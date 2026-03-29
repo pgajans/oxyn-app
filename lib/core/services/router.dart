@@ -7,6 +7,7 @@ import '../../features/performance/presentation/screens/performance_screen.dart'
 import '../../features/customization/presentation/screens/customization_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
 import '../../features/onboarding/presentation/screens/onboarding_screen.dart';
+import '../../features/subscription/presentation/screens/paywall_screen.dart';
 import '../widgets/main_shell.dart';
 
 final rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -57,6 +58,24 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/settings',
       builder: (context, state) => const SettingsScreen(),
+    ),
+    GoRoute(
+      path: '/paywall',
+      pageBuilder: (context, state) => CustomTransitionPage(
+        child: const PaywallScreen(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return SlideTransition(
+            position: Tween(
+              begin: const Offset(0, 1),
+              end: Offset.zero,
+            ).animate(CurvedAnimation(
+              parent: animation,
+              curve: Curves.easeOutCubic,
+            )),
+            child: child,
+          );
+        },
+      ),
     ),
   ],
 );

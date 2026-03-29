@@ -1,0 +1,101 @@
+import 'package:flutter/foundation.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
+import '../domain/subscription_status.dart';
+
+class SubscriptionService {
+  static const _apiKeyiOS = 'appl_YOUR_IOS_API_KEY';
+  static const _apiKeyAndroid = 'goog_YOUR_ANDROID_API_KEY';
+
+  Future<void> initialize() async {
+    try {
+      await Purchases.setLogLevel(LogLevel.debug);
+
+      PurchasesConfiguration configuration;
+      if (defaultTargetPlatform == TargetPlatform.iOS) {
+        configuration = PurchasesConfiguration(_apiKeyiOS);
+      } else {
+        configuration = PurchasesConfiguration(_apiKeyAndroid);
+      }
+
+      await Purchases.configure(configuration);
+      debugPrint('RevenueCat initialized');
+    } catch (e) {
+      debugPrint('RevenueCat init error: $e');
+    }
+  }
+
+  Future<SubscriptionStatus> getSubscriptionStatus() async {
+    try {
+      final customerInfo = await Purchases.getCustomerInfo();
+      return _mapToStatus(customerInfo);
+    } catch (e) {
+      debugPrint('getSubscriptionStatus error: $e');
+      return SubscriptionStatus.free();
+    }
+  }
+
+  Future<List<Package>> getOfferings() async {
+    try {
+      final offerings = await Purchases.getOfferings();
+      final current = offerings.current;
+      if (current == null) return [];
+      return current.availablePackages;
+    } catch (e) {
+      debugPrint('getOfferings error: $e');
+      return [];
+    }
+  }
+
+  Future<SubscriptionStatus> purchase(Package package) async {
+    try {
+      // ignore: deprecated_member_use
+      final result = await Purchases.purchasePackage(package);
+      return _mapToStatus(result.customerInfo);
+    } catch (e) {
+      debugPrint('purchase error: $e');
+      rethrow;
+    }
+  }
+
+  Future<SubscriptionStatus> restorePurchases() async {
+    try {
+      final customerInfo = await Purchases.restorePurchases();
+      return _mapToStatus(customerInfo);
+    } catch (e) {
+      debugPrint('restorePurchases error: $e');
+      return SubscriptionStatus.free();
+    }
+  }
+
+  SubscriptionStatus _mapToStatus(CustomerInfo info) {
+    final entitlements = info.entitlements.active;
+
+    if (entitlements.containsKey('pro')) {
+      final ent = entitlements['pro']!;
+      return SubscriptionStatus(
+        tier: SubscriptionTier.pro,
+        isActive: true,
+        expiresAt: ent.expirationDate != null
+            ? DateTime.tryParse(ent.expirationDate!)
+            : null,
+        productId: ent.productIdentifier,
+        isTrialActive: ent.periodType == PeriodType.trial,
+      );
+    }
+
+    if (entitlements.containsKey('plus')) {
+      final ent = entitlements['plus']!;
+      return SubscriptionStatus(
+        tier: SubscriptionTier.plus,
+        isActive: true,
+        expiresAt: ent.expirationDate != null
+            ? DateTime.tryParse(ent.expirationDate!)
+            : null,
+        productId: ent.productIdentifier,
+        isTrialActive: ent.periodType == PeriodType.trial,
+      );
+    }
+
+    return SubscriptionStatus.free();
+  }
+}
