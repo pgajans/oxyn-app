@@ -1,0 +1,77 @@
+name: oxyn
+description: "Oxyn - Telefonuna nefes aldır. Batarya analizi, depolama temizliği ve cihaz optimizasyonu."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # State Management
+  flutter_riverpod: ^3.1.0
+  riverpod_annotation: ^4.0.0
+
+  # Navigation
+  go_router: ^17.1.0
+
+  # UI & Animation
+  cupertino_icons: ^1.0.8
+  rive: ^0.14.4
+  lottie: ^3.3.1
+  fl_chart: ^1.2.0
+  shimmer: ^3.0.0
+  percent_indicator: ^4.2.3
+
+  # Device & Platform
+  device_info_plus: ^12.3.0
+  battery_plus: ^7.0.0
+  package_info_plus: ^9.0.0
+  path_provider: ^2.1.5
+  permission_handler: ^12.0.1
+  photo_manager: ^3.6.3
+  connectivity_plus: ^7.0.0
+
+  # Storage
+  hive_flutter: ^1.1.0
+  shared_preferences: ^2.5.3
+
+  # Monetization
+  purchases_flutter: ^9.15.1
+
+  # Analytics
+  firebase_core: ^4.6.0
+  firebase_analytics: ^12.2.0
+
+  # Localization
+  intl: ^0.20.2
+
+  # Widgets (Home Screen)
+  home_widget: ^0.9.0
+
+  # Utilities
+  url_launcher: ^6.3.1
+  share_plus: ^12.0.1
+  image_picker: ^1.1.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  riverpod_generator: ^4.0.0+1
+  build_runner: ^2.4.15
+  custom_lint: ^0.8.1
+  riverpod_lint: ^3.1.0
+
+flutter:
+  uses-material-design: true
+  generate: true
+
+  assets:
+    - assets/animations/
+    - assets/images/
+    - assets/translations/
