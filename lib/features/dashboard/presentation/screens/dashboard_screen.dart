@@ -1,15 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/oxyn_card.dart';
 import '../../../../core/widgets/score_ring.dart';
+import '../../domain/dashboard_provider.dart';
+import '../../../battery/domain/battery_provider.dart';
+import '../../../cleaner/domain/storage_provider.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final score = ref.watch(healthScoreProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Oxyn'),
@@ -20,21 +26,26 @@ class DashboardScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: AppSpacing.screenPadding,
-        child: Column(
-          children: [
-            const SizedBox(height: AppSpacing.md),
-            // Health Score
-            const _ScoreSection(),
-            const SizedBox(height: AppSpacing.lg),
-            // Module Grid
-            const _ModuleGrid(),
-            const SizedBox(height: AppSpacing.lg),
-            // Optimize Button
-            const _OptimizeButton(),
-            const SizedBox(height: AppSpacing.xl),
-          ],
+      body: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(batteryInfoProvider);
+          ref.invalidate(storageInfoProvider);
+        },
+        color: AppColors.primary,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: AppSpacing.screenPadding,
+          child: Column(
+            children: [
+              const SizedBox(height: AppSpacing.md),
+              _ScoreSection(score: score),
+              const SizedBox(height: AppSpacing.lg),
+              _ModuleGrid(ref: ref),
+              const SizedBox(height: AppSpacing.lg),
+              const _OptimizeButton(),
+              const SizedBox(height: AppSpacing.xl),
+            ],
+          ),
         ),
       ),
     );
@@ -42,7 +53,9 @@ class DashboardScreen extends StatelessWidget {
 }
 
 class _ScoreSection extends StatelessWidget {
-  const _ScoreSection();
+  final dynamic score;
+
+  const _ScoreSection({required this.score});
 
   @override
   Widget build(BuildContext context) {
@@ -55,18 +68,19 @@ class _ScoreSection extends StatelessWidget {
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: AppSpacing.md),
-          const ScoreRing(score: 87),
+          ScoreRing(score: score.total),
           const SizedBox(height: AppSpacing.md),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: AppColors.success.withValues(alpha: 0.15),
+              color: (score.isGood ? AppColors.success : AppColors.secondary)
+                  .withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(20),
             ),
-            child: const Text(
-              'Cihazın sağlıklı',
+            child: Text(
+              score.statusMessage,
               style: TextStyle(
-                color: AppColors.success,
+                color: score.isGood ? AppColors.success : AppColors.secondary,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -78,10 +92,26 @@ class _ScoreSection extends StatelessWidget {
 }
 
 class _ModuleGrid extends StatelessWidget {
-  const _ModuleGrid();
+  final WidgetRef ref;
+
+  const _ModuleGrid({required this.ref});
 
   @override
   Widget build(BuildContext context) {
+    final batteryAsync = ref.watch(batteryInfoProvider);
+    final batteryText = batteryAsync.when(
+      loading: () => '...',
+      error: (e, s) => '—',
+      data: (info) => '%${info.level}',
+    );
+
+    final storageAsync = ref.watch(storageInfoProvider);
+    final storageText = storageAsync.when(
+      loading: () => '...',
+      error: (e, s) => '—',
+      data: (info) => info.freeFormatted,
+    );
+
     return GridView.count(
       crossAxisCount: 2,
       mainAxisSpacing: 12,
@@ -92,21 +122,21 @@ class _ModuleGrid extends StatelessWidget {
         _ModuleCard(
           icon: Icons.battery_std,
           label: 'Batarya',
-          value: '%72',
+          value: batteryText,
           color: AppColors.success,
           onTap: () => context.go('/battery'),
         ),
         _ModuleCard(
           icon: Icons.speed,
           label: 'Performans',
-          value: 'İyi',
+          value: 'Detay',
           color: AppColors.primary,
           onTap: () => context.push('/performance'),
         ),
         _ModuleCard(
           icon: Icons.cleaning_services,
           label: 'Temizlik',
-          value: '3.2 GB',
+          value: storageText,
           color: AppColors.secondary,
           onTap: () => context.go('/cleaner'),
         ),
@@ -203,17 +233,13 @@ class _OptimizeButton extends StatelessWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
           onTap: () {
-            // TODO: Trigger optimization flow
+            // TODO: Trigger optimization flow with animation
           },
           child: const Center(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  Icons.bolt,
-                  color: AppColors.background,
-                  size: 24,
-                ),
+                Icon(Icons.bolt, color: AppColors.background, size: 24),
                 SizedBox(width: 8),
                 Text(
                   'Optimize Et',

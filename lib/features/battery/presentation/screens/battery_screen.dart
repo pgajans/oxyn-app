@@ -1,33 +1,59 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/oxyn_card.dart';
+import '../../domain/battery_info.dart';
+import '../../domain/battery_provider.dart';
 
-class BatteryScreen extends StatelessWidget {
+class BatteryScreen extends ConsumerWidget {
   const BatteryScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final batteryAsync = ref.watch(batteryInfoProvider);
+
     return Scaffold(
       appBar: AppBar(title: const Text('Batarya')),
-      body: SingleChildScrollView(
-        padding: AppSpacing.screenPadding,
-        child: Column(
-          children: [
-            const SizedBox(height: AppSpacing.md),
-            // Battery Level
-            _BatteryLevelCard(),
-            const SizedBox(height: AppSpacing.md),
-            // Battery Health Info
-            const _BatteryInfoGrid(),
-            const SizedBox(height: AppSpacing.md),
-            // Charge Alarm
-            const _ChargeAlarmCard(),
-            const SizedBox(height: AppSpacing.md),
-            // Energy Consumers
-            const _EnergyConsumersCard(),
-            const SizedBox(height: AppSpacing.xl),
-          ],
+      body: batteryAsync.when(
+        loading: () => const Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
+        error: (e, _) => Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.error_outline, color: AppColors.danger, size: 48),
+              const SizedBox(height: 12),
+              Text('Hata: $e', style: const TextStyle(color: AppColors.textSecondary)),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () => ref.read(batteryInfoProvider.notifier).refresh(),
+                child: const Text('Tekrar Dene'),
+              ),
+            ],
+          ),
+        ),
+        data: (info) => RefreshIndicator(
+          onRefresh: () => ref.read(batteryInfoProvider.notifier).refresh(),
+          color: AppColors.primary,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: AppSpacing.screenPadding,
+            child: Column(
+              children: [
+                const SizedBox(height: AppSpacing.md),
+                _BatteryLevelCard(info: info),
+                const SizedBox(height: AppSpacing.md),
+                _BatteryInfoGrid(info: info),
+                const SizedBox(height: AppSpacing.md),
+                _ChargeAlarmCard(ref: ref),
+                const SizedBox(height: AppSpacing.md),
+                _EnergyConsumersCard(info: info),
+                const SizedBox(height: AppSpacing.xl),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -35,6 +61,16 @@ class BatteryScreen extends StatelessWidget {
 }
 
 class _BatteryLevelCard extends StatelessWidget {
+  final BatteryInfo info;
+
+  const _BatteryLevelCard({required this.info});
+
+  Color get _levelColor {
+    if (info.isLow) return AppColors.danger;
+    if (info.level < 50) return AppColors.secondary;
+    return AppColors.success;
+  }
+
   @override
   Widget build(BuildContext context) {
     return OxynCard(
@@ -48,26 +84,26 @@ class _BatteryLevelCard extends StatelessWidget {
                 width: 120,
                 height: 120,
                 child: CircularProgressIndicator(
-                  value: 0.72,
+                  value: info.level / 100,
                   strokeWidth: 10,
                   backgroundColor: AppColors.surfaceLight,
-                  valueColor: const AlwaysStoppedAnimation<Color>(AppColors.success),
+                  valueColor: AlwaysStoppedAnimation<Color>(_levelColor),
                   strokeCap: StrokeCap.round,
                 ),
               ),
-              const Column(
+              Column(
                 children: [
                   Text(
-                    '72%',
-                    style: TextStyle(
+                    info.levelText,
+                    style: const TextStyle(
                       fontSize: 36,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textPrimary,
                     ),
                   ),
                   Text(
-                    'Kalan',
-                    style: TextStyle(
+                    info.isCharging ? 'Şarj oluyor' : 'Kalan',
+                    style: const TextStyle(
                       fontSize: 14,
                       color: AppColors.textSecondary,
                     ),
@@ -77,11 +113,116 @@ class _BatteryLevelCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.md),
-          const Text(
-            'Tahmini 5 saat 23 dakika',
-            style: TextStyle(
+          if (!info.isCharging)
+            Text(
+              'Tahmini ${info.remainingText}',
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 14,
+              ),
+            ),
+          if (info.isCharging)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppColors.success.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.bolt, color: AppColors.success, size: 16),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Şarj ediliyor',
+                    style: TextStyle(
+                      color: AppColors.success,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BatteryInfoGrid extends StatelessWidget {
+  final BatteryInfo info;
+
+  const _BatteryInfoGrid({required this.info});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: _InfoTile(
+            icon: Icons.thermostat,
+            iconColor: info.isOverheating ? AppColors.danger : AppColors.secondary,
+            value: info.temperatureText,
+            label: 'Sıcaklık',
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _InfoTile(
+            icon: Icons.favorite,
+            iconColor: info.healthPercentage > 80 ? AppColors.success : AppColors.danger,
+            value: info.healthText,
+            label: 'Sağlık',
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _InfoTile(
+            icon: Icons.loop,
+            iconColor: AppColors.primary,
+            value: info.cycleCount > 0 ? '${info.cycleCount}' : '—',
+            label: 'Döngü',
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _InfoTile extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String value;
+  final String label;
+
+  const _InfoTile({
+    required this.icon,
+    required this.iconColor,
+    required this.value,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return OxynCard(
+      child: Column(
+        children: [
+          Icon(icon, color: iconColor, size: 28),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
               color: AppColors.textSecondary,
-              fontSize: 14,
             ),
           ),
         ],
@@ -90,100 +231,16 @@ class _BatteryLevelCard extends StatelessWidget {
   }
 }
 
-class _BatteryInfoGrid extends StatelessWidget {
-  const _BatteryInfoGrid();
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: OxynCard(
-            child: Column(
-              children: [
-                Icon(Icons.thermostat, color: AppColors.secondary, size: 28),
-                const SizedBox(height: AppSpacing.sm),
-                const Text(
-                  '32°C',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                const Text(
-                  'Sıcaklık',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: OxynCard(
-            child: Column(
-              children: [
-                Icon(Icons.favorite, color: AppColors.danger, size: 28),
-                const SizedBox(height: AppSpacing.sm),
-                const Text(
-                  '%94',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                const Text(
-                  'Sağlık',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: OxynCard(
-            child: Column(
-              children: [
-                Icon(Icons.loop, color: AppColors.primary, size: 28),
-                const SizedBox(height: AppSpacing.sm),
-                const Text(
-                  '347',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                const Text(
-                  'Döngü',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 class _ChargeAlarmCard extends StatelessWidget {
-  const _ChargeAlarmCard();
+  final WidgetRef ref;
+
+  const _ChargeAlarmCard({required this.ref});
 
   @override
   Widget build(BuildContext context) {
+    final enabled = ref.watch(chargeAlarmEnabledProvider);
+    final percent = ref.watch(chargeAlarmPercentProvider);
+
     return OxynCard(
       child: Row(
         children: [
@@ -196,11 +253,11 @@ class _ChargeAlarmCard extends StatelessWidget {
             child: const Icon(Icons.alarm, color: AppColors.warning, size: 24),
           ),
           const SizedBox(width: AppSpacing.md),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const Text(
                   'Şarj Alarmı',
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
@@ -208,8 +265,8 @@ class _ChargeAlarmCard extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '%80\'de bildirim al',
-                  style: TextStyle(
+                  '%$percent\'de bildirim al',
+                  style: const TextStyle(
                     fontSize: 12,
                     color: AppColors.textSecondary,
                   ),
@@ -218,8 +275,9 @@ class _ChargeAlarmCard extends StatelessWidget {
             ),
           ),
           Switch(
-            value: true,
-            onChanged: (v) {},
+            value: enabled,
+            onChanged: (v) =>
+                ref.read(chargeAlarmEnabledProvider.notifier).toggle(v),
             activeTrackColor: AppColors.primary,
           ),
         ],
@@ -229,7 +287,9 @@ class _ChargeAlarmCard extends StatelessWidget {
 }
 
 class _EnergyConsumersCard extends StatelessWidget {
-  const _EnergyConsumersCard();
+  final BatteryInfo info;
+
+  const _EnergyConsumersCard({required this.info});
 
   @override
   Widget build(BuildContext context) {
@@ -237,72 +297,63 @@ class _EnergyConsumersCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Enerji Tüketenler',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Text(
+                  'Ayarlara Git',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
           const Text(
-            'Enerji Tüketenler',
+            'Detaylı batarya kullanım bilgisi için cihaz ayarlarındaki Batarya bölümünü kontrol edebilirsiniz.',
             style: TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 16,
-              color: AppColors.textPrimary,
+              fontSize: 13,
+              color: AppColors.textSecondary,
+              height: 1.5,
             ),
           ),
           const SizedBox(height: AppSpacing.md),
-          _ConsumerRow(name: 'Instagram', usage: '23%', color: AppColors.danger),
-          const SizedBox(height: AppSpacing.sm),
-          _ConsumerRow(name: 'YouTube', usage: '18%', color: AppColors.secondary),
-          const SizedBox(height: AppSpacing.sm),
-          _ConsumerRow(name: 'WhatsApp', usage: '12%', color: AppColors.success),
-          const SizedBox(height: AppSpacing.sm),
-          _ConsumerRow(name: 'Chrome', usage: '9%', color: AppColors.primary),
+          Row(
+            children: [
+              Icon(Icons.info_outline, size: 16, color: AppColors.textTertiary),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  'iOS ve Android güvenlik kısıtlamaları nedeniyle uygulama bazlı enerji tüketim verisi sınırlıdır.',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: AppColors.textTertiary,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
-    );
-  }
-}
-
-class _ConsumerRow extends StatelessWidget {
-  final String name;
-  final String usage;
-  final Color color;
-
-  const _ConsumerRow({
-    required this.name,
-    required this.usage,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final percent = double.tryParse(usage.replaceAll('%', '')) ?? 0;
-
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            name,
-            style: const TextStyle(color: AppColors.textPrimary),
-          ),
-        ),
-        Text(
-          usage,
-          style: TextStyle(
-            color: color,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(width: 12),
-        SizedBox(
-          width: 80,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: percent / 100,
-              backgroundColor: AppColors.surfaceLight,
-              valueColor: AlwaysStoppedAnimation<Color>(color),
-              minHeight: 6,
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

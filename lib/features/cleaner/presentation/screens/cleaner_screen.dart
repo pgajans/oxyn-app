@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/oxyn_card.dart';
+import '../../domain/storage_provider.dart';
 
-class CleanerScreen extends StatelessWidget {
+class CleanerScreen extends ConsumerWidget {
   const CleanerScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final storageAsync = ref.watch(storageInfoProvider);
+    final scanAsync = ref.watch(scanResultProvider);
+
     return Scaffold(
       appBar: AppBar(title: const Text('Temizlik')),
       body: SingleChildScrollView(
@@ -16,40 +21,98 @@ class CleanerScreen extends StatelessWidget {
           children: [
             const SizedBox(height: AppSpacing.md),
             // Storage overview
-            const _StorageOverview(),
+            storageAsync.when(
+              loading: () => const OxynCard(
+                padding: EdgeInsets.all(32),
+                child: Center(
+                  child: CircularProgressIndicator(color: AppColors.primary),
+                ),
+              ),
+              error: (e, _) => OxynCard(
+                child: Text('Depolama bilgisi alınamadı: $e'),
+              ),
+              data: (storage) => _StorageOverview(
+                total: storage.totalFormatted,
+                used: storage.usedFormatted,
+                free: storage.freeFormatted,
+                usedPercent: storage.usedPercent,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            // Scan button
+            scanAsync.when(
+              loading: () => Container(
+                width: double.infinity,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Center(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                      SizedBox(width: 12),
+                      Text(
+                        'Taranıyor...',
+                        style: TextStyle(color: AppColors.primary),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              error: (e, s) => const SizedBox.shrink(),
+              data: (scan) {
+                if (scan.totalItemCount == 0) {
+                  return SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton.icon(
+                      onPressed: () =>
+                          ref.read(scanResultProvider.notifier).startScan(),
+                      icon: const Icon(Icons.search),
+                      label: const Text('Taramayı Başlat'),
+                    ),
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
             const SizedBox(height: AppSpacing.lg),
             // Cleaning categories
             const _CleaningCategory(
               icon: Icons.photo_library,
               title: 'Benzer Fotoğraflar',
-              subtitle: '847 benzer fotoğraf bulundu',
-              size: '1.8 GB',
+              subtitle: 'Taranmayı bekliyor',
+              size: '—',
               color: AppColors.secondary,
             ),
             const SizedBox(height: AppSpacing.md),
             const _CleaningCategory(
               icon: Icons.file_present,
               title: 'Büyük Dosyalar',
-              subtitle: '12 dosya 50MB üzeri',
-              size: '2.3 GB',
+              subtitle: '50MB üzeri dosyalar',
+              size: '—',
               color: AppColors.danger,
             ),
             const SizedBox(height: AppSpacing.md),
             const _CleaningCategory(
               icon: Icons.screenshot,
               title: 'Ekran Görüntüleri',
-              subtitle: '234 ekran görüntüsü',
-              size: '890 MB',
+              subtitle: 'Taranmayı bekliyor',
+              size: '—',
               color: AppColors.primary,
             ),
             const SizedBox(height: AppSpacing.md),
-            const _CleaningCategory(
-              icon: Icons.cached,
-              title: 'Önbellek',
-              subtitle: 'Uygulama önbelleği',
-              size: '320 MB',
-              color: AppColors.tertiary,
-            ),
+            _CacheCategory(ref: ref),
             const SizedBox(height: AppSpacing.xl),
           ],
         ),
@@ -59,7 +122,17 @@ class CleanerScreen extends StatelessWidget {
 }
 
 class _StorageOverview extends StatelessWidget {
-  const _StorageOverview();
+  final String total;
+  final String used;
+  final String free;
+  final double usedPercent;
+
+  const _StorageOverview({
+    required this.total,
+    required this.used,
+    required this.free,
+    required this.usedPercent,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -68,79 +141,66 @@ class _StorageOverview extends StatelessWidget {
       child: Column(
         children: [
           const Text(
-            'Temizlenebilir Alan',
-            style: TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 14,
-            ),
+            'Depolama',
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
           ),
           const SizedBox(height: AppSpacing.sm),
-          const Text(
-            '5.3 GB',
-            style: TextStyle(
-              fontSize: 42,
-              fontWeight: FontWeight.w700,
-              color: AppColors.primary,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                used,
+                style: const TextStyle(
+                  fontSize: 36,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primary,
+                ),
+              ),
+              Text(
+                ' / $total',
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: AppSpacing.md),
           ClipRRect(
             borderRadius: BorderRadius.circular(6),
-            child: const SizedBox(
-              height: 12,
-              child: Row(
-                children: [
-                  Expanded(flex: 34, child: ColoredBox(color: AppColors.secondary)),
-                  Expanded(flex: 43, child: ColoredBox(color: AppColors.danger)),
-                  Expanded(flex: 17, child: ColoredBox(color: AppColors.primary)),
-                  Expanded(flex: 6, child: ColoredBox(color: AppColors.tertiary)),
-                ],
+            child: LinearProgressIndicator(
+              value: usedPercent / 100,
+              backgroundColor: AppColors.surfaceLight,
+              valueColor: AlwaysStoppedAnimation<Color>(
+                usedPercent > 90 ? AppColors.danger : AppColors.primary,
               ),
+              minHeight: 10,
             ),
           ),
-          const SizedBox(height: AppSpacing.md),
-          const Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
+          const SizedBox(height: AppSpacing.sm),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _LegendItem(color: AppColors.secondary, label: 'Fotoğraf'),
-              _LegendItem(color: AppColors.danger, label: 'Dosyalar'),
-              _LegendItem(color: AppColors.primary, label: 'Ekran G.'),
-              _LegendItem(color: AppColors.tertiary, label: 'Önbellek'),
+              Text(
+                'Kullanılan: $used',
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              Text(
+                'Boş: $free',
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColors.success,
+                ),
+              ),
             ],
           ),
         ],
       ),
-    );
-  }
-}
-
-class _LegendItem extends StatelessWidget {
-  final Color color;
-  final String label;
-
-  const _LegendItem({required this.color, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 8,
-          height: 8,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(2),
-          ),
-        ),
-        const SizedBox(width: 4),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 11,
-            color: AppColors.textSecondary,
-          ),
-        ),
-      ],
     );
   }
 }
@@ -163,9 +223,7 @@ class _CleaningCategory extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return OxynCard(
-      onTap: () {
-        // TODO: Navigate to detail screen
-      },
+      onTap: () {},
       child: Row(
         children: [
           Container(
@@ -199,26 +257,75 @@ class _CleaningCategory extends StatelessWidget {
               ],
             ),
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              size,
-              style: TextStyle(
-                color: color,
-                fontWeight: FontWeight.w600,
-                fontSize: 13,
+          if (size != '—')
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                size,
+                style: TextStyle(
+                  color: color,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
               ),
             ),
-          ),
           const SizedBox(width: 8),
-          Icon(
-            Icons.chevron_right,
-            color: AppColors.textTertiary,
+          const Icon(Icons.chevron_right, color: AppColors.textTertiary),
+        ],
+      ),
+    );
+  }
+}
+
+class _CacheCategory extends StatelessWidget {
+  final WidgetRef ref;
+
+  const _CacheCategory({required this.ref});
+
+  @override
+  Widget build(BuildContext context) {
+    return OxynCard(
+      onTap: () {
+        // TODO: Clear app cache with confirmation
+      },
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.tertiary.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(Icons.cached, color: AppColors.tertiary, size: 24),
           ),
+          const SizedBox(width: AppSpacing.md),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Önbellek',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                SizedBox(height: 2),
+                Text(
+                  'Uygulama önbelleğini temizle',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Icon(Icons.chevron_right, color: AppColors.textTertiary),
         ],
       ),
     );

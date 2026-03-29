@@ -1,14 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/oxyn_card.dart';
 import '../../../../core/widgets/score_ring.dart';
+import '../../../dashboard/domain/dashboard_provider.dart';
+import '../../domain/performance_provider.dart';
 
-class PerformanceScreen extends StatelessWidget {
+class PerformanceScreen extends ConsumerWidget {
   const PerformanceScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final score = ref.watch(healthScoreProvider);
+    final deviceAsync = ref.watch(deviceInfoProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Performans'),
@@ -22,11 +28,96 @@ class PerformanceScreen extends StatelessWidget {
         child: Column(
           children: [
             const SizedBox(height: AppSpacing.md),
-            const _PerformanceScore(),
+            OxynCard(
+              padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
+              child: Column(
+                children: [
+                  Text(
+                    'Performans Skoru',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  ScoreRing(score: score.total),
+                  const SizedBox(height: AppSpacing.md),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: (score.isGood ? AppColors.success : AppColors.secondary)
+                          .withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      score.statusMessage,
+                      style: TextStyle(
+                        color: score.isGood ? AppColors.success : AppColors.secondary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            // Score breakdown
+            Row(
+              children: [
+                _ScoreBreakdownTile(
+                  label: 'Batarya',
+                  score: score.batteryScore,
+                  maxScore: 35,
+                  color: AppColors.success,
+                ),
+                const SizedBox(width: 8),
+                _ScoreBreakdownTile(
+                  label: 'Depolama',
+                  score: score.storageScore,
+                  maxScore: 40,
+                  color: AppColors.primary,
+                ),
+                const SizedBox(width: 8),
+                _ScoreBreakdownTile(
+                  label: 'Sıcaklık',
+                  score: score.temperatureScore,
+                  maxScore: 25,
+                  color: AppColors.secondary,
+                ),
+              ],
+            ),
             const SizedBox(height: AppSpacing.lg),
-            const _InfoRow(),
-            const SizedBox(height: AppSpacing.lg),
-            const _DeviceInfoCard(),
+            // Device Info
+            deviceAsync.when(
+              loading: () => const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(32),
+                  child: CircularProgressIndicator(color: AppColors.primary),
+                ),
+              ),
+              error: (e, _) => OxynCard(
+                child: Text('Cihaz bilgisi alınamadı: $e'),
+              ),
+              data: (device) => OxynCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Cihaz Bilgisi',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    _InfoItem(label: 'Model', value: device.model),
+                    _InfoItem(label: 'İşletim Sistemi', value: device.osVersion),
+                    if (device.totalStorage != '—')
+                      _InfoItem(label: 'Depolama', value: device.totalStorage),
+                    if (device.freeStorage != '—')
+                      _InfoItem(label: 'Boş Alan', value: device.freeStorage),
+                  ],
+                ),
+              ),
+            ),
             const SizedBox(height: AppSpacing.xl),
           ],
         ),
@@ -35,123 +126,54 @@ class PerformanceScreen extends StatelessWidget {
   }
 }
 
-class _PerformanceScore extends StatelessWidget {
-  const _PerformanceScore();
+class _ScoreBreakdownTile extends StatelessWidget {
+  final String label;
+  final int score;
+  final int maxScore;
+  final Color color;
+
+  const _ScoreBreakdownTile({
+    required this.label,
+    required this.score,
+    required this.maxScore,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return OxynCard(
-      padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
-      child: Column(
-        children: [
-          Text(
-            'Performans Skoru',
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-          const SizedBox(height: AppSpacing.md),
-          const ScoreRing(score: 82),
-          const SizedBox(height: AppSpacing.md),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: AppColors.success.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: const Text(
-              'İyi durumda',
+    return Expanded(
+      child: OxynCard(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          children: [
+            Text(
+              '$score/$maxScore',
               style: TextStyle(
-                color: AppColors.success,
-                fontWeight: FontWeight.w500,
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: color,
               ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _InfoRow extends StatelessWidget {
-  const _InfoRow();
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: OxynCard(
-            child: Column(
-              children: [
-                const Icon(Icons.thermostat, color: AppColors.primary, size: 28),
-                const SizedBox(height: AppSpacing.sm),
-                const Text(
-                  '38°C',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                const Text(
-                  'CPU Sıcaklık',
-                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                ),
-              ],
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 11,
+                color: AppColors.textSecondary,
+              ),
             ),
-          ),
+            const SizedBox(height: 6),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(3),
+              child: LinearProgressIndicator(
+                value: score / maxScore,
+                backgroundColor: AppColors.surfaceLight,
+                valueColor: AlwaysStoppedAnimation<Color>(color),
+                minHeight: 4,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: OxynCard(
-            child: Column(
-              children: [
-                const Icon(Icons.memory, color: AppColors.tertiary, size: 28),
-                const SizedBox(height: AppSpacing.sm),
-                const Text(
-                  '4.2 GB',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                const Text(
-                  'RAM Kullanım',
-                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _DeviceInfoCard extends StatelessWidget {
-  const _DeviceInfoCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return OxynCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Cihaz Bilgisi',
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 16,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          _InfoItem(label: 'Model', value: 'iPhone 15 Pro'),
-          _InfoItem(label: 'İşletim Sistemi', value: 'iOS 18.3'),
-          _InfoItem(label: 'Depolama', value: '256 GB'),
-          _InfoItem(label: 'Kullanılan', value: '187 GB'),
-          _InfoItem(label: 'Boş Alan', value: '69 GB'),
-        ],
       ),
     );
   }
@@ -170,10 +192,7 @@ class _InfoItem extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: const TextStyle(color: AppColors.textSecondary),
-          ),
+          Text(label, style: const TextStyle(color: AppColors.textSecondary)),
           Text(
             value,
             style: const TextStyle(
