@@ -50,3 +50,11 @@ lib/core/localization/generated/
 # Environment / secrets
 .env
 *.env
+
+# Android signing
+android/key.properties
+android/app/*.jks
+*.jks
+
+# Debug logs
+.cursor/debug-*.log
