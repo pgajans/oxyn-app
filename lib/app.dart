@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:go_router/go_router.dart';
 import 'core/localization/generated/app_localizations.dart';
 import 'core/theme/app_theme.dart';
-import 'core/services/router.dart';
 
 class OxynApp extends StatelessWidget {
-  const OxynApp({super.key});
+  final GoRouter router;
+
+  const OxynApp({super.key, required this.router});
 
   @override
   Widget build(BuildContext context) {
@@ -13,7 +15,7 @@ class OxynApp extends StatelessWidget {
       title: 'Oxyn',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
-      routerConfig: appRouter,
+      routerConfig: router,
       localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,

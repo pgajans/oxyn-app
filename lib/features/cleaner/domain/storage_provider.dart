@@ -38,15 +38,28 @@ class ScanResultNotifier extends AsyncNotifier<ScanResult> {
 
   Future<void> startScan() async {
     state = const AsyncValue.loading();
-    // Photo scanning will be implemented with photo_manager
-    // For now, return empty result
-    await Future.delayed(const Duration(seconds: 2));
-    state = const AsyncValue.data(ScanResult(
+
+    final repo = ref.read(storageRepositoryProvider);
+
+    await Future.delayed(const Duration(milliseconds: 800));
+    final cacheSize = await repo.getCacheSize();
+    await Future.delayed(const Duration(milliseconds: 700));
+
+    state = AsyncValue.data(ScanResult(
       duplicatePhotos: [],
       largeFiles: [],
       screenshots: [],
-      totalCleanableBytes: 0,
+      totalCleanableBytes: cacheSize,
+      cacheBytes: cacheSize,
+      hasScanned: true,
     ));
+  }
+
+  Future<int> cleanCache() async {
+    final repo = ref.read(storageRepositoryProvider);
+    final cleaned = await repo.clearAppCache();
+    await startScan();
+    return cleaned;
   }
 }
 

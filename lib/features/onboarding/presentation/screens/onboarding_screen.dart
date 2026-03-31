@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/services/router.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -51,7 +52,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         curve: Curves.easeInOut,
       );
     } else {
-      // Onboarding done -> go to scan screen
+      markOnboardingSeen();
       Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => const _ScanScreen()),
@@ -70,10 +71,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: TextButton(
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const _ScanScreen()),
-                  ),
+                  onPressed: () {
+                    markOnboardingSeen();
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const _ScanScreen()),
+                    );
+                  },
                   child: const Text(
                     'Atla',
                     style: TextStyle(color: AppColors.textSecondary),
@@ -211,6 +215,9 @@ class _ScanScreenState extends State<_ScanScreen>
       duration: const Duration(seconds: 8),
     );
     _controller.forward();
+    _controller.addListener(() {
+      if (mounted) setState(() {});
+    });
     _controller.addListener(_updateTask);
     _controller.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
@@ -253,37 +260,31 @@ class _ScanScreenState extends State<_ScanScreen>
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Spacer(),
-              // Animated scanner
-              AnimatedBuilder(
-                animation: _controller,
-                builder: (context, child) {
-                  return SizedBox(
-                    width: 160,
-                    height: 160,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        CircularProgressIndicator(
-                          value: _controller.value,
-                          strokeWidth: 8,
-                          backgroundColor: AppColors.surfaceLight,
-                          valueColor: const AlwaysStoppedAnimation<Color>(
-                            AppColors.primary,
-                          ),
-                          strokeCap: StrokeCap.round,
-                        ),
-                        Text(
-                          '${(_controller.value * 100).toInt()}%',
-                          style: const TextStyle(
-                            fontSize: 36,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                      ],
+              SizedBox(
+                width: 160,
+                height: 160,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    CircularProgressIndicator(
+                      value: _controller.value,
+                      strokeWidth: 8,
+                      backgroundColor: AppColors.surfaceLight,
+                      valueColor: const AlwaysStoppedAnimation<Color>(
+                        AppColors.primary,
+                      ),
+                      strokeCap: StrokeCap.round,
                     ),
-                  );
-                },
+                    Text(
+                      '${(_controller.value * 100).toInt()}%',
+                      style: const TextStyle(
+                        fontSize: 36,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: AppSpacing.xl),
               Text(

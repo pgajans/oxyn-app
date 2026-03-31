@@ -42,7 +42,7 @@ class DashboardScreen extends ConsumerWidget {
               const SizedBox(height: AppSpacing.lg),
               _ModuleGrid(ref: ref),
               const SizedBox(height: AppSpacing.lg),
-              const _OptimizeButton(),
+              _OptimizeButton(ref: ref),
               const SizedBox(height: AppSpacing.xl),
             ],
           ),
@@ -207,8 +207,120 @@ class _ModuleCard extends StatelessWidget {
   }
 }
 
-class _OptimizeButton extends StatelessWidget {
-  const _OptimizeButton();
+class _OptimizeButton extends StatefulWidget {
+  final WidgetRef ref;
+
+  const _OptimizeButton({required this.ref});
+
+  @override
+  State<_OptimizeButton> createState() => _OptimizeButtonState();
+}
+
+class _OptimizeButtonState extends State<_OptimizeButton> {
+  bool _isOptimizing = false;
+
+  Future<void> _runOptimization() async {
+    if (_isOptimizing) return;
+    setState(() => _isOptimizing = true);
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => const _OptimizationDialog(),
+    );
+
+    try {
+      final repo =
+          widget.ref.read(storageRepositoryProvider);
+      final cacheCleared = await repo.clearAppCache();
+
+      widget.ref.invalidate(batteryInfoProvider);
+      widget.ref.invalidate(storageInfoProvider);
+
+      await Future.delayed(const Duration(seconds: 2));
+
+      if (mounted) {
+        Navigator.of(context).pop();
+        _showResultSheet(cacheCleared);
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Optimizasyon sırasında bir hata oluştu')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isOptimizing = false);
+    }
+  }
+
+  void _showResultSheet(int cacheCleared) {
+    final cacheMB = (cacheCleared / (1024 * 1024)).toStringAsFixed(1);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.surfaceLight,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 24),
+            const Icon(Icons.check_circle, color: AppColors.success, size: 64),
+            const SizedBox(height: 16),
+            const Text(
+              'Optimizasyon Tamamlandı!',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _ResultChip(
+                  icon: Icons.cached,
+                  label: 'Önbellek',
+                  value: '$cacheMB MB',
+                  color: AppColors.secondary,
+                ),
+                const SizedBox(width: 12),
+                const _ResultChip(
+                  icon: Icons.memory,
+                  label: 'RAM',
+                  value: 'Optimize',
+                  color: AppColors.primary,
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Tamam'),
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -232,27 +344,157 @@ class _OptimizeButton extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
-          onTap: () {
-            // TODO: Trigger optimization flow with animation
-          },
-          child: const Center(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.bolt, color: AppColors.background, size: 24),
-                SizedBox(width: 8),
-                Text(
-                  'Optimize Et',
-                  style: TextStyle(
-                    color: AppColors.background,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
+          onTap: _runOptimization,
+          child: Center(
+            child: _isOptimizing
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      color: AppColors.background,
+                      strokeWidth: 2.5,
+                    ),
+                  )
+                : const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.bolt, color: AppColors.background, size: 24),
+                      SizedBox(width: 8),
+                      Text(
+                        'Optimize Et',
+                        style: TextStyle(
+                          color: AppColors.background,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
-            ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _OptimizationDialog extends StatefulWidget {
+  const _OptimizationDialog();
+
+  @override
+  State<_OptimizationDialog> createState() => _OptimizationDialogState();
+}
+
+class _OptimizationDialogState extends State<_OptimizationDialog> {
+  int _step = 0;
+  static const _steps = [
+    'Önbellek temizleniyor...',
+    'RAM optimize ediliyor...',
+    'Depolama analiz ediliyor...',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _advanceSteps();
+  }
+
+  Future<void> _advanceSteps() async {
+    for (var i = 0; i < _steps.length; i++) {
+      await Future.delayed(const Duration(milliseconds: 700));
+      if (mounted) setState(() => _step = i);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: AppColors.surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(
+              width: 64,
+              height: 64,
+              child: CircularProgressIndicator(
+                color: AppColors.primary,
+                strokeWidth: 3,
+              ),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'Optimize Ediliyor',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 12),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              child: Text(
+                _steps[_step],
+                key: ValueKey(_step),
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ResultChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
+
+  const _ResultChip({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: 18),
+          const SizedBox(width: 8),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(fontSize: 11, color: color.withValues(alpha: 0.8)),
+              ),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: color,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

@@ -1,6 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../subscription/domain/subscription_provider.dart';
@@ -24,7 +27,6 @@ class SettingsScreen extends ConsumerWidget {
         padding: AppSpacing.screenPadding,
         children: [
           const SizedBox(height: AppSpacing.md),
-          // Premium banner
           if (!isPremium) ...[
             _PremiumBanner(onTap: () => context.push('/paywall')),
             const SizedBox(height: AppSpacing.lg),
@@ -46,9 +48,7 @@ class SettingsScreen extends ConsumerWidget {
                   iconColor: AppColors.tertiary,
                   title: 'Aboneliğini Yönet',
                   subtitle: 'Plus aktif',
-                  onTap: () {
-                    // Deep link to Store subscription management
-                  },
+                  onTap: () => _openSubscriptionManagement(),
                 ),
               _SettingsTile(
                 icon: Icons.restore,
@@ -56,6 +56,12 @@ class SettingsScreen extends ConsumerWidget {
                 title: 'Satın Alımları Geri Yükle',
                 onTap: () {
                   ref.read(subscriptionStatusProvider.notifier).restore();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Satın alımlar kontrol ediliyor...'),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
                 },
               ),
             ],
@@ -69,13 +75,13 @@ class SettingsScreen extends ConsumerWidget {
                 iconColor: AppColors.primary,
                 title: 'Dil',
                 subtitle: 'Türkçe',
-                onTap: () {},
+                onTap: () => _showLanguageDialog(context),
               ),
               _SettingsTile(
                 icon: Icons.notifications_outlined,
                 iconColor: AppColors.secondary,
                 title: 'Bildirimler',
-                onTap: () {},
+                onTap: () => _openNotificationSettings(),
               ),
             ],
           ),
@@ -88,24 +94,23 @@ class SettingsScreen extends ConsumerWidget {
                 iconColor: AppColors.textSecondary,
                 title: 'Versiyon',
                 subtitle: '1.0.0',
-                onTap: () {},
+                onTap: () => _showVersionDialog(context),
               ),
               _SettingsTile(
                 icon: Icons.privacy_tip_outlined,
                 iconColor: AppColors.textSecondary,
                 title: 'Gizlilik Politikası',
-                onTap: () {},
+                onTap: () => _openUrl('https://oxynapp.com/privacy'),
               ),
               _SettingsTile(
                 icon: Icons.description_outlined,
                 iconColor: AppColors.textSecondary,
                 title: 'Kullanım Şartları',
-                onTap: () {},
+                onTap: () => _openUrl('https://oxynapp.com/terms'),
               ),
             ],
           ),
           const SizedBox(height: AppSpacing.lg),
-          // Important notice about subscription cancellation
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -133,6 +138,173 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: AppSpacing.xl),
+        ],
+      ),
+    );
+  }
+
+  void _showLanguageDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: const Text('Dil Seçimi'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _LanguageTile(name: 'Türkçe', code: 'tr', isSelected: true),
+            _LanguageTile(name: 'English', code: 'en', isSelected: false),
+            _LanguageTile(name: 'Español', code: 'es', isSelected: false),
+            _LanguageTile(name: 'Português', code: 'pt', isSelected: false),
+            _LanguageTile(name: 'العربية', code: 'ar', isSelected: false),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Kapat'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showVersionDialog(BuildContext context) async {
+    PackageInfo? info;
+    try {
+      info = await PackageInfo.fromPlatform();
+    } catch (_) {}
+
+    if (context.mounted) {
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: AppColors.surface,
+          title: const Text('Versiyon Bilgisi'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _VersionRow('Uygulama', info?.appName ?? 'Oxyn'),
+              _VersionRow('Versiyon', info?.version ?? '1.0.0'),
+              _VersionRow('Build', info?.buildNumber ?? '1'),
+              const SizedBox(height: 12),
+              const Text(
+                'Oxyn - Telefon Bakım ve Optimizasyon',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textTertiary,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Tamam'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  Future<void> _openNotificationSettings() async {
+    if (Platform.isAndroid) {
+      const intent = 'android.settings.APP_NOTIFICATION_SETTINGS';
+      final uri = Uri.parse('intent:#Intent;action=$intent;end');
+      try {
+        await launchUrl(uri);
+      } catch (_) {
+        await launchUrl(Uri.parse('app-settings:'));
+      }
+    } else {
+      await launchUrl(Uri.parse('app-settings:'));
+    }
+  }
+
+  Future<void> _openSubscriptionManagement() async {
+    if (Platform.isAndroid) {
+      await launchUrl(
+        Uri.parse('https://play.google.com/store/account/subscriptions'),
+        mode: LaunchMode.externalApplication,
+      );
+    } else {
+      await launchUrl(
+        Uri.parse('https://apps.apple.com/account/subscriptions'),
+        mode: LaunchMode.externalApplication,
+      );
+    }
+  }
+
+  Future<void> _openUrl(String url) async {
+    final uri = Uri.parse(url);
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {}
+  }
+}
+
+class _LanguageTile extends StatelessWidget {
+  final String name;
+  final String code;
+  final bool isSelected;
+
+  const _LanguageTile({
+    required this.name,
+    required this.code,
+    required this.isSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      dense: true,
+      title: Text(
+        name,
+        style: TextStyle(
+          color: isSelected ? AppColors.primary : AppColors.textPrimary,
+          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+        ),
+      ),
+      trailing: isSelected
+          ? const Icon(Icons.check_circle, color: AppColors.primary, size: 20)
+          : null,
+      onTap: () {
+        if (!isSelected) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('$name dil desteği yakında aktif olacak'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+        Navigator.pop(context);
+      },
+    );
+  }
+}
+
+class _VersionRow extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _VersionRow(this.label, this.value);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label,
+              style: const TextStyle(color: AppColors.textSecondary, fontSize: 14)),
+          Text(value,
+              style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 14)),
         ],
       ),
     );
@@ -271,10 +443,12 @@ class _SettingsTile extends StatelessWidget {
       subtitle: subtitle != null
           ? Text(
               subtitle!,
-              style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+              style:
+                  const TextStyle(color: AppColors.textSecondary, fontSize: 12),
             )
           : null,
-      trailing: const Icon(Icons.chevron_right, color: AppColors.textTertiary),
+      trailing:
+          const Icon(Icons.chevron_right, color: AppColors.textTertiary),
       onTap: onTap,
     );
   }

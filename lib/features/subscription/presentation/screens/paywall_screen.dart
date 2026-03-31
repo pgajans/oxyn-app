@@ -352,7 +352,14 @@ class _FallbackPricing extends StatelessWidget {
           price: '\$2.99/hafta',
           subtitle: '3 gün ücretsiz deneme',
           isPopular: true,
-          onTap: () {},
+          onTap: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Abonelik sistemi yapılandırılıyor, yakında aktif olacak'),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          },
         ),
         const SizedBox(height: 12),
         _FallbackCard(
@@ -360,7 +367,14 @@ class _FallbackPricing extends StatelessWidget {
           price: '\$6.99/ay',
           subtitle: 'En çok tercih edilen',
           isPopular: false,
-          onTap: () {},
+          onTap: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Abonelik sistemi yapılandırılıyor, yakında aktif olacak'),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          },
         ),
         const SizedBox(height: 12),
         _FallbackCard(
@@ -368,7 +382,14 @@ class _FallbackPricing extends StatelessWidget {
           price: '\$49.99/yıl',
           subtitle: '%58 tasarruf',
           isPopular: false,
-          onTap: () {},
+          onTap: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Abonelik sistemi yapılandırılıyor, yakında aktif olacak'),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          },
         ),
       ],
     );

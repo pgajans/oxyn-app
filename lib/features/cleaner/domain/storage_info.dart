@@ -33,14 +33,14 @@ class StorageInfo {
   double get freePercent =>
       totalBytes > 0 ? (freeBytes / totalBytes) * 100 : 0;
 
-  String get totalFormatted => _formatBytes(totalBytes);
-  String get freeFormatted => _formatBytes(freeBytes);
-  String get usedFormatted => _formatBytes(usedBytes);
-  String get photosFormatted => _formatBytes(photosBytes);
-  String get videosFormatted => _formatBytes(videosBytes);
-  String get cacheFormatted => _formatBytes(cacheBytes);
+  String get totalFormatted => formatBytes(totalBytes);
+  String get freeFormatted => formatBytes(freeBytes);
+  String get usedFormatted => formatBytes(usedBytes);
+  String get photosFormatted => formatBytes(photosBytes);
+  String get videosFormatted => formatBytes(videosBytes);
+  String get cacheFormatted => formatBytes(cacheBytes);
 
-  static String _formatBytes(int bytes) {
+  static String formatBytes(int bytes) {
     if (bytes <= 0) return '0 B';
     const suffixes = ['B', 'KB', 'MB', 'GB', 'TB'];
     var i = 0;
@@ -72,7 +72,7 @@ class CleanableItem {
     this.createdAt,
   });
 
-  String get sizeFormatted => StorageInfo._formatBytes(sizeBytes);
+  String get sizeFormatted => StorageInfo.formatBytes(sizeBytes);
 }
 
 enum CleanableType {
@@ -88,12 +88,16 @@ class ScanResult {
   final List<CleanableItem> largeFiles;
   final List<CleanableItem> screenshots;
   final int totalCleanableBytes;
+  final int cacheBytes;
+  final bool hasScanned;
 
   const ScanResult({
     required this.duplicatePhotos,
     required this.largeFiles,
     required this.screenshots,
     required this.totalCleanableBytes,
+    this.cacheBytes = 0,
+    this.hasScanned = false,
   });
 
   factory ScanResult.empty() => const ScanResult(
@@ -101,10 +105,12 @@ class ScanResult {
         largeFiles: [],
         screenshots: [],
         totalCleanableBytes: 0,
+        cacheBytes: 0,
+        hasScanned: false,
       );
 
   String get totalCleanableFormatted =>
-      StorageInfo._formatBytes(totalCleanableBytes);
+      StorageInfo.formatBytes(totalCleanableBytes);
 
   int get totalItemCount =>
       duplicatePhotos.length + largeFiles.length + screenshots.length;

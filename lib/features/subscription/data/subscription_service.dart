@@ -3,8 +3,8 @@ import 'package:purchases_flutter/purchases_flutter.dart';
 import '../domain/subscription_status.dart';
 
 class SubscriptionService {
-  static const _apiKeyiOS = 'appl_YOUR_IOS_API_KEY';
-  static const _apiKeyAndroid = 'goog_YOUR_ANDROID_API_KEY';
+  static const _apiKeyiOS = 'test_TzkrDTMSSUVFIReOIcxWQsVUWkr';
+  static const _apiKeyAndroid = 'test_TzkrDTMSSUVFIReOIcxWQsVUWkr';
 
   Future<void> initialize() async {
     try {

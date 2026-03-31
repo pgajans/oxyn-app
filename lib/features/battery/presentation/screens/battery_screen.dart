@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/oxyn_card.dart';
+import '../../../../platform/native_platform_channel.dart';
 import '../../domain/battery_info.dart';
 import '../../domain/battery_provider.dart';
 
@@ -25,10 +26,12 @@ class BatteryScreen extends ConsumerWidget {
             children: [
               const Icon(Icons.error_outline, color: AppColors.danger, size: 48),
               const SizedBox(height: 12),
-              Text('Hata: $e', style: const TextStyle(color: AppColors.textSecondary)),
+              Text('Hata: $e',
+                  style: const TextStyle(color: AppColors.textSecondary)),
               const SizedBox(height: 16),
               ElevatedButton(
-                onPressed: () => ref.read(batteryInfoProvider.notifier).refresh(),
+                onPressed: () =>
+                    ref.read(batteryInfoProvider.notifier).refresh(),
                 child: const Text('Tekrar Dene'),
               ),
             ],
@@ -128,11 +131,11 @@ class _BatteryLevelCard extends StatelessWidget {
                 color: AppColors.success.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: Row(
+              child: const Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.bolt, color: AppColors.success, size: 16),
-                  const SizedBox(width: 4),
+                  SizedBox(width: 4),
                   Text(
                     'Şarj ediliyor',
                     style: TextStyle(
@@ -162,7 +165,8 @@ class _BatteryInfoGrid extends StatelessWidget {
         Expanded(
           child: _InfoTile(
             icon: Icons.thermostat,
-            iconColor: info.isOverheating ? AppColors.danger : AppColors.secondary,
+            iconColor:
+                info.isOverheating ? AppColors.danger : AppColors.secondary,
             value: info.temperatureText,
             label: 'Sıcaklık',
           ),
@@ -171,7 +175,9 @@ class _BatteryInfoGrid extends StatelessWidget {
         Expanded(
           child: _InfoTile(
             icon: Icons.favorite,
-            iconColor: info.healthPercentage > 80 ? AppColors.success : AppColors.danger,
+            iconColor: info.healthPercentage > 80
+                ? AppColors.success
+                : AppColors.danger,
             value: info.healthText,
             label: 'Sağlık',
           ),
@@ -242,44 +248,92 @@ class _ChargeAlarmCard extends StatelessWidget {
     final percent = ref.watch(chargeAlarmPercentProvider);
 
     return OxynCard(
-      child: Row(
+      child: Column(
         children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: AppColors.warning.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(Icons.alarm, color: AppColors.warning, size: 24),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.warning.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.alarm, color: AppColors.warning, size: 24),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Şarj Alarmı',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    Text(
+                      '%$percent\'de bildirim al',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Switch(
+                value: enabled,
+                onChanged: (v) =>
+                    ref.read(chargeAlarmEnabledProvider.notifier).toggle(v),
+                activeTrackColor: AppColors.primary,
+              ),
+            ],
           ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          if (enabled) ...[
+            const SizedBox(height: AppSpacing.md),
+            Row(
               children: [
                 const Text(
-                  'Şarj Alarmı',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+                  '%20',
+                  style: TextStyle(fontSize: 12, color: AppColors.textTertiary),
+                ),
+                Expanded(
+                  child: SliderTheme(
+                    data: SliderThemeData(
+                      activeTrackColor: AppColors.primary,
+                      inactiveTrackColor: AppColors.surfaceLight,
+                      thumbColor: AppColors.primary,
+                      overlayColor: AppColors.primary.withValues(alpha: 0.15),
+                      trackHeight: 4,
+                    ),
+                    child: Slider(
+                      value: percent.toDouble(),
+                      min: 20,
+                      max: 100,
+                      divisions: 16,
+                      label: '%$percent',
+                      onChanged: (v) =>
+                          ref.read(chargeAlarmPercentProvider.notifier).set(v.round()),
+                    ),
                   ),
                 ),
-                Text(
-                  '%$percent\'de bildirim al',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
-                  ),
+                const Text(
+                  '%100',
+                  style: TextStyle(fontSize: 12, color: AppColors.textTertiary),
                 ),
               ],
             ),
-          ),
-          Switch(
-            value: enabled,
-            onChanged: (v) =>
-                ref.read(chargeAlarmEnabledProvider.notifier).toggle(v),
-            activeTrackColor: AppColors.primary,
-          ),
+            const SizedBox(height: 4),
+            Text(
+              'Batarya sağlığı için %80 önerilir',
+              style: TextStyle(
+                fontSize: 11,
+                color: AppColors.textTertiary,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -309,18 +363,32 @@ class _EnergyConsumersCard extends StatelessWidget {
                   ),
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Text(
-                  'Ayarlara Git',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w500,
+              GestureDetector(
+                onTap: () async {
+                  await NativePlatformChannel.openBatterySettings();
+                },
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.open_in_new,
+                          size: 12, color: AppColors.primary),
+                      SizedBox(width: 4),
+                      Text(
+                        'Ayarlara Git',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -336,10 +404,10 @@ class _EnergyConsumersCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: AppSpacing.md),
-          Row(
+          const Row(
             children: [
               Icon(Icons.info_outline, size: 16, color: AppColors.textTertiary),
-              const SizedBox(width: 6),
+              SizedBox(width: 6),
               Expanded(
                 child: Text(
                   'iOS ve Android güvenlik kısıtlamaları nedeniyle uygulama bazlı enerji tüketim verisi sınırlıdır.',

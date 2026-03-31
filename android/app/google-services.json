@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "152738408216",
+    "project_id": "oxyn-689a0",
+    "storage_bucket": "oxyn-689a0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:152738408216:android:fa1e0a93d45d9a0111206d",
+        "android_client_info": {
+          "package_name": "com.oxynapp.oxyn"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCi8HMCcEIwOXkPNaFmB-5m1o_ugsM2-mg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
