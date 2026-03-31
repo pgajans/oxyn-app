@@ -20,7 +20,7 @@ class SettingsScreen extends ConsumerWidget {
         title: const Text('Ayarlar'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => context.pop(),
         ),
       ),
       body: ListView(

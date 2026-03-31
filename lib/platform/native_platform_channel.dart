@@ -7,15 +7,9 @@ class NativePlatformChannel {
   static Future<Map<String, dynamic>> getStorageInfo() async {
     try {
       final result = await _channel.invokeMethod<Map>('getStorageInfo');
-      final data = Map<String, dynamic>.from(result ?? {});
-      // #region agent log
-      debugPrint('[DEBUG-53de45] NativePlatformChannel.getStorageInfo | result=$data');
-      // #endregion
-      return data;
+      return Map<String, dynamic>.from(result ?? {});
     } catch (e) {
-      // #region agent log
-      debugPrint('[DEBUG-53de45] NativePlatformChannel.getStorageInfo | ERROR=$e');
-      // #endregion
+      debugPrint('Platform channel getStorageInfo error: $e');
       return {};
     }
   }
@@ -23,15 +17,9 @@ class NativePlatformChannel {
   static Future<Map<String, dynamic>> getBatteryDetails() async {
     try {
       final result = await _channel.invokeMethod<Map>('getBatteryDetails');
-      final data = Map<String, dynamic>.from(result ?? {});
-      // #region agent log
-      debugPrint('[DEBUG-53de45] NativePlatformChannel.getBatteryDetails | result=$data');
-      // #endregion
-      return data;
+      return Map<String, dynamic>.from(result ?? {});
     } catch (e) {
-      // #region agent log
-      debugPrint('[DEBUG-53de45] NativePlatformChannel.getBatteryDetails | ERROR=$e');
-      // #endregion
+      debugPrint('Platform channel getBatteryDetails error: $e');
       return {};
     }
   }
@@ -39,14 +27,9 @@ class NativePlatformChannel {
   static Future<double> getCpuTemperature() async {
     try {
       final result = await _channel.invokeMethod<double>('getCpuTemperature');
-      // #region agent log
-      debugPrint('[DEBUG-53de45] NativePlatformChannel.getCpuTemperature | result=$result');
-      // #endregion
       return result ?? 0.0;
     } catch (e) {
-      // #region agent log
-      debugPrint('[DEBUG-53de45] NativePlatformChannel.getCpuTemperature | ERROR=$e');
-      // #endregion
+      debugPrint('Platform channel getCpuTemperature error: $e');
       return 0.0;
     }
   }

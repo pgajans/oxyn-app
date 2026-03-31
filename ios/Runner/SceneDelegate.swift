@@ -11,8 +11,7 @@ class SceneDelegate: FlutterSceneDelegate {
   ) {
     super.scene(scene, willConnectTo: session, options: connectionOptions)
 
-    guard let windowScene = scene as? UIWindowScene,
-          let flutterVC = windowScene.windows.first?.rootViewController as? FlutterViewController
+    guard let flutterVC = self.window?.rootViewController as? FlutterViewController
     else { return }
 
     channel = FlutterMethodChannel(

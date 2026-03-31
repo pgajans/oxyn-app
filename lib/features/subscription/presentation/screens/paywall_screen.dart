@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -22,7 +23,13 @@ class PaywallScreen extends ConsumerWidget {
               alignment: Alignment.centerRight,
               child: IconButton(
                 icon: const Icon(Icons.close, color: AppColors.textSecondary),
-                onPressed: () => Navigator.pop(context),
+                onPressed: () {
+                  if (context.canPop()) {
+                    context.pop();
+                  } else {
+                    context.go('/dashboard');
+                  }
+                },
               ),
             ),
             Expanded(
@@ -87,7 +94,11 @@ class PaywallScreen extends ConsumerWidget {
                     TextButton(
                       onPressed: () {
                         ref.read(subscriptionStatusProvider.notifier).restore();
-                        Navigator.pop(context);
+                        if (context.canPop()) {
+                          context.pop();
+                        } else {
+                          context.go('/dashboard');
+                        }
                       },
                       child: const Text(
                         'Satın Alımları Geri Yükle',
@@ -254,7 +265,13 @@ class _PricingCard extends StatelessWidget {
       onTap: () async {
         try {
           await ref.read(subscriptionStatusProvider.notifier).purchase(package);
-          if (context.mounted) Navigator.pop(context);
+          if (context.mounted) {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/dashboard');
+            }
+          }
         } catch (e) {
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(

@@ -226,6 +226,7 @@ class _OptimizeButtonState extends State<_OptimizeButton> {
     showDialog(
       context: context,
       barrierDismissible: false,
+      useRootNavigator: true,
       builder: (ctx) => const _OptimizationDialog(),
     );
 
@@ -240,12 +241,13 @@ class _OptimizeButtonState extends State<_OptimizeButton> {
       await Future.delayed(const Duration(seconds: 2));
 
       if (mounted) {
-        Navigator.of(context).pop();
+        Navigator.of(context, rootNavigator: true).pop();
         _showResultSheet(cacheCleared);
       }
     } catch (e) {
+      await Future.delayed(const Duration(milliseconds: 300));
       if (mounted) {
-        Navigator.of(context).pop();
+        Navigator.of(context, rootNavigator: true).pop();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Optimizasyon sırasında bir hata oluştu')),
         );

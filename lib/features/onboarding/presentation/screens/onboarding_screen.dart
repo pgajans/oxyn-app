@@ -389,8 +389,8 @@ class _ScanResultScreen extends StatelessWidget {
                 height: 56,
                 child: ElevatedButton(
                   onPressed: () {
-                    // Show paywall after showing value
-                    context.go('/paywall');
+                    context.go('/dashboard');
+                    context.push('/paywall');
                   },
                   child: const Text('Temizlemeye Başla'),
                 ),
