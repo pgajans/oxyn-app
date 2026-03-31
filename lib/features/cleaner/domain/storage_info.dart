@@ -84,7 +84,7 @@ enum CleanableType {
 }
 
 class ScanResult {
-  final List<CleanableItem> duplicatePhotos;
+  final List<List<CleanableItem>> similarPhotoGroups;
   final List<CleanableItem> largeFiles;
   final List<CleanableItem> screenshots;
   final int totalCleanableBytes;
@@ -92,7 +92,7 @@ class ScanResult {
   final bool hasScanned;
 
   const ScanResult({
-    required this.duplicatePhotos,
+    required this.similarPhotoGroups,
     required this.largeFiles,
     required this.screenshots,
     required this.totalCleanableBytes,
@@ -101,7 +101,7 @@ class ScanResult {
   });
 
   factory ScanResult.empty() => const ScanResult(
-        duplicatePhotos: [],
+        similarPhotoGroups: [],
         largeFiles: [],
         screenshots: [],
         totalCleanableBytes: 0,
@@ -109,9 +109,21 @@ class ScanResult {
         hasScanned: false,
       );
 
+  List<CleanableItem> get allDuplicatePhotos =>
+      similarPhotoGroups.expand((g) => g.skip(1)).toList();
+
+  int get similarPhotosBytes =>
+      allDuplicatePhotos.fold(0, (sum, item) => sum + item.sizeBytes);
+
+  int get largeFilesBytes =>
+      largeFiles.fold(0, (sum, item) => sum + item.sizeBytes);
+
+  int get screenshotsBytes =>
+      screenshots.fold(0, (sum, item) => sum + item.sizeBytes);
+
   String get totalCleanableFormatted =>
       StorageInfo.formatBytes(totalCleanableBytes);
 
   int get totalItemCount =>
-      duplicatePhotos.length + largeFiles.length + screenshots.length;
+      allDuplicatePhotos.length + largeFiles.length + screenshots.length;
 }

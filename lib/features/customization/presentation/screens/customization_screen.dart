@@ -1,39 +1,92 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/oxyn_card.dart';
+import '../../../subscription/domain/subscription_provider.dart';
+
+// --- Animation data model ---
+
+class ChargingAnimation {
+  final String name;
+  final IconData icon;
+  final Color color;
+  final bool isPremium;
+
+  const ChargingAnimation({
+    required this.name,
+    required this.icon,
+    required this.color,
+    this.isPremium = false,
+  });
+}
+
+const _animations = [
+  ChargingAnimation(name: 'Neon Pulse', icon: Icons.bolt, color: AppColors.primary),
+  ChargingAnimation(name: 'Kalp Ritmi', icon: Icons.favorite, color: AppColors.danger),
+  ChargingAnimation(name: 'Minimalist', icon: Icons.circle_outlined, color: AppColors.textPrimary),
+  ChargingAnimation(name: 'Futuristik', icon: Icons.rocket_launch, color: AppColors.tertiary, isPremium: true),
+  ChargingAnimation(name: 'Aurora', icon: Icons.auto_awesome, color: AppColors.success, isPremium: true),
+  ChargingAnimation(name: 'Galaksi', icon: Icons.stars, color: AppColors.secondary, isPremium: true),
+];
+
+// --- Providers with persistence ---
 
 final selectedAnimationProvider =
-    NotifierProvider<SelectedAnimationNotifier, int>(
+    AsyncNotifierProvider<SelectedAnimationNotifier, int>(
   SelectedAnimationNotifier.new,
 );
 
-class SelectedAnimationNotifier extends Notifier<int> {
-  @override
-  int build() => 0;
+class SelectedAnimationNotifier extends AsyncNotifier<int> {
+  static const _key = 'selected_animation';
 
-  void set(int value) => state = value;
+  @override
+  Future<int> build() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt(_key) ?? 0;
+  }
+
+  Future<void> set(int value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_key, value);
+    state = AsyncValue.data(value);
+  }
 }
 
 final selectedWidgetStyleProvider =
-    NotifierProvider<SelectedWidgetStyleNotifier, int>(
+    AsyncNotifierProvider<SelectedWidgetStyleNotifier, int>(
   SelectedWidgetStyleNotifier.new,
 );
 
-class SelectedWidgetStyleNotifier extends Notifier<int> {
-  @override
-  int build() => 0;
+class SelectedWidgetStyleNotifier extends AsyncNotifier<int> {
+  static const _key = 'selected_widget_style';
 
-  void set(int value) => state = value;
+  @override
+  Future<int> build() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt(_key) ?? 0;
+  }
+
+  Future<void> set(int value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_key, value);
+    state = AsyncValue.data(value);
+  }
 }
+
+// --- Screen ---
 
 class CustomizationScreen extends ConsumerWidget {
   const CustomizationScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final selectedAsync = ref.watch(selectedAnimationProvider);
+    final selectedIndex = selectedAsync.value ?? 0;
+
     return Scaffold(
       appBar: AppBar(title: const Text('Stil')),
       body: SingleChildScrollView(
@@ -51,12 +104,13 @@ class CustomizationScreen extends ConsumerWidget {
               height: 200,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
-                itemCount: 6,
+                itemCount: _animations.length,
                 separatorBuilder: (context, index) =>
                     const SizedBox(width: 12),
                 itemBuilder: (context, index) => _AnimationCard(
                   index: index,
-                  isLocked: index > 2,
+                  animation: _animations[index],
+                  isSelected: selectedIndex == index,
                   ref: ref,
                 ),
               ),
@@ -78,52 +132,26 @@ class CustomizationScreen extends ConsumerWidget {
 
 class _AnimationCard extends StatelessWidget {
   final int index;
-  final bool isLocked;
+  final ChargingAnimation animation;
+  final bool isSelected;
   final WidgetRef ref;
 
   const _AnimationCard({
     required this.index,
-    required this.isLocked,
+    required this.animation,
+    required this.isSelected,
     required this.ref,
   });
 
-  static const _animationNames = [
-    'Neon Pulse',
-    'Kalp Ritmi',
-    'Minimalist',
-    'Futuristik',
-    'Aurora',
-    'Galaksi',
-  ];
-
-  static const _animationIcons = [
-    Icons.bolt,
-    Icons.favorite,
-    Icons.circle_outlined,
-    Icons.rocket_launch,
-    Icons.auto_awesome,
-    Icons.stars,
-  ];
-
-  static const _animationColors = [
-    AppColors.primary,
-    AppColors.danger,
-    AppColors.textPrimary,
-    AppColors.tertiary,
-    AppColors.success,
-    AppColors.secondary,
-  ];
-
   @override
   Widget build(BuildContext context) {
-    final selectedIndex = ref.watch(selectedAnimationProvider);
-    final isSelected = selectedIndex == index;
+    final isPremium = ref.watch(isPremiumProvider);
 
     return SizedBox(
       width: 140,
       child: OxynCard(
         onTap: () {
-          if (isLocked) {
+          if (animation.isPremium && !isPremium) {
             context.push('/paywall');
             return;
           }
@@ -132,7 +160,7 @@ class _AnimationCard extends StatelessWidget {
         },
         padding: EdgeInsets.zero,
         color: isSelected
-            ? _animationColors[index].withValues(alpha: 0.08)
+            ? animation.color.withValues(alpha: 0.08)
             : null,
         child: Stack(
           children: [
@@ -146,7 +174,7 @@ class _AnimationCard extends StatelessWidget {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    _animationColors[index].withValues(alpha: 0.3),
+                    animation.color.withValues(alpha: 0.3),
                     AppColors.surface,
                   ],
                 ),
@@ -154,14 +182,14 @@ class _AnimationCard extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    _animationIcons[index],
-                    color: _animationColors[index],
-                    size: 48,
+                  _MiniAnimationPreview(
+                    index: index,
+                    color: animation.color,
+                    icon: animation.icon,
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   Text(
-                    _animationNames[index],
+                    animation.name,
                     style: const TextStyle(
                       color: AppColors.textPrimary,
                       fontWeight: FontWeight.w500,
@@ -182,7 +210,7 @@ class _AnimationCard extends StatelessWidget {
                 ],
               ),
             ),
-            if (isLocked)
+            if (animation.isPremium && !isPremium)
               Positioned(
                 top: 8,
                 right: 8,
@@ -210,7 +238,7 @@ class _AnimationCard extends StatelessWidget {
                   ),
                 ),
               ),
-            if (isSelected && !isLocked)
+            if (isSelected)
               Positioned(
                 top: 8,
                 right: 8,
@@ -237,23 +265,185 @@ class _AnimationCard extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) => _AnimationPreviewSheet(
-        name: _animationNames[index],
-        color: _animationColors[index],
-        icon: _animationIcons[index],
+        index: index,
+        animation: animation,
       ),
     );
   }
 }
 
-class _AnimationPreviewSheet extends StatefulWidget {
-  final String name;
+// --- Mini preview for card thumbnails ---
+
+class _MiniAnimationPreview extends StatefulWidget {
+  final int index;
   final Color color;
   final IconData icon;
 
-  const _AnimationPreviewSheet({
-    required this.name,
+  const _MiniAnimationPreview({
+    required this.index,
     required this.color,
     required this.icon,
+  });
+
+  @override
+  State<_MiniAnimationPreview> createState() => _MiniAnimationPreviewState();
+}
+
+class _MiniAnimationPreviewState extends State<_MiniAnimationPreview>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      duration: const Duration(milliseconds: 2000),
+      vsync: this,
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 64,
+      height: 64,
+      child: AnimatedBuilder(
+        animation: _ctrl,
+        builder: (context, child) {
+          return CustomPaint(
+            painter: _MiniPainter(widget.index, widget.color, _ctrl.value),
+            child: Center(
+              child: Icon(widget.icon, color: widget.color, size: 28),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _MiniPainter extends CustomPainter {
+  final int index;
+  final Color color;
+  final double progress;
+
+  _MiniPainter(this.index, this.color, this.progress);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2 - 4;
+
+    switch (index) {
+      case 0: // Neon Pulse
+        final pulse = 0.6 + 0.4 * sin(progress * 2 * pi);
+        canvas.drawCircle(
+          center,
+          radius * pulse,
+          Paint()
+            ..color = color.withValues(alpha: 0.2 * pulse)
+            ..style = PaintingStyle.fill,
+        );
+        break;
+      case 1: // Kalp Ritmi
+        final beat = sin(progress * 4 * pi).abs();
+        canvas.drawCircle(
+          center,
+          radius * (0.7 + 0.3 * beat),
+          Paint()
+            ..color = color.withValues(alpha: 0.15 + 0.15 * beat)
+            ..style = PaintingStyle.fill,
+        );
+        break;
+      case 2: // Minimalist
+        canvas.drawCircle(
+          center,
+          radius,
+          Paint()
+            ..color = color.withValues(alpha: 0.1)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 2,
+        );
+        final sweepAngle = progress * 2 * pi;
+        canvas.drawArc(
+          Rect.fromCircle(center: center, radius: radius),
+          -pi / 2,
+          sweepAngle,
+          false,
+          Paint()
+            ..color = color.withValues(alpha: 0.6)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 2
+            ..strokeCap = StrokeCap.round,
+        );
+        break;
+      case 3: // Futuristik
+        for (int i = 0; i < 3; i++) {
+          final r = radius * (0.5 + i * 0.2);
+          final angle = progress * 2 * pi + i * pi / 3;
+          canvas.save();
+          canvas.translate(center.dx, center.dy);
+          canvas.rotate(angle * (i.isEven ? 1 : -1));
+          canvas.translate(-center.dx, -center.dy);
+          canvas.drawCircle(
+            center,
+            r,
+            Paint()
+              ..color = color.withValues(alpha: 0.15)
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 1.5,
+          );
+          canvas.restore();
+        }
+        break;
+      case 4: // Aurora
+        for (int i = 0; i < 5; i++) {
+          final wave = sin(progress * 2 * pi + i * 0.5);
+          canvas.drawCircle(
+            Offset(center.dx + wave * 8, center.dy + i * 3 - 6),
+            radius * 0.6,
+            Paint()
+              ..color = color.withValues(alpha: 0.06)
+              ..style = PaintingStyle.fill,
+          );
+        }
+        break;
+      case 5: // Galaksi
+        for (int i = 0; i < 4; i++) {
+          final angle = progress * 2 * pi + i * pi / 2;
+          final x = center.dx + cos(angle) * radius * 0.6;
+          final y = center.dy + sin(angle) * radius * 0.6;
+          canvas.drawCircle(
+            Offset(x, y),
+            3,
+            Paint()
+              ..color = color.withValues(alpha: 0.4 + 0.3 * sin(progress * 4 * pi + i))
+              ..style = PaintingStyle.fill,
+          );
+        }
+        break;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _MiniPainter old) => old.progress != progress;
+}
+
+// --- Full preview sheet ---
+
+class _AnimationPreviewSheet extends StatefulWidget {
+  final int index;
+  final ChargingAnimation animation;
+
+  const _AnimationPreviewSheet({
+    required this.index,
+    required this.animation,
   });
 
   @override
@@ -262,33 +452,20 @@ class _AnimationPreviewSheet extends StatefulWidget {
 
 class _AnimationPreviewSheetState extends State<_AnimationPreviewSheet>
     with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
-  late Animation<double> _opacityAnimation;
+  late AnimationController _ctrl;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 1500),
+    _ctrl = AnimationController(
+      duration: const Duration(milliseconds: 3000),
       vsync: this,
-    )..repeat(reverse: true);
-
-    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.2).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
-    _opacityAnimation = Tween<double>(begin: 0.4, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
-
-    _controller.addListener(() {
-      if (mounted) setState(() {});
-    });
+    )..repeat();
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _ctrl.dispose();
     super.dispose();
   }
 
@@ -309,7 +486,7 @@ class _AnimationPreviewSheetState extends State<_AnimationPreviewSheet>
           ),
           const SizedBox(height: 24),
           Text(
-            widget.name,
+            widget.animation.name,
             style: const TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w700,
@@ -318,39 +495,30 @@ class _AnimationPreviewSheetState extends State<_AnimationPreviewSheet>
           ),
           const SizedBox(height: 32),
           SizedBox(
-            height: 150,
-            child: Center(
-              child: Transform.scale(
-                scale: _scaleAnimation.value,
-                child: Opacity(
-                  opacity: _opacityAnimation.value,
-                  child: Container(
-                    width: 100,
-                    height: 100,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: widget.color.withValues(alpha: 0.2),
-                      boxShadow: [
-                        BoxShadow(
-                          color: widget.color.withValues(
-                              alpha: _opacityAnimation.value * 0.3),
-                          blurRadius: 30,
-                          spreadRadius: 10,
-                        ),
-                      ],
-                    ),
+            height: 180,
+            width: 180,
+            child: AnimatedBuilder(
+              animation: _ctrl,
+              builder: (context, child) {
+                return CustomPaint(
+                  painter: _FullAnimationPainter(
+                    widget.index,
+                    widget.animation.color,
+                    _ctrl.value,
+                  ),
+                  child: Center(
                     child: Icon(
-                      widget.icon,
-                      color: widget.color,
-                      size: 48,
+                      widget.animation.icon,
+                      color: widget.animation.color,
+                      size: 56,
                     ),
                   ),
-                ),
-              ),
+                );
+              },
             ),
           ),
           const SizedBox(height: 24),
-          Text(
+          const Text(
             'Bu animasyon şarj sırasında gösterilecek',
             style: TextStyle(
               fontSize: 13,
@@ -372,6 +540,273 @@ class _AnimationPreviewSheetState extends State<_AnimationPreviewSheet>
   }
 }
 
+class _FullAnimationPainter extends CustomPainter {
+  final int index;
+  final Color color;
+  final double t;
+
+  _FullAnimationPainter(this.index, this.color, this.t);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2 - 8;
+
+    switch (index) {
+      case 0: _paintNeonPulse(canvas, center, radius);
+      case 1: _paintHeartbeat(canvas, center, radius);
+      case 2: _paintMinimalist(canvas, center, radius);
+      case 3: _paintFuturistic(canvas, center, radius);
+      case 4: _paintAurora(canvas, center, radius);
+      case 5: _paintGalaxy(canvas, center, radius);
+    }
+  }
+
+  void _paintNeonPulse(Canvas canvas, Offset center, double radius) {
+    for (int i = 0; i < 4; i++) {
+      final phase = (t + i * 0.25) % 1.0;
+      final r = radius * phase;
+      final alpha = (1 - phase) * 0.4;
+      canvas.drawCircle(
+        center,
+        r,
+        Paint()
+          ..color = color.withValues(alpha: alpha)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 3 * (1 - phase),
+      );
+    }
+    final glow = 0.5 + 0.5 * sin(t * 2 * pi);
+    canvas.drawCircle(
+      center,
+      radius * 0.35,
+      Paint()
+        ..color = color.withValues(alpha: 0.1 + 0.15 * glow)
+        ..style = PaintingStyle.fill,
+    );
+  }
+
+  void _paintHeartbeat(Canvas canvas, Offset center, double radius) {
+    final beat1 = _heartbeatCurve((t * 2) % 1.0);
+    final beat2 = _heartbeatCurve((t * 2 + 0.5) % 1.0);
+
+    canvas.drawCircle(
+      center,
+      radius * (0.5 + 0.3 * beat1),
+      Paint()
+        ..color = color.withValues(alpha: 0.15)
+        ..style = PaintingStyle.fill,
+    );
+    canvas.drawCircle(
+      center,
+      radius * (0.3 + 0.2 * beat2),
+      Paint()
+        ..color = color.withValues(alpha: 0.25)
+        ..style = PaintingStyle.fill,
+    );
+
+    // EKG line
+    final path = Path();
+    final cy = center.dy + radius * 0.6;
+    path.moveTo(center.dx - radius, cy);
+    for (double x = -1.0; x <= 1.0; x += 0.02) {
+      final px = center.dx + x * radius;
+      final phase = (x + 1.0) / 2.0;
+      final shifted = (phase - t) % 1.0;
+      double y = 0;
+      if (shifted > 0.4 && shifted < 0.45) {
+        y = -30 * sin((shifted - 0.4) / 0.05 * pi);
+      } else if (shifted > 0.45 && shifted < 0.5) {
+        y = 15 * sin((shifted - 0.45) / 0.05 * pi);
+      }
+      path.lineTo(px, cy + y);
+    }
+    canvas.drawPath(
+      path,
+      Paint()
+        ..color = color.withValues(alpha: 0.5)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2
+        ..strokeCap = StrokeCap.round,
+    );
+  }
+
+  double _heartbeatCurve(double t) {
+    if (t < 0.1) return t / 0.1;
+    if (t < 0.2) return 1.0 - (t - 0.1) / 0.1;
+    return 0;
+  }
+
+  void _paintMinimalist(Canvas canvas, Offset center, double radius) {
+    canvas.drawCircle(
+      center,
+      radius,
+      Paint()
+        ..color = color.withValues(alpha: 0.08)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2,
+    );
+
+    final sweep = t * 2 * pi;
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      -pi / 2,
+      sweep,
+      false,
+      Paint()
+        ..color = color.withValues(alpha: 0.6)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 4
+        ..strokeCap = StrokeCap.round,
+    );
+
+    final pct = '${(t * 100).toInt()}%';
+    final tp = TextPainter(
+      text: TextSpan(
+        text: pct,
+        style: TextStyle(
+          color: color.withValues(alpha: 0.4),
+          fontSize: 16,
+          fontWeight: FontWeight.w300,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    tp.paint(canvas, Offset(center.dx - tp.width / 2, center.dy + radius * 0.3));
+  }
+
+  void _paintFuturistic(Canvas canvas, Offset center, double radius) {
+    for (int i = 0; i < 3; i++) {
+      final r = radius * (0.4 + i * 0.25);
+      final speed = (i + 1) * (i.isEven ? 1 : -1);
+      final startAngle = t * 2 * pi * speed;
+
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: r),
+        startAngle,
+        pi * 0.8,
+        false,
+        Paint()
+          ..color = color.withValues(alpha: 0.3 - i * 0.08)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 3 - i * 0.5
+          ..strokeCap = StrokeCap.round,
+      );
+
+      final dotAngle = startAngle + pi * 0.8;
+      canvas.drawCircle(
+        Offset(center.dx + cos(dotAngle) * r, center.dy + sin(dotAngle) * r),
+        3,
+        Paint()..color = color.withValues(alpha: 0.6),
+      );
+    }
+  }
+
+  void _paintAurora(Canvas canvas, Offset center, double radius) {
+    final colors = [
+      color,
+      HSLColor.fromColor(color).withHue((HSLColor.fromColor(color).hue + 40) % 360).toColor(),
+      HSLColor.fromColor(color).withHue((HSLColor.fromColor(color).hue + 80) % 360).toColor(),
+    ];
+
+    for (int layer = 0; layer < 3; layer++) {
+      final path = Path();
+      final yBase = center.dy - radius * 0.3 + layer * radius * 0.3;
+      path.moveTo(center.dx - radius, yBase);
+
+      for (double x = -1.0; x <= 1.0; x += 0.04) {
+        final px = center.dx + x * radius;
+        final wave = sin(x * 3 + t * 2 * pi + layer * 0.8) * radius * 0.15;
+        path.lineTo(px, yBase + wave);
+      }
+      path.lineTo(center.dx + radius, center.dy + radius);
+      path.lineTo(center.dx - radius, center.dy + radius);
+      path.close();
+
+      canvas.drawPath(
+        path,
+        Paint()
+          ..color = colors[layer].withValues(alpha: 0.08)
+          ..style = PaintingStyle.fill,
+      );
+      
+      // Top edge glow
+      final edgePath = Path();
+      edgePath.moveTo(center.dx - radius, yBase);
+      for (double x = -1.0; x <= 1.0; x += 0.04) {
+        final px = center.dx + x * radius;
+        final wave = sin(x * 3 + t * 2 * pi + layer * 0.8) * radius * 0.15;
+        edgePath.lineTo(px, yBase + wave);
+      }
+      canvas.drawPath(
+        edgePath,
+        Paint()
+          ..color = colors[layer].withValues(alpha: 0.4)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2,
+      );
+    }
+  }
+
+  void _paintGalaxy(Canvas canvas, Offset center, double radius) {
+    // Spiral arms
+    for (int arm = 0; arm < 2; arm++) {
+      final armOffset = arm * pi;
+      final path = Path();
+      bool first = true;
+      for (double a = 0; a < 4 * pi; a += 0.1) {
+        final r = radius * 0.1 + (a / (4 * pi)) * radius * 0.8;
+        final angle = a + t * 2 * pi + armOffset;
+        final x = center.dx + cos(angle) * r;
+        final y = center.dy + sin(angle) * r;
+        if (first) {
+          path.moveTo(x, y);
+          first = false;
+        } else {
+          path.lineTo(x, y);
+        }
+      }
+      canvas.drawPath(
+        path,
+        Paint()
+          ..color = color.withValues(alpha: 0.2)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2
+          ..strokeCap = StrokeCap.round,
+      );
+    }
+
+    // Stars
+    final rng = [0.3, 0.5, 0.7, 0.85, 0.4, 0.65, 0.9, 0.2];
+    final angles = [0.5, 1.3, 2.1, 3.0, 3.8, 4.6, 5.4, 6.1];
+    for (int i = 0; i < 8; i++) {
+      final r = radius * rng[i];
+      final angle = angles[i] + t * 2 * pi * 0.3;
+      final twinkle = (sin(t * 8 * pi + i * 1.5) + 1) / 2;
+      canvas.drawCircle(
+        Offset(center.dx + cos(angle) * r, center.dy + sin(angle) * r),
+        1.5 + twinkle * 2,
+        Paint()..color = color.withValues(alpha: 0.3 + 0.4 * twinkle),
+      );
+    }
+
+    // Center glow
+    canvas.drawCircle(
+      center,
+      radius * 0.12,
+      Paint()
+        ..color = color.withValues(alpha: 0.3)
+        ..style = PaintingStyle.fill
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _FullAnimationPainter old) => old.t != t;
+}
+
+// --- Widget Styles ---
+
 class _WidgetStyleGrid extends StatelessWidget {
   final WidgetRef ref;
 
@@ -379,7 +814,8 @@ class _WidgetStyleGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final selectedStyle = ref.watch(selectedWidgetStyleProvider);
+    final selectedAsync = ref.watch(selectedWidgetStyleProvider);
+    final selectedStyle = selectedAsync.value ?? 0;
 
     return GridView.count(
       crossAxisCount: 2,

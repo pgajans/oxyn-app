@@ -1,98 +1,138 @@
+import 'package:applovin_max/applovin_max.dart';
 import 'package:flutter/foundation.dart';
 
-/// AppLovin MAX Reklam Servisi
-///
-/// applovin_max paketi projeye eklendiğinde tam entegrasyon yapılacak.
-/// Şu an servis iskeleti ve mantık hazır durumda.
-///
-/// Entegrasyon adımları:
-/// 1. pubspec.yaml'a applovin_max ekle
-/// 2. AppLovin dashboard'dan SDK key al
-/// 3. AdMob, Meta, Unity Ads bidder'larını ekle
-/// 4. Ad unit ID'lerini yapılandır
 class AdService {
   static final AdService _instance = AdService._();
   factory AdService() => _instance;
   AdService._();
 
   bool _initialized = false;
+  VoidCallback? _pendingRewardCallback;
 
-  // Ad Unit IDs - AppLovin dashboard'dan alınacak
+  static const _sdkKey = 'YOUR_APPLOVIN_SDK_KEY';
+
+  static const _interstitialAdUnitId = 'YOUR_INTERSTITIAL_AD_UNIT_ID';
+  static const _rewardedAdUnitId = 'YOUR_REWARDED_AD_UNIT_ID';
   static const _bannerAdUnitId = 'YOUR_BANNER_AD_UNIT_ID';
 
   Future<void> initialize() async {
     if (_initialized) return;
 
-    // AppLovin MAX SDK initialization:
-    // await AppLovinMAX.initialize(sdkKey);
-    // await AppLovinMAX.setHasUserConsent(true);
-    // await AppLovinMAX.setIsAgeRestrictedUser(false);
+    try {
+      final config = await AppLovinMAX.initialize(_sdkKey);
+      if (config == null) {
+        debugPrint('AppLovin MAX init returned null');
+        _initialized = true;
+        return;
+      }
 
-    _initialized = true;
-    debugPrint('AdService initialized');
+      _setupInterstitialListeners();
+      _setupRewardedListeners();
 
-    _loadRewarded();
-    _loadInterstitial();
-  }
+      _initialized = true;
+      debugPrint('AdService initialized');
 
-  // --- Rewarded Video ---
-
-  void _loadRewarded() {
-    // AppLovinMAX.loadRewardedAd(_rewardedAdUnitId);
-    debugPrint('Loading rewarded ad...');
-  }
-
-  /// Rewarded video göster
-  /// Kullanıcı tamamlarsa [onRewarded] çağrılır
-  Future<bool> showRewarded({required VoidCallback onRewarded}) async {
-    if (!_initialized) return false;
-
-    // if (await AppLovinMAX.isRewardedAdReady(_rewardedAdUnitId)) {
-    //   AppLovinMAX.showRewardedAd(_rewardedAdUnitId);
-    //   // Listen for reward callback
-    //   onRewarded();
-    //   return true;
-    // }
-
-    debugPrint('Rewarded ad not ready');
-    return false;
+      _loadInterstitial();
+      _loadRewarded();
+    } catch (e) {
+      debugPrint('AdService init error: $e');
+      _initialized = true;
+    }
   }
 
   // --- Interstitial ---
 
-  void _loadInterstitial() {
-    // AppLovinMAX.loadInterstitial(_interstitialAdUnitId);
-    debugPrint('Loading interstitial ad...');
+  void _setupInterstitialListeners() {
+    AppLovinMAX.setInterstitialListener(InterstitialListener(
+      onAdLoadedCallback: (_) {
+        debugPrint('Interstitial ad loaded');
+      },
+      onAdLoadFailedCallback: (adUnitId, error) {
+        Future.delayed(const Duration(seconds: 30), _loadInterstitial);
+      },
+      onAdDisplayedCallback: (_) {},
+      onAdDisplayFailedCallback: (adUnitId, error) {
+        _loadInterstitial();
+      },
+      onAdClickedCallback: (_) {},
+      onAdHiddenCallback: (_) {
+        _loadInterstitial();
+      },
+    ));
   }
 
-  /// Interstitial göster - SADECE temizlik tamamlandı sonrası
+  void _loadInterstitial() {
+    AppLovinMAX.loadInterstitial(_interstitialAdUnitId);
+  }
+
   Future<bool> showInterstitial() async {
     if (!_initialized) return false;
 
-    // if (await AppLovinMAX.isInterstitialReady(_interstitialAdUnitId)) {
-    //   AppLovinMAX.showInterstitial(_interstitialAdUnitId);
-    //   return true;
-    // }
+    final ready = await AppLovinMAX.isInterstitialReady(_interstitialAdUnitId);
+    if (ready ?? false) {
+      AppLovinMAX.showInterstitial(_interstitialAdUnitId);
+      return true;
+    }
 
     debugPrint('Interstitial ad not ready');
     return false;
   }
 
+  // --- Rewarded ---
+
+  void _setupRewardedListeners() {
+    AppLovinMAX.setRewardedAdListener(RewardedAdListener(
+      onAdLoadedCallback: (_) {
+        debugPrint('Rewarded ad loaded');
+      },
+      onAdLoadFailedCallback: (adUnitId, error) {
+        Future.delayed(const Duration(seconds: 30), _loadRewarded);
+      },
+      onAdDisplayedCallback: (_) {},
+      onAdDisplayFailedCallback: (adUnitId, error) {
+        _loadRewarded();
+      },
+      onAdClickedCallback: (_) {},
+      onAdHiddenCallback: (_) {
+        _loadRewarded();
+      },
+      onAdReceivedRewardCallback: (adUnitId, reward) {
+        _pendingRewardCallback?.call();
+        _pendingRewardCallback = null;
+      },
+    ));
+  }
+
+  void _loadRewarded() {
+    AppLovinMAX.loadRewardedAd(_rewardedAdUnitId);
+  }
+
+  Future<bool> showRewarded({required VoidCallback onRewarded}) async {
+    if (!_initialized) return false;
+
+    final ready = await AppLovinMAX.isRewardedAdReady(_rewardedAdUnitId);
+    if (ready ?? false) {
+      _pendingRewardCallback = onRewarded;
+      AppLovinMAX.showRewardedAd(_rewardedAdUnitId);
+      return true;
+    }
+
+    debugPrint('Rewarded ad not ready');
+    return false;
+  }
+
   // --- Banner ---
 
-  /// Banner widget'ı için ad unit ID döndürür
   String get bannerAdUnitId => _bannerAdUnitId;
 
-  /// Tüm reklamları temizle
   void dispose() {
     _initialized = false;
-    debugPrint('AdService disposed');
+    _pendingRewardCallback = null;
   }
 }
 
-/// Rewarded video sonrası kullanıcıya verilecek ödüller
 enum AdRewardType {
-  extraCleaningQuota,    // +10 ek temizlik hakkı
-  tryPremiumAnimation,   // 24 saat premium animasyon deneme
-  extraScanCategory,     // +1 ek kategori taraması
+  extraCleaningQuota,
+  tryPremiumAnimation,
+  extraScanCategory,
 }

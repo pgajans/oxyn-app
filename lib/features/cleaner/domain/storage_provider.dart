@@ -41,18 +41,46 @@ class ScanResultNotifier extends AsyncNotifier<ScanResult> {
 
     final repo = ref.read(storageRepositoryProvider);
 
-    await Future.delayed(const Duration(milliseconds: 800));
-    final cacheSize = await repo.getCacheSize();
-    await Future.delayed(const Duration(milliseconds: 700));
+    try {
+      final results = await Future.wait([
+        repo.getCacheSize(),
+        repo.findScreenshots(),
+        repo.findLargeFiles(),
+        repo.findSimilarPhotos(),
+      ]);
 
-    state = AsyncValue.data(ScanResult(
-      duplicatePhotos: [],
-      largeFiles: [],
-      screenshots: [],
-      totalCleanableBytes: cacheSize,
-      cacheBytes: cacheSize,
-      hasScanned: true,
-    ));
+      final cacheSize = results[0] as int;
+      final screenshots = results[1] as List<CleanableItem>;
+      final largeFiles = results[2] as List<CleanableItem>;
+      final similarGroups = results[3] as List<List<CleanableItem>>;
+
+      final duplicateBytes =
+          similarGroups.expand((g) => g.skip(1)).fold(0, (sum, item) => sum + item.sizeBytes);
+      final screenshotBytes =
+          screenshots.fold(0, (sum, item) => sum + item.sizeBytes);
+      final largeFileBytes =
+          largeFiles.fold(0, (sum, item) => sum + item.sizeBytes);
+
+      state = AsyncValue.data(ScanResult(
+        similarPhotoGroups: similarGroups,
+        largeFiles: largeFiles,
+        screenshots: screenshots,
+        totalCleanableBytes:
+            cacheSize + duplicateBytes + screenshotBytes + largeFileBytes,
+        cacheBytes: cacheSize,
+        hasScanned: true,
+      ));
+    } catch (e) {
+      final cacheSize = await repo.getCacheSize();
+      state = AsyncValue.data(ScanResult(
+        similarPhotoGroups: [],
+        largeFiles: [],
+        screenshots: [],
+        totalCleanableBytes: cacheSize,
+        cacheBytes: cacheSize,
+        hasScanned: true,
+      ));
+    }
   }
 
   Future<int> cleanCache() async {

@@ -10,7 +10,7 @@
     <uses-permission android:name="android.permission.VIBRATE"/>
 
     <application
-        android:label="oxyn"
+        android:label="Oxyn"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:enableOnBackInvokedCallback="true">

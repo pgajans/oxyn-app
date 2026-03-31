@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../domain/subscription_provider.dart';
@@ -109,25 +110,30 @@ class PaywallScreen extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: AppSpacing.sm),
-                    // Legal links
-                    const Row(
+                    Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text(
-                          'Gizlilik Politikası',
-                          style: TextStyle(
-                            color: AppColors.textTertiary,
-                            fontSize: 11,
-                            decoration: TextDecoration.underline,
+                        GestureDetector(
+                          onTap: () => launchUrl(Uri.parse('https://oxynapp.com/privacy')),
+                          child: const Text(
+                            'Gizlilik Politikası',
+                            style: TextStyle(
+                              color: AppColors.textTertiary,
+                              fontSize: 11,
+                              decoration: TextDecoration.underline,
+                            ),
                           ),
                         ),
-                        SizedBox(width: 16),
-                        Text(
-                          'Kullanım Şartları',
-                          style: TextStyle(
-                            color: AppColors.textTertiary,
-                            fontSize: 11,
-                            decoration: TextDecoration.underline,
+                        const SizedBox(width: 16),
+                        GestureDetector(
+                          onTap: () => launchUrl(Uri.parse('https://oxynapp.com/terms')),
+                          child: const Text(
+                            'Kullanım Şartları',
+                            style: TextStyle(
+                              color: AppColors.textTertiary,
+                              fontSize: 11,
+                              decoration: TextDecoration.underline,
+                            ),
                           ),
                         ),
                       ],

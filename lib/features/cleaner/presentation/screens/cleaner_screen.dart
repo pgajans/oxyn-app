@@ -1,8 +1,10 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/oxyn_card.dart';
+import '../../data/storage_repository.dart';
 import '../../domain/storage_info.dart';
 import '../../domain/storage_provider.dart';
 
@@ -39,7 +41,6 @@ class CleanerScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: AppSpacing.lg),
-            // Scan section
             scanAsync.when(
               loading: () => Container(
                 width: double.infinity,
@@ -87,66 +88,567 @@ class CleanerScreen extends ConsumerWidget {
               },
             ),
             const SizedBox(height: AppSpacing.lg),
-            // Cleaning categories
-            _CleaningCategory(
-              icon: Icons.photo_library,
-              title: 'Benzer Fotoğraflar',
-              subtitle: 'Galeriyi tarayarak benzer fotoğrafları bul',
-              size: '—',
-              color: AppColors.secondary,
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                        'Fotoğraf tarama özelliği yakında aktif olacak'),
-                    behavior: SnackBarBehavior.floating,
+            scanAsync.when(
+              loading: () => const SizedBox.shrink(),
+              error: (e, s) => const SizedBox.shrink(),
+              data: (scan) => Column(
+                children: [
+                  _CleaningCategory(
+                    icon: Icons.photo_library,
+                    title: 'Benzer Fotoğraflar',
+                    subtitle: scan.hasScanned
+                        ? '${scan.similarPhotoGroups.length} grup bulundu'
+                        : 'Galeriyi tarayarak benzer fotoğrafları bul',
+                    size: scan.hasScanned && scan.similarPhotosBytes > 0
+                        ? StorageInfo.formatBytes(scan.similarPhotosBytes)
+                        : '—',
+                    color: AppColors.secondary,
+                    onTap: () {
+                      if (!scan.hasScanned || scan.similarPhotoGroups.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Önce taramayı başlatın'),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                        return;
+                      }
+                      _showSimilarPhotos(context, ref, scan.similarPhotoGroups);
+                    },
                   ),
-                );
-              },
-            ),
-            const SizedBox(height: AppSpacing.md),
-            _CleaningCategory(
-              icon: Icons.file_present,
-              title: 'Büyük Dosyalar',
-              subtitle: '50MB üzeri dosyalar',
-              size: '—',
-              color: AppColors.danger,
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content:
-                        Text('Büyük dosya tarama özelliği yakında aktif olacak'),
-                    behavior: SnackBarBehavior.floating,
+                  const SizedBox(height: AppSpacing.md),
+                  _CleaningCategory(
+                    icon: Icons.file_present,
+                    title: 'Büyük Dosyalar',
+                    subtitle: scan.hasScanned
+                        ? '${scan.largeFiles.length} dosya (50MB+)'
+                        : '50MB üzeri dosyalar',
+                    size: scan.hasScanned && scan.largeFilesBytes > 0
+                        ? StorageInfo.formatBytes(scan.largeFilesBytes)
+                        : '—',
+                    color: AppColors.danger,
+                    onTap: () {
+                      if (!scan.hasScanned || scan.largeFiles.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(scan.hasScanned
+                                ? '50MB üzeri dosya bulunamadı'
+                                : 'Önce taramayı başlatın'),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                        return;
+                      }
+                      _showLargeFiles(context, ref, scan.largeFiles);
+                    },
                   ),
-                );
-              },
-            ),
-            const SizedBox(height: AppSpacing.md),
-            _CleaningCategory(
-              icon: Icons.screenshot,
-              title: 'Ekran Görüntüleri',
-              subtitle: 'Eski ekran görüntülerini temizle',
-              size: '—',
-              color: AppColors.primary,
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                        'Ekran görüntüsü tarama özelliği yakında aktif olacak'),
-                    behavior: SnackBarBehavior.floating,
+                  const SizedBox(height: AppSpacing.md),
+                  _CleaningCategory(
+                    icon: Icons.screenshot,
+                    title: 'Ekran Görüntüleri',
+                    subtitle: scan.hasScanned
+                        ? '${scan.screenshots.length} ekran görüntüsü'
+                        : 'Eski ekran görüntülerini temizle',
+                    size: scan.hasScanned && scan.screenshotsBytes > 0
+                        ? StorageInfo.formatBytes(scan.screenshotsBytes)
+                        : '—',
+                    color: AppColors.primary,
+                    onTap: () {
+                      if (!scan.hasScanned || scan.screenshots.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(scan.hasScanned
+                                ? 'Ekran görüntüsü bulunamadı'
+                                : 'Önce taramayı başlatın'),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                        return;
+                      }
+                      _showScreenshots(context, ref, scan.screenshots);
+                    },
                   ),
-                );
-              },
+                  const SizedBox(height: AppSpacing.md),
+                  _CacheCategory(ref: ref),
+                ],
+              ),
             ),
-            const SizedBox(height: AppSpacing.md),
-            _CacheCategory(ref: ref),
             const SizedBox(height: AppSpacing.xl),
           ],
         ),
       ),
     );
   }
+
+  void _showSimilarPhotos(
+    BuildContext context,
+    WidgetRef ref,
+    List<List<CleanableItem>> groups,
+  ) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => _SimilarPhotosPage(groups: groups, ref: ref),
+      ),
+    );
+  }
+
+  void _showLargeFiles(
+    BuildContext context,
+    WidgetRef ref,
+    List<CleanableItem> files,
+  ) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => _FileListPage(
+          title: 'Büyük Dosyalar',
+          items: files,
+          ref: ref,
+        ),
+      ),
+    );
+  }
+
+  void _showScreenshots(
+    BuildContext context,
+    WidgetRef ref,
+    List<CleanableItem> screenshots,
+  ) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => _FileListPage(
+          title: 'Ekran Görüntüleri',
+          items: screenshots,
+          ref: ref,
+        ),
+      ),
+    );
+  }
 }
+
+// --- Detail Pages ---
+
+class _SimilarPhotosPage extends StatefulWidget {
+  final List<List<CleanableItem>> groups;
+  final WidgetRef ref;
+
+  const _SimilarPhotosPage({required this.groups, required this.ref});
+
+  @override
+  State<_SimilarPhotosPage> createState() => _SimilarPhotosPageState();
+}
+
+class _SimilarPhotosPageState extends State<_SimilarPhotosPage> {
+  final Set<String> _selected = {};
+
+  @override
+  Widget build(BuildContext context) {
+    final totalSelected = _selected.length;
+    final totalBytes = widget.groups
+        .expand((g) => g)
+        .where((item) => _selected.contains(item.id))
+        .fold(0, (sum, item) => sum + item.sizeBytes);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Benzer Fotoğraflar'),
+        actions: [
+          if (totalSelected > 0)
+            TextButton.icon(
+              onPressed: () => _deleteSelected(),
+              icon: const Icon(Icons.delete, color: AppColors.danger),
+              label: Text(
+                '$totalSelected sil (${StorageInfo.formatBytes(totalBytes)})',
+                style: const TextStyle(color: AppColors.danger),
+              ),
+            ),
+        ],
+      ),
+      body: ListView.builder(
+        padding: AppSpacing.screenPadding,
+        itemCount: widget.groups.length,
+        itemBuilder: (context, groupIndex) {
+          final group = widget.groups[groupIndex];
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Text(
+                  'Grup ${groupIndex + 1} (${group.length} fotoğraf)',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+              SizedBox(
+                height: 120,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: group.length,
+                  separatorBuilder: (context, index) => const SizedBox(width: 8),
+                  itemBuilder: (context, itemIndex) {
+                    final item = group[itemIndex];
+                    final isSelected = _selected.contains(item.id);
+                    return GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          if (isSelected) {
+                            _selected.remove(item.id);
+                          } else {
+                            _selected.add(item.id);
+                          }
+                        });
+                      },
+                      child: Stack(
+                        children: [
+                          Container(
+                            width: 120,
+                            height: 120,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              border: isSelected
+                                  ? Border.all(
+                                      color: AppColors.danger, width: 3)
+                                  : null,
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: _ThumbnailWidget(assetId: item.id),
+                            ),
+                          ),
+                          if (isSelected)
+                            Positioned(
+                              top: 4,
+                              right: 4,
+                              child: Container(
+                                padding: const EdgeInsets.all(2),
+                                decoration: const BoxDecoration(
+                                  color: AppColors.danger,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.check,
+                                    color: Colors.white, size: 16),
+                              ),
+                            ),
+                          Positioned(
+                            bottom: 4,
+                            left: 4,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.black54,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                item.sizeFormatted,
+                                style: const TextStyle(
+                                    color: Colors.white, fontSize: 10),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+              Divider(height: 24, color: AppColors.textTertiary.withValues(alpha: 0.3)),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Future<void> _deleteSelected() async {
+    if (_selected.isEmpty) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: const Text('Fotoğrafları Sil'),
+        content: Text('${_selected.length} fotoğraf silinecek. Emin misiniz?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('İptal'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Sil'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    final items = widget.groups
+        .expand((g) => g)
+        .where((item) => _selected.contains(item.id))
+        .toList();
+
+    final repo = widget.ref.read(storageRepositoryProvider);
+    final success = await repo.deleteMediaItems(items);
+
+    if (mounted) {
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${items.length} fotoğraf silindi'),
+            backgroundColor: AppColors.success,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        widget.ref.read(scanResultProvider.notifier).startScan();
+        Navigator.pop(context);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Silme işlemi başarısız oldu'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+}
+
+class _FileListPage extends StatefulWidget {
+  final String title;
+  final List<CleanableItem> items;
+  final WidgetRef ref;
+
+  const _FileListPage({
+    required this.title,
+    required this.items,
+    required this.ref,
+  });
+
+  @override
+  State<_FileListPage> createState() => _FileListPageState();
+}
+
+class _FileListPageState extends State<_FileListPage> {
+  final Set<String> _selected = {};
+
+  @override
+  Widget build(BuildContext context) {
+    final totalBytes = widget.items
+        .where((item) => _selected.contains(item.id))
+        .fold(0, (sum, item) => sum + item.sizeBytes);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.title),
+        actions: [
+          if (_selected.isNotEmpty)
+            TextButton.icon(
+              onPressed: () => _deleteSelected(),
+              icon: const Icon(Icons.delete, color: AppColors.danger),
+              label: Text(
+                '${_selected.length} sil (${StorageInfo.formatBytes(totalBytes)})',
+                style: const TextStyle(color: AppColors.danger),
+              ),
+            ),
+        ],
+      ),
+      body: ListView.separated(
+        padding: AppSpacing.screenPadding,
+        itemCount: widget.items.length,
+        separatorBuilder: (context, index) => const SizedBox(height: 8),
+        itemBuilder: (context, index) {
+          final item = widget.items[index];
+          final isSelected = _selected.contains(item.id);
+
+          return OxynCard(
+            onTap: () {
+              setState(() {
+                if (isSelected) {
+                  _selected.remove(item.id);
+                } else {
+                  _selected.add(item.id);
+                }
+              });
+            },
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 60,
+                  height: 60,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: _ThumbnailWidget(assetId: item.id),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.name,
+                        style: const TextStyle(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        item.sizeFormatted,
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Checkbox(
+                  value: isSelected,
+                  onChanged: (val) {
+                    setState(() {
+                      if (val == true) {
+                        _selected.add(item.id);
+                      } else {
+                        _selected.remove(item.id);
+                      }
+                    });
+                  },
+                  activeColor: AppColors.danger,
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+      bottomNavigationBar: _selected.isNotEmpty
+          ? SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: ElevatedButton.icon(
+                  onPressed: _deleteSelected,
+                  icon: const Icon(Icons.delete_sweep),
+                  label: Text(
+                    '${_selected.length} Dosya Sil (${StorageInfo.formatBytes(totalBytes)})',
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.danger,
+                    minimumSize: const Size.fromHeight(52),
+                  ),
+                ),
+              ),
+            )
+          : null,
+    );
+  }
+
+  Future<void> _deleteSelected() async {
+    if (_selected.isEmpty) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: const Text('Dosyaları Sil'),
+        content: Text(
+            '${_selected.length} dosya silinecek. Bu işlem geri alınamaz. Emin misiniz?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('İptal'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Sil'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    final items = widget.items
+        .where((item) => _selected.contains(item.id))
+        .toList();
+
+    final repo = widget.ref.read(storageRepositoryProvider);
+    final success = await repo.deleteMediaItems(items);
+
+    if (mounted) {
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${items.length} dosya silindi'),
+            backgroundColor: AppColors.success,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        widget.ref.read(scanResultProvider.notifier).startScan();
+        Navigator.pop(context);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Silme işlemi başarısız oldu'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+}
+
+// --- Thumbnail Widget ---
+
+class _ThumbnailWidget extends StatefulWidget {
+  final String assetId;
+
+  const _ThumbnailWidget({required this.assetId});
+
+  @override
+  State<_ThumbnailWidget> createState() => _ThumbnailWidgetState();
+}
+
+class _ThumbnailWidgetState extends State<_ThumbnailWidget> {
+  Uint8List? _data;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadThumbnail();
+  }
+
+  Future<void> _loadThumbnail() async {
+    final repo = StorageRepository();
+    final data = await repo.getThumbnail(widget.assetId);
+    if (mounted) {
+      setState(() => _data = data);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_data == null) {
+      return Container(
+        color: AppColors.surface,
+        child: const Center(
+          child: Icon(Icons.image, color: AppColors.textTertiary, size: 24),
+        ),
+      );
+    }
+    return Image.memory(_data!, fit: BoxFit.cover);
+  }
+}
+
+// --- Existing widgets ---
 
 class _ScanResultCard extends StatelessWidget {
   final ScanResult scan;
@@ -156,21 +658,22 @@ class _ScanResultCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasCacheToClear = scan.cacheBytes > 0;
+    final totalCleanable = scan.totalCleanableBytes;
+    final hasItems = totalCleanable > 0;
 
     return OxynCard(
       padding: const EdgeInsets.all(20),
       child: Column(
         children: [
           Icon(
-            hasCacheToClear ? Icons.cleaning_services : Icons.check_circle,
-            color: hasCacheToClear ? AppColors.secondary : AppColors.success,
+            hasItems ? Icons.cleaning_services : Icons.check_circle,
+            color: hasItems ? AppColors.secondary : AppColors.success,
             size: 40,
           ),
           const SizedBox(height: 12),
           Text(
-            hasCacheToClear
-                ? 'Temizlenebilir: ${StorageInfo.formatBytes(scan.cacheBytes)}'
+            hasItems
+                ? 'Temizlenebilir: ${scan.totalCleanableFormatted}'
                 : 'Cihazın temiz!',
             style: const TextStyle(
               fontSize: 16,
@@ -178,39 +681,15 @@ class _ScanResultCard extends StatelessWidget {
               color: AppColors.textPrimary,
             ),
           ),
-          if (hasCacheToClear) ...[
+          if (hasItems) ...[
             const SizedBox(height: 4),
-            const Text(
-              'Uygulama önbelleği temizlenebilir',
-              style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () async {
-                  final cleaned = await ref
-                      .read(scanResultProvider.notifier)
-                      .cleanCache();
-                  if (context.mounted) {
-                    final mb =
-                        (cleaned / (1024 * 1024)).toStringAsFixed(1);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('$mb MB önbellek temizlendi!'),
-                        behavior: SnackBarBehavior.floating,
-                        backgroundColor: AppColors.success,
-                      ),
-                    );
-                    ref.invalidate(storageInfoProvider);
-                  }
-                },
-                icon: const Icon(Icons.delete_sweep),
-                label: const Text('Temizle'),
-              ),
+            Text(
+              '${scan.totalItemCount} öğe bulundu',
+              style:
+                  const TextStyle(fontSize: 12, color: AppColors.textSecondary),
             ),
           ],
-          if (!hasCacheToClear) ...[
+          if (!hasItems) ...[
             const SizedBox(height: 8),
             const Text(
               'Temizlenecek bir şey bulunamadı',

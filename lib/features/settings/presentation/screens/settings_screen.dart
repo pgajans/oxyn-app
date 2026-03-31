@@ -8,12 +8,18 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../subscription/domain/subscription_provider.dart';
 
+final _appVersionProvider = FutureProvider<String>((ref) async {
+  final info = await PackageInfo.fromPlatform();
+  return info.version;
+});
+
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isPremium = ref.watch(isPremiumProvider);
+    final appVersion = ref.watch(_appVersionProvider).value ?? '...';
 
     return Scaffold(
       appBar: AppBar(
@@ -93,7 +99,7 @@ class SettingsScreen extends ConsumerWidget {
                 icon: Icons.info_outline,
                 iconColor: AppColors.textSecondary,
                 title: 'Versiyon',
-                subtitle: '1.0.0',
+                subtitle: appVersion,
                 onTap: () => _showVersionDialog(context),
               ),
               _SettingsTile(

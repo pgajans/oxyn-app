@@ -22,13 +22,7 @@ class OxynApp extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      supportedLocales: const [
-        Locale('en'),
-        Locale('tr'),
-        Locale('es'),
-        Locale('pt', 'BR'),
-        Locale('ar'),
-      ],
+      supportedLocales: AppLocalizations.supportedLocales,
     );
   }
 }
