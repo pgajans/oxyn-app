@@ -15,8 +15,16 @@ class AdService {
   static const _rewardedAdUnitId = 'YOUR_REWARDED_AD_UNIT_ID';
   static const _bannerAdUnitId = 'YOUR_BANNER_AD_UNIT_ID';
 
+  static bool get _isPlaceholderKey => _sdkKey.startsWith('YOUR_');
+
   Future<void> initialize() async {
     if (_initialized) return;
+
+    if (_isPlaceholderKey) {
+      debugPrint('AppLovin skipped: placeholder SDK key');
+      _initialized = true;
+      return;
+    }
 
     try {
       final config = await AppLovinMAX.initialize(_sdkKey);
@@ -66,7 +74,7 @@ class AdService {
   }
 
   Future<bool> showInterstitial() async {
-    if (!_initialized) return false;
+    if (!_initialized || _isPlaceholderKey) return false;
 
     final ready = await AppLovinMAX.isInterstitialReady(_interstitialAdUnitId);
     if (ready ?? false) {
@@ -108,7 +116,7 @@ class AdService {
   }
 
   Future<bool> showRewarded({required VoidCallback onRewarded}) async {
-    if (!_initialized) return false;
+    if (!_initialized || _isPlaceholderKey) return false;
 
     final ready = await AppLovinMAX.isRewardedAdReady(_rewardedAdUnitId);
     if (ready ?? false) {
