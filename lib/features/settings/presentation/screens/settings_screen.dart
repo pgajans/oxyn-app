@@ -106,13 +106,13 @@ class SettingsScreen extends ConsumerWidget {
                 icon: Icons.privacy_tip_outlined,
                 iconColor: AppColors.textSecondary,
                 title: 'Gizlilik Politikası',
-                onTap: () => _openUrl('https://oxynapp.com/privacy'),
+                onTap: () => context.push('/privacy'),
               ),
               _SettingsTile(
                 icon: Icons.description_outlined,
                 iconColor: AppColors.textSecondary,
                 title: 'Kullanım Şartları',
-                onTap: () => _openUrl('https://oxynapp.com/terms'),
+                onTap: () => context.push('/terms'),
               ),
             ],
           ),
@@ -243,12 +243,6 @@ class SettingsScreen extends ConsumerWidget {
     }
   }
 
-  Future<void> _openUrl(String url) async {
-    final uri = Uri.parse(url);
-    try {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } catch (_) {}
-  }
 }
 
 class _LanguageTile extends StatelessWidget {

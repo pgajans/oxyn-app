@@ -9,6 +9,8 @@ import '../../features/customization/presentation/screens/customization_screen.d
 import '../../features/settings/presentation/screens/settings_screen.dart';
 import '../../features/onboarding/presentation/screens/onboarding_screen.dart';
 import '../../features/subscription/presentation/screens/paywall_screen.dart';
+import '../../features/legal/presentation/screens/privacy_policy_screen.dart';
+import '../../features/legal/presentation/screens/terms_screen.dart';
 import '../widgets/main_shell.dart';
 
 final rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -72,6 +74,14 @@ GoRouter buildRouter({required bool showOnboarding}) {
       GoRoute(
         path: '/settings',
         builder: (context, state) => const SettingsScreen(),
+      ),
+      GoRoute(
+        path: '/privacy',
+        builder: (context, state) => const PrivacyPolicyScreen(),
+      ),
+      GoRoute(
+        path: '/terms',
+        builder: (context, state) => const TermsScreen(),
       ),
       GoRoute(
         path: '/paywall',

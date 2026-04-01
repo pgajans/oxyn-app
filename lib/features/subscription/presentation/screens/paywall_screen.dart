@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../domain/subscription_provider.dart';
@@ -114,7 +113,7 @@ class PaywallScreen extends ConsumerWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         GestureDetector(
-                          onTap: () => launchUrl(Uri.parse('https://oxynapp.com/privacy')),
+                          onTap: () => context.push('/privacy'),
                           child: const Text(
                             'Gizlilik Politikası',
                             style: TextStyle(
@@ -126,7 +125,7 @@ class PaywallScreen extends ConsumerWidget {
                         ),
                         const SizedBox(width: 16),
                         GestureDetector(
-                          onTap: () => launchUrl(Uri.parse('https://oxynapp.com/terms')),
+                          onTap: () => context.push('/terms'),
                           child: const Text(
                             'Kullanım Şartları',
                             style: TextStyle(
