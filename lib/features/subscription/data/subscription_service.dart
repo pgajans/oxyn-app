@@ -3,12 +3,26 @@ import 'package:purchases_flutter/purchases_flutter.dart';
 import '../domain/subscription_status.dart';
 
 class SubscriptionService {
+  // Production key'ler RevenueCat dashboard'dan alınacak
+  // Test key'ler sadece debug modda çalışır, release'de RevenueCat devre dışı kalır
   static const _apiKeyiOS = 'test_TzkrDTMSSUVFIReOIcxWQsVUWkr';
   static const _apiKeyAndroid = 'test_TzkrDTMSSUVFIReOIcxWQsVUWkr';
 
+  bool _initialized = false;
+  bool get isInitialized => _initialized;
+
+  static bool get _isTestKey =>
+      _apiKeyiOS.startsWith('test_') || _apiKeyAndroid.startsWith('test_');
+
   Future<void> initialize() async {
+    if (kReleaseMode && _isTestKey) {
+      debugPrint('RevenueCat skipped: test key in release mode');
+      return;
+    }
+
     try {
-      await Purchases.setLogLevel(LogLevel.debug);
+      await Purchases.setLogLevel(
+          kReleaseMode ? LogLevel.warn : LogLevel.debug);
 
       PurchasesConfiguration configuration;
       if (defaultTargetPlatform == TargetPlatform.iOS) {
@@ -18,6 +32,7 @@ class SubscriptionService {
       }
 
       await Purchases.configure(configuration);
+      _initialized = true;
       debugPrint('RevenueCat initialized');
     } catch (e) {
       debugPrint('RevenueCat init error: $e');
@@ -25,6 +40,7 @@ class SubscriptionService {
   }
 
   Future<SubscriptionStatus> getSubscriptionStatus() async {
+    if (!_initialized) return SubscriptionStatus.free();
     try {
       final customerInfo = await Purchases.getCustomerInfo();
       return _mapToStatus(customerInfo);
@@ -35,6 +51,7 @@ class SubscriptionService {
   }
 
   Future<List<Package>> getOfferings() async {
+    if (!_initialized) return [];
     try {
       final offerings = await Purchases.getOfferings();
       final current = offerings.current;
@@ -47,6 +64,7 @@ class SubscriptionService {
   }
 
   Future<SubscriptionStatus> purchase(Package package) async {
+    if (!_initialized) return SubscriptionStatus.free();
     try {
       // ignore: deprecated_member_use
       final result = await Purchases.purchasePackage(package);
@@ -58,6 +76,7 @@ class SubscriptionService {
   }
 
   Future<SubscriptionStatus> restorePurchases() async {
+    if (!_initialized) return SubscriptionStatus.free();
     try {
       final customerInfo = await Purchases.restorePurchases();
       return _mapToStatus(customerInfo);
