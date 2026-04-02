@@ -1,15 +1,30 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/oxyn_card.dart';
 import '../../data/storage_repository.dart';
 import '../../domain/storage_info.dart';
 import '../../domain/storage_provider.dart';
+import '../../../subscription/domain/subscription_provider.dart';
 
 class CleanerScreen extends ConsumerWidget {
   const CleanerScreen({super.key});
+
+  Future<bool> _canClean(BuildContext context, WidgetRef ref) async {
+    final isPremium = ref.read(isPremiumProvider);
+    if (isPremium) return true;
+
+    final freeAvailable = await ref.read(freeCleanAvailableProvider.future);
+    if (freeAvailable) return true;
+
+    if (context.mounted) {
+      context.push('/paywall');
+    }
+    return false;
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -103,7 +118,7 @@ class CleanerScreen extends ConsumerWidget {
                         ? StorageInfo.formatBytes(scan.similarPhotosBytes)
                         : '—',
                     color: AppColors.secondary,
-                    onTap: () {
+                    onTap: () async {
                       if (!scan.hasScanned || scan.similarPhotoGroups.isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
@@ -113,7 +128,10 @@ class CleanerScreen extends ConsumerWidget {
                         );
                         return;
                       }
-                      _showSimilarPhotos(context, ref, scan.similarPhotoGroups);
+                      if (!await _canClean(context, ref)) return;
+                      if (context.mounted) {
+                        _showSimilarPhotos(context, ref, scan.similarPhotoGroups);
+                      }
                     },
                   ),
                   const SizedBox(height: AppSpacing.md),
@@ -127,7 +145,7 @@ class CleanerScreen extends ConsumerWidget {
                         ? StorageInfo.formatBytes(scan.largeFilesBytes)
                         : '—',
                     color: AppColors.danger,
-                    onTap: () {
+                    onTap: () async {
                       if (!scan.hasScanned || scan.largeFiles.isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
@@ -139,7 +157,10 @@ class CleanerScreen extends ConsumerWidget {
                         );
                         return;
                       }
-                      _showLargeFiles(context, ref, scan.largeFiles);
+                      if (!await _canClean(context, ref)) return;
+                      if (context.mounted) {
+                        _showLargeFiles(context, ref, scan.largeFiles);
+                      }
                     },
                   ),
                   const SizedBox(height: AppSpacing.md),
@@ -153,7 +174,7 @@ class CleanerScreen extends ConsumerWidget {
                         ? StorageInfo.formatBytes(scan.screenshotsBytes)
                         : '—',
                     color: AppColors.primary,
-                    onTap: () {
+                    onTap: () async {
                       if (!scan.hasScanned || scan.screenshots.isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
@@ -165,7 +186,10 @@ class CleanerScreen extends ConsumerWidget {
                         );
                         return;
                       }
-                      _showScreenshots(context, ref, scan.screenshots);
+                      if (!await _canClean(context, ref)) return;
+                      if (context.mounted) {
+                        _showScreenshots(context, ref, scan.screenshots);
+                      }
                     },
                   ),
                   const SizedBox(height: AppSpacing.md),
@@ -396,25 +420,27 @@ class _SimilarPhotosPageState extends State<_SimilarPhotosPage> {
     final repo = widget.ref.read(storageRepositoryProvider);
     final success = await repo.deleteMediaItems(items);
 
-    if (mounted) {
-      if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${items.length} fotoğraf silindi'),
-            backgroundColor: AppColors.success,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-        widget.ref.read(scanResultProvider.notifier).startScan();
-        Navigator.pop(context);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Silme işlemi başarısız oldu'),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
+    if (!mounted) return;
+    if (success) {
+      await markFreeCleanUsed();
+      widget.ref.invalidate(freeCleanAvailableProvider);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${items.length} fotoğraf silindi'),
+          backgroundColor: AppColors.success,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      widget.ref.read(scanResultProvider.notifier).startScan();
+      Navigator.pop(context);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Silme işlemi başarısız oldu'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     }
   }
 }
@@ -583,25 +609,27 @@ class _FileListPageState extends State<_FileListPage> {
     final repo = widget.ref.read(storageRepositoryProvider);
     final success = await repo.deleteMediaItems(items);
 
-    if (mounted) {
-      if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${items.length} dosya silindi'),
-            backgroundColor: AppColors.success,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-        widget.ref.read(scanResultProvider.notifier).startScan();
-        Navigator.pop(context);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Silme işlemi başarısız oldu'),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
+    if (!mounted) return;
+    if (success) {
+      await markFreeCleanUsed();
+      widget.ref.invalidate(freeCleanAvailableProvider);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${items.length} dosya silindi'),
+          backgroundColor: AppColors.success,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      widget.ref.read(scanResultProvider.notifier).startScan();
+      Navigator.pop(context);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Silme işlemi başarısız oldu'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     }
   }
 }
@@ -660,6 +688,9 @@ class _ScanResultCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final totalCleanable = scan.totalCleanableBytes;
     final hasItems = totalCleanable > 0;
+    final isPremium = ref.watch(isPremiumProvider);
+    final freeCleanAsync = ref.watch(freeCleanAvailableProvider);
+    final hasFreeClean = freeCleanAsync.value ?? false;
 
     return OxynCard(
       padding: const EdgeInsets.all(20),
@@ -688,6 +719,25 @@ class _ScanResultCard extends StatelessWidget {
               style:
                   const TextStyle(fontSize: 12, color: AppColors.textSecondary),
             ),
+            const SizedBox(height: 16),
+            if (!isPremium && hasFreeClean)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppColors.success.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Text(
+                  'İlk temizlik ücretsiz!',
+                  style: TextStyle(
+                    color: AppColors.success,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            if (!isPremium && hasFreeClean)
+              const SizedBox(height: 8),
           ],
           if (!hasItems) ...[
             const SizedBox(height: 8),

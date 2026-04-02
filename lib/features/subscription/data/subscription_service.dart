@@ -3,16 +3,18 @@ import 'package:purchases_flutter/purchases_flutter.dart';
 import '../domain/subscription_status.dart';
 
 class SubscriptionService {
-  // Production key'ler RevenueCat dashboard'dan alınacak
-  // Test key'ler sadece debug modda çalışır, release'de RevenueCat devre dışı kalır
-  static const _apiKeyiOS = 'test_TzkrDTMSSUVFIReOIcxWQsVUWkr';
-  static const _apiKeyAndroid = 'test_TzkrDTMSSUVFIReOIcxWQsVUWkr';
+  static const _apiKeyiOS = 'test_TzkrDTMSSUVFIReOIcxWQsVUWkr'; // Apple onaylaninca production key ile degistirilecek
+  static const _apiKeyAndroid = 'goog_FcjENVZJSseGJJQvdBjuFvhEZkp';
 
   bool _initialized = false;
   bool get isInitialized => _initialized;
 
-  static bool get _isTestKey =>
-      _apiKeyiOS.startsWith('test_') || _apiKeyAndroid.startsWith('test_');
+  static bool get _isTestKey {
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      return _apiKeyiOS.startsWith('test_');
+    }
+    return _apiKeyAndroid.startsWith('test_');
+  }
 
   Future<void> initialize() async {
     if (kReleaseMode && _isTestKey) {

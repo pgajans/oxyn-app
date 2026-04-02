@@ -1,6 +1,19 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../data/storage_repository.dart';
 import 'storage_info.dart';
+
+const _freeCleanUsedKey = 'free_clean_used';
+
+final freeCleanAvailableProvider = FutureProvider<bool>((ref) async {
+  final prefs = await SharedPreferences.getInstance();
+  return !(prefs.getBool(_freeCleanUsedKey) ?? false);
+});
+
+Future<void> markFreeCleanUsed() async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setBool(_freeCleanUsedKey, true);
+}
 
 final storageRepositoryProvider = Provider<StorageRepository>((ref) {
   return StorageRepository();

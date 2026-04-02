@@ -24,7 +24,9 @@ class PaywallScreen extends ConsumerWidget {
               child: IconButton(
                 icon: const Icon(Icons.close, color: AppColors.textSecondary),
                 onPressed: () {
-                  if (context.canPop()) {
+                  if (Navigator.of(context).canPop()) {
+                    Navigator.of(context).pop();
+                  } else if (context.canPop()) {
                     context.pop();
                   } else {
                     context.go('/dashboard');

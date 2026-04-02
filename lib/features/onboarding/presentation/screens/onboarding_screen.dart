@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/services/router.dart';
+import '../../../subscription/presentation/screens/paywall_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -388,11 +389,18 @@ class _ScanResultScreen extends StatelessWidget {
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: () {
-                    context.go('/dashboard');
-                    context.push('/paywall');
+                  onPressed: () async {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const PaywallScreen(),
+                        fullscreenDialog: true,
+                      ),
+                    );
+                    if (context.mounted) {
+                      context.go('/dashboard');
+                    }
                   },
-                  child: const Text('Temizlemeye Başla'),
+                  child: const Text('Premium\'u Keşfet'),
                 ),
               ),
               const SizedBox(height: 12),
