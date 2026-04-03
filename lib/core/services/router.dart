@@ -5,12 +5,14 @@ import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
 import '../../features/battery/presentation/screens/battery_screen.dart';
 import '../../features/cleaner/presentation/screens/cleaner_screen.dart';
 import '../../features/performance/presentation/screens/performance_screen.dart';
-import '../../features/customization/presentation/screens/customization_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
 import '../../features/onboarding/presentation/screens/onboarding_screen.dart';
 import '../../features/subscription/presentation/screens/paywall_screen.dart';
 import '../../features/legal/presentation/screens/privacy_policy_screen.dart';
 import '../../features/legal/presentation/screens/terms_screen.dart';
+import '../../features/trivia/presentation/screens/trivia_screen.dart';
+import '../../features/ai_doctor/presentation/screens/ai_doctor_screen.dart';
+import '../../features/news/presentation/screens/news_screen.dart';
 import '../widgets/main_shell.dart';
 
 final rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -48,6 +50,24 @@ GoRouter buildRouter({required bool showOnboarding}) {
             ),
           ),
           GoRoute(
+            path: '/trivia',
+            pageBuilder: (context, state) => const NoTransitionPage(
+              child: TriviaScreen(),
+            ),
+          ),
+          GoRoute(
+            path: '/ai-doctor-tab',
+            pageBuilder: (context, state) => const NoTransitionPage(
+              child: AiDoctorScreen(),
+            ),
+          ),
+          GoRoute(
+            path: '/settings-tab',
+            pageBuilder: (context, state) => const NoTransitionPage(
+              child: SettingsScreen(),
+            ),
+          ),
+          GoRoute(
             path: '/battery',
             pageBuilder: (context, state) => const NoTransitionPage(
               child: BatteryScreen(),
@@ -60,9 +80,9 @@ GoRouter buildRouter({required bool showOnboarding}) {
             ),
           ),
           GoRoute(
-            path: '/style',
+            path: '/news',
             pageBuilder: (context, state) => const NoTransitionPage(
-              child: CustomizationScreen(),
+              child: NewsScreen(),
             ),
           ),
         ],
@@ -74,6 +94,10 @@ GoRouter buildRouter({required bool showOnboarding}) {
       GoRoute(
         path: '/settings',
         builder: (context, state) => const SettingsScreen(),
+      ),
+      GoRoute(
+        path: '/ai-doctor',
+        builder: (context, state) => const AiDoctorScreen(),
       ),
       GoRoute(
         path: '/privacy',

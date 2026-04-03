@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../platform/native_platform_channel.dart';
 import '../../../subscription/domain/subscription_provider.dart';
 
 final _appVersionProvider = FutureProvider<String>((ref) async {
@@ -22,13 +23,7 @@ class SettingsScreen extends ConsumerWidget {
     final appVersion = ref.watch(_appVersionProvider).value ?? '...';
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Ayarlar'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios),
-          onPressed: () => context.pop(),
-        ),
-      ),
+      appBar: AppBar(title: const Text('Ayarlar')),
       body: ListView(
         padding: AppSpacing.screenPadding,
         children: [
@@ -42,18 +37,18 @@ class SettingsScreen extends ConsumerWidget {
             children: [
               if (!isPremium)
                 _SettingsTile(
-                  icon: Icons.star,
+                  icon: Icons.star_outline,
                   iconColor: AppColors.tertiary,
-                  title: 'Oxyn Plus\'a Geç',
-                  subtitle: 'Tüm özelliklerin kilidini aç',
+                  title: 'Ücretsiz Sürümdesiniz',
+                  subtitle: 'Premium\'a geçmek için dokunun',
                   onTap: () => context.push('/paywall'),
                 ),
               if (isPremium)
                 _SettingsTile(
                   icon: Icons.star,
                   iconColor: AppColors.tertiary,
-                  title: 'Aboneliğini Yönet',
-                  subtitle: 'Plus aktif',
+                  title: 'Oxyn Plus Aktif',
+                  subtitle: 'Aboneliğini yönet',
                   onTap: () => _openSubscriptionManagement(),
                 ),
               _SettingsTile(
@@ -88,6 +83,19 @@ class SettingsScreen extends ConsumerWidget {
                 iconColor: AppColors.secondary,
                 title: 'Bildirimler',
                 onTap: () => _openNotificationSettings(),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          _SettingsSection(
+            title: 'Özellikler',
+            children: [
+              _SettingsTile(
+                icon: Icons.health_and_safety,
+                iconColor: AppColors.success,
+                title: 'AI Cihaz Doktoru',
+                subtitle: isPremium ? 'Günde 1 analiz hakkı' : 'Premium özellik',
+                onTap: () => context.push('/ai-doctor'),
               ),
             ],
           ),
@@ -217,13 +225,7 @@ class SettingsScreen extends ConsumerWidget {
 
   Future<void> _openNotificationSettings() async {
     if (Platform.isAndroid) {
-      const intent = 'android.settings.APP_NOTIFICATION_SETTINGS';
-      final uri = Uri.parse('intent:#Intent;action=$intent;end');
-      try {
-        await launchUrl(uri);
-      } catch (_) {
-        await launchUrl(Uri.parse('app-settings:'));
-      }
+      await NativePlatformChannel.openNotificationSettings();
     } else {
       await launchUrl(Uri.parse('app-settings:'));
     }
@@ -242,7 +244,6 @@ class SettingsScreen extends ConsumerWidget {
       );
     }
   }
-
 }
 
 class _LanguageTile extends StatelessWidget {
@@ -288,7 +289,6 @@ class _LanguageTile extends StatelessWidget {
 class _VersionRow extends StatelessWidget {
   final String label;
   final String value;
-
   const _VersionRow(this.label, this.value);
 
   @override
@@ -299,7 +299,8 @@ class _VersionRow extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label,
-              style: const TextStyle(color: AppColors.textSecondary, fontSize: 14)),
+              style: const TextStyle(
+                  color: AppColors.textSecondary, fontSize: 14)),
           Text(value,
               style: const TextStyle(
                   color: AppColors.textPrimary,
@@ -313,7 +314,6 @@ class _VersionRow extends StatelessWidget {
 
 class _PremiumBanner extends StatelessWidget {
   final VoidCallback onTap;
-
   const _PremiumBanner({required this.onTap});
 
   @override
@@ -342,7 +342,8 @@ class _PremiumBanner extends StatelessWidget {
                 color: AppColors.primary.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(Icons.bolt, color: AppColors.primary, size: 24),
+              child:
+                  const Icon(Icons.bolt, color: AppColors.primary, size: 24),
             ),
             const SizedBox(width: 16),
             const Expanded(
@@ -359,7 +360,7 @@ class _PremiumBanner extends StatelessWidget {
                   ),
                   SizedBox(height: 4),
                   Text(
-                    'Sınırsız temizlik, tüm animasyonlar, reklamsız',
+                    'Sınırsız temizlik, AI analiz, reklamsız',
                     style: TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 12,
@@ -443,8 +444,8 @@ class _SettingsTile extends StatelessWidget {
       subtitle: subtitle != null
           ? Text(
               subtitle!,
-              style:
-                  const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+              style: const TextStyle(
+                  color: AppColors.textSecondary, fontSize: 12),
             )
           : null,
       trailing:

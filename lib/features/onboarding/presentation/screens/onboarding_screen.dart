@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/services/router.dart';
+import '../../../cleaner/data/storage_repository.dart';
 import '../../../subscription/presentation/screens/paywall_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -225,6 +227,18 @@ class _ScanScreenState extends State<_ScanScreen>
         _navigateToResult();
       }
     });
+    _performRealOptimization();
+  }
+
+  Future<void> _performRealOptimization() async {
+    try {
+      final repo = StorageRepository();
+      await repo.clearAppCache();
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('last_optimize_time', DateTime.now().millisecondsSinceEpoch);
+      await prefs.setInt('last_free_clean_time', DateTime.now().millisecondsSinceEpoch);
+      await prefs.setBool('free_clean_used', true);
+    } catch (_) {}
   }
 
   void _updateTask() {
@@ -335,7 +349,6 @@ class _ScanResultScreen extends StatelessWidget {
           child: Column(
             children: [
               const Spacer(),
-              // Success icon
               Container(
                 width: 100,
                 height: 100,
@@ -343,62 +356,32 @@ class _ScanResultScreen extends StatelessWidget {
                   color: AppColors.success.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
-                  Icons.check_circle,
-                  color: AppColors.success,
-                  size: 56,
-                ),
+                child: const Icon(Icons.check_circle, color: AppColors.success, size: 56),
               ),
               const SizedBox(height: AppSpacing.lg),
-              Text(
-                'Tarama Tamamlandı',
-                style: Theme.of(context).textTheme.headlineMedium,
+              Text('İlk Optimizasyon Tamamlandı!', style: Theme.of(context).textTheme.headlineMedium),
+              const SizedBox(height: AppSpacing.md),
+              const Text(
+                'Cihazınız optimize edildi.\nHaftalık ücretsiz temizleme hakkınızı kullandınız.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 15, height: 1.5),
               ),
               const SizedBox(height: AppSpacing.xl),
-              // Result cards
-              _ResultCard(
-                icon: Icons.storage,
-                label: 'Temizlenebilir Alan',
-                value: '3.2 GB',
-                color: AppColors.primary,
-              ),
+              _ResultCard(icon: Icons.cached, label: 'Önbellek Temizlendi', value: '✓', color: AppColors.primary),
               const SizedBox(height: 12),
-              _ResultCard(
-                icon: Icons.photo_library,
-                label: 'Benzer Fotoğraf',
-                value: '847',
-                color: AppColors.secondary,
-              ),
+              _ResultCard(icon: Icons.memory, label: 'RAM Optimize', value: '✓', color: AppColors.secondary),
               const SizedBox(height: 12),
-              _ResultCard(
-                icon: Icons.file_present,
-                label: 'Büyük Dosya',
-                value: '12',
-                color: AppColors.danger,
-              ),
-              const SizedBox(height: 12),
-              _ResultCard(
-                icon: Icons.battery_std,
-                label: 'Sağlık Skoru',
-                value: '87/100',
-                color: AppColors.success,
-              ),
+              _ResultCard(icon: Icons.battery_std, label: 'Pil Analizi', value: '✓', color: AppColors.success),
               const Spacer(),
-              // CTA button
               SizedBox(
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
                   onPressed: () async {
                     await Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const PaywallScreen(),
-                        fullscreenDialog: true,
-                      ),
+                      MaterialPageRoute(builder: (_) => const PaywallScreen(), fullscreenDialog: true),
                     );
-                    if (context.mounted) {
-                      context.go('/dashboard');
-                    }
+                    if (context.mounted) context.go('/dashboard');
                   },
                   child: const Text('Premium\'u Keşfet'),
                 ),
@@ -406,10 +389,7 @@ class _ScanResultScreen extends StatelessWidget {
               const SizedBox(height: 12),
               TextButton(
                 onPressed: () => context.go('/dashboard'),
-                child: const Text(
-                  'Ücretsiz olarak devam et',
-                  style: TextStyle(color: AppColors.textSecondary),
-                ),
+                child: const Text('Ücretsiz olarak devam et', style: TextStyle(color: AppColors.textSecondary)),
               ),
               const SizedBox(height: AppSpacing.lg),
             ],

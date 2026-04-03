@@ -44,6 +44,15 @@ class BatteryInfo {
   bool get isLow => level < 20;
   bool get isOverheating => temperature > 40;
 
+  String get screenOnTime {
+    final h = estimatedRemaining.inHours;
+    final m = estimatedRemaining.inMinutes % 60;
+    if (isCharging) return '~${(level * 0.15).toStringAsFixed(0)}s';
+    if (h > 0) return '~${h}s ${m}dk';
+    if (m > 0) return '~${m}dk';
+    return '—';
+  }
+
   String get statusMessage {
     if (isOverheating) return 'Cihaz aşırı ısınıyor!';
     if (isLow) return 'Batarya düşük';

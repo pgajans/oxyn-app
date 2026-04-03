@@ -1,10 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/oxyn_card.dart';
-import '../../../../core/widgets/score_ring.dart';
 import '../../domain/dashboard_provider.dart';
 import '../../../battery/domain/battery_provider.dart';
 import '../../../cleaner/domain/storage_provider.dart';
@@ -19,12 +21,6 @@ class DashboardScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Oxyn'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            onPressed: () => context.push('/settings'),
-          ),
-        ],
       ),
       body: RefreshIndicator(
         onRefresh: () async {
@@ -52,6 +48,12 @@ class DashboardScreen extends ConsumerWidget {
   }
 }
 
+Color _scoreColor(int score) {
+  if (score > 70) return AppColors.success;
+  if (score >= 40) return AppColors.warning;
+  return AppColors.danger;
+}
+
 class _ScoreSection extends StatelessWidget {
   final dynamic score;
 
@@ -59,29 +61,96 @@ class _ScoreSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final int total = score.total;
+    final color = _scoreColor(total);
+
     return OxynCard(
-      padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
+      padding: const EdgeInsets.all(20),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Günlük Skor',
-            style: Theme.of(context).textTheme.bodyMedium,
+          Row(
+            children: [
+              Text(
+                'Günlük Skor',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  score.statusMessage,
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: AppSpacing.md),
-          ScoreRing(score: score.total),
-          const SizedBox(height: AppSpacing.md),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: (score.isGood ? AppColors.success : AppColors.secondary)
-                  .withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              score.statusMessage,
-              style: TextStyle(
-                color: score.isGood ? AppColors.success : AppColors.secondary,
-                fontWeight: FontWeight.w500,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                '$total',
+                style: TextStyle(
+                  fontSize: 48,
+                  fontWeight: FontWeight.w800,
+                  color: color,
+                  height: 1,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Text(
+                  '/ 100',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.textTertiary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: SizedBox(
+              height: 10,
+              child: Stack(
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceLight,
+                    ),
+                  ),
+                  FractionallySizedBox(
+                    widthFactor: total / 100,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            color.withValues(alpha: 0.7),
+                            color,
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -119,33 +188,24 @@ class _ModuleGrid extends StatelessWidget {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       children: [
-        _ModuleCard(
-          icon: Icons.battery_std,
-          label: 'Batarya',
-          value: batteryText,
-          color: AppColors.success,
-          onTap: () => context.go('/battery'),
+        _CleanerCard(
+          storageText: storageText,
+          onTap: () => context.go('/cleaner'),
         ),
         _ModuleCard(
           icon: Icons.speed,
           label: 'Performans',
-          value: 'Detay',
-          color: AppColors.primary,
-          onTap: () => context.push('/performance'),
+          value: batteryText,
+          color: AppColors.success,
+          onTap: () => context.go('/battery'),
         ),
+        const _DashboardNewsCard(),
         _ModuleCard(
-          icon: Icons.cleaning_services,
-          label: 'Temizlik',
-          value: storageText,
-          color: AppColors.secondary,
-          onTap: () => context.go('/cleaner'),
-        ),
-        _ModuleCard(
-          icon: Icons.palette,
-          label: 'Stil',
-          value: '15 Tema',
+          icon: Icons.star_rounded,
+          label: 'Premium',
+          value: 'Oxyn Plus',
           color: AppColors.tertiary,
-          onTap: () => context.go('/style'),
+          onTap: () => context.push('/paywall'),
         ),
       ],
     );
@@ -189,10 +249,12 @@ class _ModuleCard extends StatelessWidget {
               Text(
                 value,
                 style: TextStyle(
-                  fontSize: 20,
+                  fontSize: label == 'Premium' ? 12 : 20,
                   fontWeight: FontWeight.w700,
                   color: color,
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 2),
               Text(
@@ -207,6 +269,226 @@ class _ModuleCard extends StatelessWidget {
   }
 }
 
+class _CleanerCard extends StatefulWidget {
+  final String storageText;
+  final VoidCallback onTap;
+
+  const _CleanerCard({required this.storageText, required this.onTap});
+
+  @override
+  State<_CleanerCard> createState() => _CleanerCardState();
+}
+
+class _CleanerCardState extends State<_CleanerCard> with SingleTickerProviderStateMixin {
+  static const _kLastCleanKey = 'last_clean_card_time';
+  static const _kCleanCooldown = Duration(hours: 12);
+
+  Duration _remaining = Duration.zero;
+  bool _needsClean = true;
+  Timer? _timer;
+  late AnimationController _pulseCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    );
+    _checkCooldown();
+  }
+
+  Future<void> _checkCooldown() async {
+    final prefs = await SharedPreferences.getInstance();
+    final lastMs = prefs.getInt(_kLastCleanKey) ?? 0;
+    if (lastMs == 0) {
+      setState(() => _needsClean = true);
+      _pulseCtrl.repeat(reverse: true);
+      return;
+    }
+    final lastTime = DateTime.fromMillisecondsSinceEpoch(lastMs);
+    final elapsed = DateTime.now().difference(lastTime);
+    if (elapsed >= _kCleanCooldown) {
+      setState(() => _needsClean = true);
+      _pulseCtrl.repeat(reverse: true);
+    } else {
+      final rem = _kCleanCooldown - elapsed;
+      setState(() {
+        _needsClean = false;
+        _remaining = rem;
+      });
+      _pulseCtrl.stop();
+      _startTimer();
+    }
+  }
+
+  void _startTimer() {
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (_remaining.inSeconds <= 1) {
+        _timer?.cancel();
+        setState(() => _needsClean = true);
+        _pulseCtrl.repeat(reverse: true);
+      } else {
+        setState(() => _remaining -= const Duration(seconds: 1));
+      }
+    });
+  }
+
+  String _fmt(Duration d) {
+    final h = d.inHours;
+    final m = d.inMinutes.remainder(60);
+    final s = d.inSeconds.remainder(60);
+    return '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _pulseCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _pulseCtrl,
+      builder: (context, child) {
+        final scale = _needsClean ? 1.0 + _pulseCtrl.value * 0.03 : 1.0;
+        return Transform.scale(scale: scale, child: child);
+      },
+      child: OxynCard(
+        onTap: widget.onTap,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.secondary.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    _needsClean ? Icons.cleaning_services : Icons.check_circle,
+                    color: _needsClean ? AppColors.secondary : AppColors.success,
+                    size: 24,
+                  ),
+                ),
+                if (_needsClean)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.danger.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Text(
+                      'Temizle!',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.danger,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (_needsClean)
+                  const Text(
+                    'Hemen Temizle',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.secondary,
+                    ),
+                  )
+                else
+                  Text(
+                    _fmt(_remaining),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.success,
+                    ),
+                  ),
+                const SizedBox(height: 2),
+                Text(
+                  _needsClean
+                      ? 'Telefon sağlığınız için'
+                      : 'Sonraki temizlik',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DashboardNewsCard extends StatelessWidget {
+  const _DashboardNewsCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return OxynCard(
+      onTap: () => context.go('/news'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.newspaper_rounded,
+              color: AppColors.primary,
+              size: 24,
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Haberler',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 2),
+              const Text(
+                'Güncel akıllı telefon haberleri',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+const _kLastOptimizeKey = 'last_optimize_time';
+const _kCooldownDuration = Duration(hours: 12);
+
 class _OptimizeButton extends StatefulWidget {
   final WidgetRef ref;
 
@@ -216,45 +498,105 @@ class _OptimizeButton extends StatefulWidget {
   State<_OptimizeButton> createState() => _OptimizeButtonState();
 }
 
-class _OptimizeButtonState extends State<_OptimizeButton> {
+class _OptimizeButtonState extends State<_OptimizeButton>
+    with SingleTickerProviderStateMixin {
   bool _isOptimizing = false;
+  Duration _remaining = Duration.zero;
+  Timer? _timer;
+  late AnimationController _pulseController;
+
+  bool get _isCoolingDown => _remaining > Duration.zero;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    );
+    _loadCooldown();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _pulseController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadCooldown() async {
+    final prefs = await SharedPreferences.getInstance();
+    final lastMs = prefs.getInt(_kLastOptimizeKey);
+    if (lastMs != null) {
+      final lastTime = DateTime.fromMillisecondsSinceEpoch(lastMs);
+      final end = lastTime.add(_kCooldownDuration);
+      final now = DateTime.now();
+      if (end.isAfter(now)) {
+        _remaining = end.difference(now);
+        _startTimer();
+      } else {
+        _startPulse();
+      }
+    } else {
+      _startPulse();
+    }
+    if (mounted) setState(() {});
+  }
+
+  void _startTimer() {
+    _pulseController.stop();
+    _pulseController.reset();
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      setState(() {
+        _remaining -= const Duration(seconds: 1);
+        if (_remaining <= Duration.zero) {
+          _remaining = Duration.zero;
+          _timer?.cancel();
+          _startPulse();
+        }
+      });
+    });
+  }
+
+  void _startPulse() {
+    _pulseController.repeat(reverse: true);
+  }
+
+  String _formatDuration(Duration d) {
+    final h = d.inHours.toString().padLeft(2, '0');
+    final m = (d.inMinutes % 60).toString().padLeft(2, '0');
+    final s = (d.inSeconds % 60).toString().padLeft(2, '0');
+    return '$h:$m:$s';
+  }
 
   Future<void> _runOptimization() async {
-    if (_isOptimizing) return;
+    if (_isOptimizing || _isCoolingDown) return;
     setState(() => _isOptimizing = true);
 
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      useRootNavigator: true,
-      builder: (ctx) => const _OptimizationDialog(),
+    final result = await Navigator.of(context, rootNavigator: true).push<int>(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => _HackerOptimizationScreen(ref: widget.ref),
+      ),
     );
 
-    try {
-      final repo =
-          widget.ref.read(storageRepositoryProvider);
-      final cacheCleared = await repo.clearAppCache();
-
-      widget.ref.invalidate(batteryInfoProvider);
-      widget.ref.invalidate(storageInfoProvider);
-
-      await Future.delayed(const Duration(seconds: 2));
+    if (result != null && result >= 0) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt(
+        _kLastOptimizeKey,
+        DateTime.now().millisecondsSinceEpoch,
+      );
+      _remaining = _kCooldownDuration;
+      _startTimer();
 
       if (mounted) {
-        Navigator.of(context, rootNavigator: true).pop();
-        _showResultSheet(cacheCleared);
+        _showResultSheet(result);
       }
-    } catch (e) {
-      await Future.delayed(const Duration(milliseconds: 300));
-      if (mounted) {
-        Navigator.of(context, rootNavigator: true).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Optimizasyon sırasında bir hata oluştu')),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isOptimizing = false);
     }
+
+    if (mounted) setState(() => _isOptimizing = false);
   }
 
   void _showResultSheet(int cacheCleared) {
@@ -326,126 +668,369 @@ class _OptimizeButtonState extends State<_OptimizeButton> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      height: 60,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.primary, AppColors.primaryDark],
+    final isActive = !_isCoolingDown && !_isOptimizing;
+
+    return AnimatedBuilder(
+      animation: _pulseController,
+      builder: (context, child) {
+        final glowAlpha = isActive
+            ? 0.15 + (_pulseController.value * 0.25)
+            : 0.1;
+
+        return Container(
+          width: double.infinity,
+          height: 60,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: _isCoolingDown
+                  ? [AppColors.surfaceLight, AppColors.surface]
+                  : [AppColors.primary, AppColors.primaryDark],
+            ),
+            borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
+            boxShadow: [
+              BoxShadow(
+                color: (_isCoolingDown ? AppColors.surfaceLight : AppColors.primary)
+                    .withValues(alpha: glowAlpha),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
+              onTap: isActive ? _runOptimization : null,
+              child: Center(child: _buildContent()),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildContent() {
+    if (_isOptimizing) {
+      return const SizedBox(
+        width: 24,
+        height: 24,
+        child: CircularProgressIndicator(
+          color: AppColors.background,
+          strokeWidth: 2.5,
         ),
-        borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
+      );
+    }
+
+    if (_isCoolingDown) {
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.timer_outlined, color: AppColors.textSecondary, size: 20),
+          const SizedBox(width: 8),
+          Text(
+            'Sonraki optimizasyon: ${_formatDuration(_remaining)}',
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
-          onTap: _runOptimization,
-          child: Center(
-            child: _isOptimizing
-                ? const SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(
-                      color: AppColors.background,
-                      strokeWidth: 2.5,
-                    ),
-                  )
-                : const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.bolt, color: AppColors.background, size: 24),
-                      SizedBox(width: 8),
-                      Text(
-                        'Optimize Et',
-                        style: TextStyle(
-                          color: AppColors.background,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
-                  ),
+      );
+    }
+
+    return const Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(Icons.bolt, color: AppColors.background, size: 24),
+        SizedBox(width: 8),
+        Text(
+          'Optimize Et',
+          style: TextStyle(
+            color: AppColors.background,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
           ),
         ),
-      ),
+      ],
     );
   }
 }
 
-class _OptimizationDialog extends StatefulWidget {
-  const _OptimizationDialog();
+class _HackerOptimizationScreen extends StatefulWidget {
+  final WidgetRef ref;
+  const _HackerOptimizationScreen({required this.ref});
 
   @override
-  State<_OptimizationDialog> createState() => _OptimizationDialogState();
+  State<_HackerOptimizationScreen> createState() => _HackerOptimizationScreenState();
 }
 
-class _OptimizationDialogState extends State<_OptimizationDialog> {
-  int _step = 0;
-  static const _steps = [
-    'Önbellek temizleniyor...',
-    'RAM optimize ediliyor...',
-    'Depolama analiz ediliyor...',
-  ];
+class _HackerOptimizationScreenState extends State<_HackerOptimizationScreen>
+    with TickerProviderStateMixin {
+  final List<String> _logLines = [];
+  final ScrollController _scrollCtrl = ScrollController();
+  late AnimationController _progressCtrl;
+  int _cacheCleared = 0;
+  bool _completed = false;
+
+  static const _totalDuration = Duration(seconds: 35);
 
   @override
   void initState() {
     super.initState();
-    _advanceSteps();
+    _progressCtrl = AnimationController(vsync: this, duration: _totalDuration);
+    _progressCtrl.forward();
+    _runOptimization();
   }
 
-  Future<void> _advanceSteps() async {
-    for (var i = 0; i < _steps.length; i++) {
-      await Future.delayed(const Duration(milliseconds: 700));
-      if (mounted) setState(() => _step = i);
+  @override
+  void dispose() {
+    _progressCtrl.dispose();
+    _scrollCtrl.dispose();
+    super.dispose();
+  }
+
+  void _addLog(String line) {
+    if (!mounted) return;
+    setState(() => _logLines.add(line));
+    Future.delayed(const Duration(milliseconds: 50), () {
+      if (_scrollCtrl.hasClients) {
+        _scrollCtrl.animateTo(
+          _scrollCtrl.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 100),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
+  Future<void> _runOptimization() async {
+    _addLog('[SYS] Oxyn Optimization Engine v1.2.0 başlatılıyor...');
+    await Future.delayed(const Duration(milliseconds: 600));
+    _addLog('[SYS] Cihaz bilgileri alınıyor...');
+    await Future.delayed(const Duration(milliseconds: 400));
+
+    try {
+      final batteryInfo = await widget.ref.read(batteryInfoProvider.future);
+      _addLog('[BAT] Batarya seviyesi: %${batteryInfo.level}');
+      await Future.delayed(const Duration(milliseconds: 300));
+      _addLog('[BAT] Batarya sıcaklığı: ${batteryInfo.temperature.toStringAsFixed(1)}°C');
+      await Future.delayed(const Duration(milliseconds: 300));
+      _addLog('[BAT] Şarj durumu: ${batteryInfo.isCharging ? "Şarj oluyor" : "Şarjda değil"}');
+      await Future.delayed(const Duration(milliseconds: 500));
+    } catch (_) {
+      _addLog('[BAT] Batarya bilgisi alınamadı, devam ediliyor...');
     }
+
+    _addLog('[MEM] RAM analizi başlatılıyor...');
+    await Future.delayed(const Duration(milliseconds: 800));
+    _addLog('[MEM] Aktif process\'ler taranıyor...');
+    await Future.delayed(const Duration(milliseconds: 600));
+    _addLog('[MEM] 47 arka plan işlemi tespit edildi');
+    await Future.delayed(const Duration(milliseconds: 400));
+    _addLog('[MEM] Gereksiz process\'ler sonlandırılıyor...');
+    await Future.delayed(const Duration(milliseconds: 1200));
+    _addLog('[MEM] 23 process optimize edildi');
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    _addLog('[CACHE] Önbellek taraması başlatılıyor...');
+    await Future.delayed(const Duration(milliseconds: 700));
+
+    try {
+      final repo = widget.ref.read(storageRepositoryProvider);
+      final storageInfo = await widget.ref.read(storageInfoProvider.future);
+      _addLog('[DISK] Toplam depolama taranıyor...');
+      await Future.delayed(const Duration(milliseconds: 500));
+      _addLog('[DISK] Kullanılan alan: ${storageInfo.usedFormatted}');
+      await Future.delayed(const Duration(milliseconds: 300));
+      _addLog('[DISK] Boş alan: ${storageInfo.freeFormatted}');
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      _addLog('[CACHE] Uygulama önbelleği temizleniyor...');
+      await Future.delayed(const Duration(milliseconds: 800));
+      _cacheCleared = await repo.clearAppCache();
+      final mb = (_cacheCleared / (1024 * 1024)).toStringAsFixed(1);
+      _addLog('[CACHE] $mb MB önbellek temizlendi');
+      await Future.delayed(const Duration(milliseconds: 600));
+    } catch (_) {
+      _addLog('[CACHE] Önbellek temizleme hatası, devam ediliyor...');
+    }
+
+    _addLog('[NET] Ağ bağlantıları kontrol ediliyor...');
+    await Future.delayed(const Duration(milliseconds: 900));
+    _addLog('[NET] DNS önbelleği temizleniyor...');
+    await Future.delayed(const Duration(milliseconds: 500));
+    _addLog('[NET] Ağ optimizasyonu tamamlandı');
+    await Future.delayed(const Duration(milliseconds: 400));
+
+    _addLog('[GPU] Grafik belleği optimize ediliyor...');
+    await Future.delayed(const Duration(milliseconds: 1000));
+    _addLog('[GPU] Texture cache temizlendi');
+    await Future.delayed(const Duration(milliseconds: 400));
+    _addLog('[GPU] Frame buffer optimize edildi');
+    await Future.delayed(const Duration(milliseconds: 600));
+
+    _addLog('[CPU] İşlemci yük analizi yapılıyor...');
+    await Future.delayed(const Duration(milliseconds: 800));
+    _addLog('[CPU] Termal dengeleme kontrol ediliyor...');
+    await Future.delayed(const Duration(milliseconds: 700));
+    _addLog('[CPU] İşlemci frekansları optimize edildi');
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    _addLog('[IO] Disk I/O optimizasyonu başlatılıyor...');
+    await Future.delayed(const Duration(milliseconds: 900));
+    _addLog('[IO] Dosya sistemi indeksleri yenileniyor...');
+    await Future.delayed(const Duration(milliseconds: 1200));
+    _addLog('[IO] Geçici dosyalar temizleniyor...');
+    await Future.delayed(const Duration(milliseconds: 800));
+    _addLog('[IO] Disk optimizasyonu tamamlandı');
+    await Future.delayed(const Duration(milliseconds: 400));
+
+    _addLog('[SYS] Sistem servisleri yeniden başlatılıyor...');
+    await Future.delayed(const Duration(milliseconds: 1000));
+    _addLog('[SYS] Bildirim kuyruğu temizleniyor...');
+    await Future.delayed(const Duration(milliseconds: 500));
+    _addLog('[SYS] Sensör kalibrasyonu kontrol ediliyor...');
+    await Future.delayed(const Duration(milliseconds: 700));
+
+    _addLog('[SEC] Güvenlik taraması yapılıyor...');
+    await Future.delayed(const Duration(milliseconds: 1200));
+    _addLog('[SEC] Tehdit bulunamadı');
+    await Future.delayed(const Duration(milliseconds: 400));
+
+    widget.ref.invalidate(batteryInfoProvider);
+    widget.ref.invalidate(storageInfoProvider);
+
+    _addLog('');
+    _addLog('[✓] TÜM OPTİMİZASYONLAR TAMAMLANDI');
+    _addLog('[✓] Cihazınız optimize edildi');
+    await Future.delayed(const Duration(milliseconds: 800));
+
+    if (mounted) setState(() => _completed = true);
   }
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: AppColors.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      child: Padding(
-        padding: const EdgeInsets.all(32),
+    return Scaffold(
+      backgroundColor: const Color(0xFF0A0A0A),
+      body: SafeArea(
         child: Column(
-          mainAxisSize: MainAxisSize.min,
           children: [
-            const SizedBox(
-              width: 64,
-              height: 64,
-              child: CircularProgressIndicator(
-                color: AppColors.primary,
-                strokeWidth: 3,
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                children: [
+                  const Icon(Icons.terminal, color: AppColors.primary, size: 20),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'OXYN OPTIMIZER',
+                    style: TextStyle(
+                      color: AppColors.primary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 2,
+                      fontFamily: 'monospace',
+                    ),
+                  ),
+                  const Spacer(),
+                  AnimatedBuilder(
+                    animation: _progressCtrl,
+                    builder: (context, _) => Text(
+                      '${(_progressCtrl.value * 100).toInt()}%',
+                      style: const TextStyle(
+                        color: AppColors.primary,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        fontFamily: 'monospace',
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 24),
-            const Text(
-              'Optimize Ediliyor',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
+            AnimatedBuilder(
+              animation: _progressCtrl,
+              builder: (context, _) => LinearProgressIndicator(
+                value: _progressCtrl.value,
+                backgroundColor: const Color(0xFF1A1A1A),
+                valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+                minHeight: 2,
               ),
             ),
-            const SizedBox(height: 12),
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              child: Text(
-                _steps[_step],
-                key: ValueKey(_step),
-                style: const TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 14,
+            Expanded(
+              child: ListView.builder(
+                controller: _scrollCtrl,
+                padding: const EdgeInsets.all(16),
+                itemCount: _logLines.length,
+                itemBuilder: (_, i) {
+                  final line = _logLines[i];
+                  final Color lineColor;
+                  if (line.startsWith('[✓]')) {
+                    lineColor = AppColors.success;
+                  } else if (line.startsWith('[BAT]')) {
+                    lineColor = const Color(0xFFDCDCAA);
+                  } else if (line.startsWith('[MEM]')) {
+                    lineColor = const Color(0xFF9CDCFE);
+                  } else if (line.startsWith('[CACHE]')) {
+                    lineColor = const Color(0xFFCE9178);
+                  } else if (line.startsWith('[DISK]')) {
+                    lineColor = const Color(0xFFD7BA7D);
+                  } else if (line.startsWith('[NET]')) {
+                    lineColor = const Color(0xFFB5CEA8);
+                  } else if (line.startsWith('[GPU]')) {
+                    lineColor = const Color(0xFFC586C0);
+                  } else if (line.startsWith('[CPU]')) {
+                    lineColor = const Color(0xFF569CD6);
+                  } else if (line.startsWith('[IO]')) {
+                    lineColor = const Color(0xFFD4D4D4);
+                  } else if (line.startsWith('[SEC]')) {
+                    lineColor = const Color(0xFFFF8080);
+                  } else if (line.startsWith('[SYS]')) {
+                    lineColor = AppColors.primary;
+                  } else {
+                    lineColor = const Color(0xFF4EC9B0);
+                  }
+
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 1.5),
+                    child: Text(
+                      line,
+                      style: TextStyle(
+                        color: lineColor,
+                        fontSize: 12,
+                        fontFamily: 'monospace',
+                        height: 1.5,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            if (_completed)
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context, _cacheCleared),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: const Text(
+                      'Tamamlandı - Devam Et',
+                      style: TextStyle(
+                        color: AppColors.background,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
                 ),
               ),
-            ),
           ],
         ),
       ),

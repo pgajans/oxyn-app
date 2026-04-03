@@ -133,6 +133,56 @@ class NotificationService {
     debugPrint('Weekly maintenance scheduled');
   }
 
+  Future<void> scheduleOptimizationReminder() async {
+    final now = tz.TZDateTime.now(tz.local);
+    final scheduled = now.add(const Duration(hours: 12));
+
+    final androidDetails = const AndroidNotificationDetails(
+      _channelId,
+      _channelName,
+      importance: Importance.high,
+      priority: Priority.high,
+    );
+    final details = NotificationDetails(
+        android: androidDetails, iOS: const DarwinNotificationDetails());
+
+    await _local.zonedSchedule(
+      id: 'optimize_reminder'.hashCode,
+      title: 'Optimizasyon Gerekiyor',
+      body: 'Telefonunu optimize etme zamanı geldi. Performansını artır!',
+      scheduledDate: scheduled,
+      notificationDetails: details,
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+    );
+    debugPrint('Optimization reminder scheduled for 12 hours');
+  }
+
+  Future<void> scheduleFreeUserReminder() async {
+    final now = tz.TZDateTime.now(tz.local);
+    var scheduled = tz.TZDateTime(
+        tz.local, now.year, now.month, now.day + 1, 10, 0);
+
+    final androidDetails = const AndroidNotificationDetails(
+      _channelId,
+      _channelName,
+      importance: Importance.defaultImportance,
+      priority: Priority.defaultPriority,
+    );
+    final details = NotificationDetails(
+        android: androidDetails, iOS: const DarwinNotificationDetails());
+
+    await _local.zonedSchedule(
+      id: 'free_user_reminder'.hashCode,
+      title: 'Telefonunu Analiz Et',
+      body: 'Telefonunun sağlık durumunu kontrol etmeyi unutma!',
+      scheduledDate: scheduled,
+      notificationDetails: details,
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      matchDateTimeComponents: DateTimeComponents.time,
+    );
+    debugPrint('Free user daily reminder scheduled');
+  }
+
   Future<void> scheduleDailyScoreNotification({
     required int hour,
     required int minute,

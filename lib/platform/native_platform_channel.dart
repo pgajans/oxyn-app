@@ -41,4 +41,20 @@ class NativePlatformChannel {
       debugPrint('Platform channel openBatterySettings error: $e');
     }
   }
+
+  static Future<void> openNotificationSettings() async {
+    try {
+      await _channel.invokeMethod('openNotificationSettings');
+    } catch (e) {
+      debugPrint('Platform channel openNotificationSettings error: $e');
+    }
+  }
+
+  static Future<void> openAppSettings() async {
+    try {
+      await _channel.invokeMethod('openAppSettings');
+    } catch (e) {
+      debugPrint('Platform channel openAppSettings error: $e');
+    }
+  }
 }

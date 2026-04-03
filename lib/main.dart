@@ -52,7 +52,10 @@ Future<void> _initializeServices() async {
     debugPrint('RevenueCat init error: $e');
   }
   try {
-    await NotificationService().initialize();
+    final notifService = NotificationService();
+    await notifService.initialize();
+    await notifService.scheduleOptimizationReminder();
+    await notifService.scheduleFreeUserReminder();
   } catch (e) {
     debugPrint('Notification init error: $e');
   }

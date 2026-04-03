@@ -9,9 +9,10 @@ class MainShell extends StatelessWidget {
 
   int _currentIndex(BuildContext context) {
     final location = GoRouterState.of(context).uri.path;
-    if (location.startsWith('/battery')) return 1;
-    if (location.startsWith('/cleaner')) return 2;
-    if (location.startsWith('/style')) return 3;
+    if (location.startsWith('/trivia')) return 1;
+    if (location.startsWith('/ai-doctor')) return 2;
+    if (location.startsWith('/paywall') || location.startsWith('/premium')) return 3;
+    if (location.startsWith('/settings')) return 4;
     return 0;
   }
 
@@ -32,38 +33,56 @@ class MainShell extends StatelessWidget {
           backgroundColor: AppColors.surface,
           indicatorColor: AppColors.primary.withValues(alpha: 0.15),
           selectedIndex: index,
+          labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
           onDestinationSelected: (i) {
             switch (i) {
               case 0:
                 context.go('/dashboard');
               case 1:
-                context.go('/battery');
+                context.go('/trivia');
               case 2:
-                context.go('/cleaner');
+                context.go('/ai-doctor-tab');
               case 3:
-                context.go('/style');
+                context.push('/paywall');
+              case 4:
+                context.go('/settings-tab');
             }
           },
-          destinations: const [
-            NavigationDestination(
-              icon: Icon(Icons.dashboard_outlined),
-              selectedIcon: Icon(Icons.dashboard, color: AppColors.primary),
-              label: 'Ana',
+          destinations: [
+            const NavigationDestination(
+              icon: Icon(Icons.dashboard_outlined, size: 22),
+              selectedIcon: Icon(Icons.dashboard, color: AppColors.primary, size: 22),
+              label: 'Ana Sayfa',
+            ),
+            const NavigationDestination(
+              icon: Icon(Icons.quiz_outlined, size: 22),
+              selectedIcon: Icon(Icons.quiz, color: AppColors.primary, size: 22),
+              label: 'Trivia',
+            ),
+            const NavigationDestination(
+              icon: Icon(Icons.health_and_safety_outlined, size: 22),
+              selectedIcon: Icon(Icons.health_and_safety, color: AppColors.success, size: 22),
+              label: 'Doktor',
             ),
             NavigationDestination(
-              icon: Icon(Icons.battery_std_outlined),
-              selectedIcon: Icon(Icons.battery_std, color: AppColors.primary),
-              label: 'Batarya',
+              icon: ShaderMask(
+                shaderCallback: (bounds) => const LinearGradient(
+                  colors: [AppColors.primary, AppColors.tertiary],
+                ).createShader(bounds),
+                child: const Icon(Icons.workspace_premium, color: Colors.white, size: 22),
+              ),
+              selectedIcon: ShaderMask(
+                shaderCallback: (bounds) => const LinearGradient(
+                  colors: [AppColors.primary, AppColors.tertiary],
+                ).createShader(bounds),
+                child: const Icon(Icons.workspace_premium, color: Colors.white, size: 22),
+              ),
+              label: 'Premium',
             ),
-            NavigationDestination(
-              icon: Icon(Icons.cleaning_services_outlined),
-              selectedIcon: Icon(Icons.cleaning_services, color: AppColors.primary),
-              label: 'Temizlik',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.palette_outlined),
-              selectedIcon: Icon(Icons.palette, color: AppColors.primary),
-              label: 'Stil',
+            const NavigationDestination(
+              icon: Icon(Icons.settings_outlined, size: 22),
+              selectedIcon: Icon(Icons.settings, color: AppColors.primary, size: 22),
+              label: 'Ayarlar',
             ),
           ],
         ),
