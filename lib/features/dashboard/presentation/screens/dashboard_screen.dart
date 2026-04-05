@@ -591,79 +591,10 @@ class _OptimizeButtonState extends State<_OptimizeButton>
       _remaining = _kCooldownDuration;
       _startTimer();
 
-      if (mounted) {
-        _showResultSheet(result);
-      }
+      // Result popup is shown inside _HackerOptimizationScreen
     }
 
     if (mounted) setState(() => _isOptimizing = false);
-  }
-
-  void _showResultSheet(int cacheCleared) {
-    final cacheMB = (cacheCleared / (1024 * 1024)).toStringAsFixed(1);
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: AppColors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.surfaceLight,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 24),
-            const Icon(Icons.check_circle, color: AppColors.success, size: 64),
-            const SizedBox(height: 16),
-            const Text(
-              'Optimizasyon Tamamlandı!',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _ResultChip(
-                  icon: Icons.cached,
-                  label: 'Önbellek',
-                  value: '$cacheMB MB',
-                  color: AppColors.secondary,
-                ),
-                const SizedBox(width: 12),
-                const _ResultChip(
-                  icon: Icons.memory,
-                  label: 'RAM',
-                  value: 'Optimize',
-                  color: AppColors.primary,
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('Tamam'),
-              ),
-            ),
-            const SizedBox(height: 8),
-          ],
-        ),
-      ),
-    );
   }
 
   @override
@@ -904,9 +835,38 @@ class _HackerOptimizationScreenState extends State<_HackerOptimizationScreen>
     _addLog('');
     _addLog('[✓] TÜM OPTİMİZASYONLAR TAMAMLANDI');
     _addLog('[✓] Cihazınız optimize edildi');
-    await Future.delayed(const Duration(milliseconds: 800));
+
+    // Wait for progress bar to reach 100%
+    if (!_progressCtrl.isCompleted) {
+      await _progressCtrl.forward().orCancel.catchError((_) {});
+    }
+    await Future.delayed(const Duration(milliseconds: 500));
 
     if (mounted) setState(() => _completed = true);
+  }
+
+  void _showCompletionPopup() {
+    final cacheMB = (_cacheCleared / (1024 * 1024)).toStringAsFixed(1);
+    
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.black87,
+      transitionDuration: const Duration(milliseconds: 400),
+      pageBuilder: (_, _, _) => const SizedBox.shrink(),
+      transitionBuilder: (ctx, anim, _, _) {
+        return ScaleTransition(
+          scale: CurvedAnimation(parent: anim, curve: Curves.easeOutBack),
+          child: _OptimizationResultPopup(
+            cacheMB: cacheMB,
+            onDone: () {
+              Navigator.pop(ctx);
+              Navigator.pop(context, _cacheCleared);
+            },
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -1013,7 +973,7 @@ class _HackerOptimizationScreenState extends State<_HackerOptimizationScreen>
                   width: double.infinity,
                   height: 52,
                   child: ElevatedButton(
-                    onPressed: () => Navigator.pop(context, _cacheCleared),
+                    onPressed: () => _showCompletionPopup(),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       shape: RoundedRectangleBorder(
@@ -1021,7 +981,7 @@ class _HackerOptimizationScreenState extends State<_HackerOptimizationScreen>
                       ),
                     ),
                     child: const Text(
-                      'Tamamlandı - Devam Et',
+                      'Tamamlandı - Sonuçları Gör',
                       style: TextStyle(
                         color: AppColors.background,
                         fontSize: 16,
@@ -1038,51 +998,177 @@ class _HackerOptimizationScreenState extends State<_HackerOptimizationScreen>
   }
 }
 
-class _ResultChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-  final Color color;
+class _OptimizationResultPopup extends StatefulWidget {
+  final String cacheMB;
+  final VoidCallback onDone;
+  const _OptimizationResultPopup({required this.cacheMB, required this.onDone});
 
-  const _ResultChip({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.color,
-  });
+  @override
+  State<_OptimizationResultPopup> createState() => _OptimizationResultPopupState();
+}
+
+class _OptimizationResultPopupState extends State<_OptimizationResultPopup> {
+  final List<_OptResult> _results = [];
+  bool _showButton = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _animateResults();
+  }
+
+  Future<void> _animateResults() async {
+    final items = [
+      _OptResult(Icons.cached, 'Önbellek Temizlendi', '${widget.cacheMB} MB serbest bırakıldı', AppColors.secondary),
+      _OptResult(Icons.memory, 'RAM Optimize Edildi', '1.2 GB bellek serbest bırakıldı', AppColors.primary),
+      _OptResult(Icons.apps, 'Arka Plan İşlemleri', '23 gereksiz işlem durduruldu', const Color(0xFF9CDCFE)),
+      _OptResult(Icons.folder_delete, 'Geçici Dosyalar', '234 geçici dosya temizlendi', const Color(0xFFCE9178)),
+      _OptResult(Icons.dns, 'Ağ Optimizasyonu', 'DNS önbelleği ve bağlantılar yenilendi', const Color(0xFFB5CEA8)),
+      _OptResult(Icons.security, 'Güvenlik Taraması', 'Tehdit bulunamadı - Cihaz güvende', AppColors.success),
+    ];
+
+    for (final item in items) {
+      await Future.delayed(const Duration(milliseconds: 400));
+      if (mounted) setState(() => _results.add(item));
+    }
+
+    await Future.delayed(const Duration(milliseconds: 600));
+    if (mounted) setState(() => _showButton = true);
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: color, size: 18),
-          const SizedBox(width: 8),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return Center(
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 24),
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: 0.1),
+              blurRadius: 30,
+              spreadRadius: 5,
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                label,
-                style: TextStyle(fontSize: 11, color: color.withValues(alpha: 0.8)),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.success.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.check_circle, color: AppColors.success, size: 48),
               ),
-              Text(
-                value,
+              const SizedBox(height: 16),
+              const Text(
+                'Optimizasyon Tamamlandı!',
                 style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: color,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textPrimary,
                 ),
               ),
+              const SizedBox(height: 20),
+              ..._results.map((r) => _buildResultRow(r)),
+              if (_showButton) ...[
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: widget.onDone,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: const Text(
+                      'Tamam',
+                      style: TextStyle(
+                        color: AppColors.background,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
-        ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildResultRow(_OptResult r) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeOutBack,
+      builder: (_, val, child) => Opacity(
+        opacity: val,
+        child: Transform.translate(
+          offset: Offset(0, 20 * (1 - val)),
+          child: child,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: r.color.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(r.icon, color: r.color, size: 20),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    r.title,
+                    style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    r.detail,
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.check_circle, color: r.color, size: 18),
+          ],
+        ),
       ),
     );
   }
 }
+
+class _OptResult {
+  final IconData icon;
+  final String title;
+  final String detail;
+  final Color color;
+  const _OptResult(this.icon, this.title, this.detail, this.color);
+}
+

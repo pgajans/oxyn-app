@@ -182,7 +182,7 @@ class StorageRepository {
     return items;
   }
 
-  Future<List<CleanableItem>> findLargeFiles({int minBytes = 20 * 1024 * 1024}) async {
+  Future<List<CleanableItem>> findLargeFiles({int minBytes = 10 * 1024 * 1024}) async {
     try {
       final permission = await PhotoManager.requestPermissionExtend();
       if (!permission.isAuth) return [];

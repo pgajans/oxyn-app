@@ -247,8 +247,8 @@ class CleanerScreen extends ConsumerWidget {
                     icon: Icons.file_present,
                     title: 'Büyük Dosyalar',
                     subtitle: scan.hasScanned
-                        ? '${scan.largeFiles.length} dosya (20MB+)'
-                        : '20MB üzeri dosyalar',
+                        ? '${scan.largeFiles.length} dosya (10MB+)'
+                        : '10MB üzeri dosyalar',
                     size: scan.hasScanned && scan.largeFilesBytes > 0
                         ? StorageInfo.formatBytes(scan.largeFilesBytes)
                         : '—',
@@ -258,7 +258,7 @@ class CleanerScreen extends ConsumerWidget {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(scan.hasScanned
-                                ? '50MB üzeri dosya bulunamadı'
+                                ? '10MB üzeri dosya bulunamadı'
                                 : 'Önce taramayı başlatın'),
                             behavior: SnackBarBehavior.floating,
                           ),
@@ -458,7 +458,9 @@ class _ScanResultCard extends StatefulWidget {
 class _ScanResultCardState extends State<_ScanResultCard>
     with TickerProviderStateMixin {
   late AnimationController _iconCtrl;
-  late AnimationController _rippleCtrl;
+  late AnimationController _pulseCtrl;
+  final List<_ScanStat> _visibleStats = [];
+  bool _statsRevealed = false;
 
   @override
   void initState() {
@@ -467,20 +469,41 @@ class _ScanResultCardState extends State<_ScanResultCard>
       vsync: this,
       duration: const Duration(milliseconds: 800),
     );
-    _rippleCtrl = AnimationController(
+    _pulseCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
-    );
+    )..repeat(reverse: true);
     if (widget.scan.hasScanned) {
       _iconCtrl.forward();
-      _rippleCtrl.forward();
+      _revealStats();
     }
+  }
+
+  Future<void> _revealStats() async {
+    await Future.delayed(const Duration(milliseconds: 600));
+    final scan = widget.scan;
+    final stats = <_ScanStat>[
+      _ScanStat(Icons.photo_library, 'Fotoğraflar',
+          '${scan.similarPhotoGroups.length} grup bulundu', AppColors.secondary),
+      _ScanStat(Icons.file_present, 'Büyük Dosyalar',
+          '${scan.largeFiles.length} dosya (10MB+)', AppColors.danger),
+      _ScanStat(Icons.screenshot, 'Ekran Görüntüleri',
+          '${scan.screenshots.length} adet', AppColors.primary),
+      _ScanStat(Icons.cached, 'Önbellek',
+          'Temizlenebilir alan mevcut', AppColors.warning),
+    ];
+    for (final stat in stats) {
+      await Future.delayed(const Duration(milliseconds: 300));
+      if (mounted) setState(() => _visibleStats.add(stat));
+    }
+    await Future.delayed(const Duration(milliseconds: 400));
+    if (mounted) setState(() => _statsRevealed = true);
   }
 
   @override
   void dispose() {
     _iconCtrl.dispose();
-    _rippleCtrl.dispose();
+    _pulseCtrl.dispose();
     super.dispose();
   }
 
@@ -491,56 +514,42 @@ class _ScanResultCardState extends State<_ScanResultCard>
     final isPremium = widget.ref.watch(isPremiumProvider);
     final freeCleanAsync = widget.ref.watch(freeCleanAvailableProvider);
     final hasFreeClean = freeCleanAsync.value ?? false;
-    final iconColor = hasItems ? AppColors.secondary : AppColors.success;
+    final accentColor = hasItems ? AppColors.secondary : AppColors.success;
 
     return OxynCard(
       padding: const EdgeInsets.all(20),
       child: Column(
         children: [
-          SizedBox(
-            width: 80,
-            height: 80,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                AnimatedBuilder(
-                  animation: _rippleCtrl,
-                  builder: (context, _) {
-                    return Container(
-                      width: 80 * _rippleCtrl.value,
-                      height: 80 * _rippleCtrl.value,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: iconColor.withValues(
-                            alpha: 0.4 * (1 - _rippleCtrl.value),
-                          ),
-                          width: 3,
-                        ),
+          ScaleTransition(
+            scale: CurvedAnimation(
+              parent: _iconCtrl,
+              curve: Curves.elasticOut,
+            ),
+            child: AnimatedBuilder(
+              animation: _pulseCtrl,
+              builder: (context, child) {
+                final glow = hasItems ? 0.1 + _pulseCtrl.value * 0.15 : 0.15;
+                return Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: accentColor.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: accentColor.withValues(alpha: glow),
+                        blurRadius: 20,
+                        spreadRadius: 2,
                       ),
-                    );
-                  },
-                ),
-                ScaleTransition(
-                  scale: CurvedAnimation(
-                    parent: _iconCtrl,
-                    curve: Curves.elasticOut,
+                    ],
                   ),
-                  child: Container(
-                    width: 56,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      color: iconColor.withValues(alpha: 0.15),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      hasItems ? Icons.cleaning_services : Icons.verified,
-                      color: iconColor,
-                      size: 30,
-                    ),
+                  child: Icon(
+                    hasItems ? Icons.manage_search_rounded : Icons.verified_rounded,
+                    color: accentColor,
+                    size: 32,
                   ),
-                ),
-              ],
+                );
+              },
             ),
           ),
           const SizedBox(height: 14),
@@ -556,13 +565,13 @@ class _ScanResultCardState extends State<_ScanResultCard>
                     color: AppColors.textPrimary,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 Text(
                   hasItems
                       ? 'Temizlenebilir: ${widget.scan.totalCleanableFormatted}'
                       : 'Harika! Temizlenecek bir şey bulunamadı.',
                   style: const TextStyle(
-                    fontSize: 15,
+                    fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: AppColors.textSecondary,
                   ),
@@ -572,44 +581,95 @@ class _ScanResultCardState extends State<_ScanResultCard>
                   Text(
                     '${widget.scan.totalItemCount} öğe bulundu',
                     style: const TextStyle(
-                        fontSize: 12, color: AppColors.textSecondary),
+                        fontSize: 12, color: AppColors.textTertiary),
                   ),
-                  const SizedBox(height: 14),
-                  if (!isPremium && hasFreeClean)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: AppColors.success.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Text(
-                        'Haftalık ücretsiz temizleme hakkınız var!',
-                        style: TextStyle(
-                          color: AppColors.success,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  if (!isPremium && hasFreeClean)
-                    const SizedBox(height: 8),
                 ],
-                const SizedBox(height: 12),
-                TextButton.icon(
-                  onPressed: () {
-                    widget.ref.read(scanResultProvider.notifier).startScan();
-                  },
-                  icon: const Icon(Icons.refresh, size: 18),
-                  label: const Text('Tekrar Tara'),
-                ),
               ],
             ),
           ),
+          if (_visibleStats.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            ..._visibleStats.map((s) => TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0, end: 1),
+              duration: const Duration(milliseconds: 350),
+              curve: Curves.easeOutBack,
+              builder: (_, val, child) => Opacity(
+                opacity: val,
+                child: Transform.translate(
+                  offset: Offset(0, 15 * (1 - val)),
+                  child: child,
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: s.color.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(s.icon, color: s.color, size: 18),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(s.title, style: const TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 13, fontWeight: FontWeight.w600)),
+                          Text(s.detail, style: const TextStyle(
+                            color: AppColors.textSecondary, fontSize: 11)),
+                        ],
+                      ),
+                    ),
+                    Icon(Icons.check_circle_outline, color: s.color, size: 16),
+                  ],
+                ),
+              ),
+            )),
+          ],
+          if (_statsRevealed) ...[
+            const SizedBox(height: 14),
+            if (!isPremium && hasFreeClean)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                margin: const EdgeInsets.only(bottom: 8),
+                decoration: BoxDecoration(
+                  color: AppColors.success.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Text(
+                  'Haftalık ücretsiz temizleme hakkınız var!',
+                  style: TextStyle(
+                    color: AppColors.success,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            TextButton.icon(
+              onPressed: () {
+                widget.ref.read(scanResultProvider.notifier).startScan();
+              },
+              icon: const Icon(Icons.refresh, size: 18),
+              label: const Text('Tekrar Tara'),
+            ),
+          ],
         ],
       ),
     );
   }
+}
+
+class _ScanStat {
+  final IconData icon;
+  final String title;
+  final String detail;
+  final Color color;
+  const _ScanStat(this.icon, this.title, this.detail, this.color);
 }
 
 class _SimilarPhotosPage extends StatefulWidget {
