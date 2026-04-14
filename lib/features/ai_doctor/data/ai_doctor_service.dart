@@ -4,12 +4,15 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AiDoctorService {
-  // Google AI Studio'dan ücretsiz API key al: https://aistudio.google.com/apikey
-  static const _geminiApiKey = 'AIzaSyA76EiMgXRB2Sb2yumt4P6iVM-OrRtNNJc';
+  static const _geminiApiKey = String.fromEnvironment(
+    'GEMINI_API_KEY',
+    defaultValue: '',
+  );
   static const _lastResultKey = 'ai_doctor_last_result';
   static const _lastDateKey = 'ai_doctor_last_date';
 
-  static bool get _isPlaceholderKey => _geminiApiKey.startsWith('YOUR_');
+  static bool get _isPlaceholderKey =>
+      _geminiApiKey.isEmpty || _geminiApiKey.startsWith('YOUR_');
 
   Future<bool> canAnalyzeToday() async {
     final prefs = await SharedPreferences.getInstance();
@@ -93,7 +96,7 @@ class AiDoctorService {
             'maxOutputTokens': 800,
           },
         }),
-      );
+      ).timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -115,7 +118,7 @@ class AiDoctorService {
           freeStorage: freeStorage,
         );
       } else {
-        debugPrint('Gemini API error: ${response.statusCode} ${response.body}');
+        debugPrint('Gemini API error: ${response.statusCode}');
         return _generateLocalReport(
           batteryLevel: batteryLevel,
           batteryTemperature: batteryTemperature,

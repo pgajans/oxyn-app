@@ -325,6 +325,10 @@ class _CleanerCardState extends State<_CleanerCard> with SingleTickerProviderSta
   void _startTimer() {
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) {
+        _timer?.cancel();
+        return;
+      }
       if (_remaining.inSeconds <= 1) {
         _timer?.cancel();
         setState(() => _needsClean = true);

@@ -3,23 +3,34 @@ import 'package:purchases_flutter/purchases_flutter.dart';
 import '../domain/subscription_status.dart';
 
 class SubscriptionService {
-  static const _apiKeyiOS = 'test_TzkrDTMSSUVFIReOIcxWQsVUWkr'; // Apple onaylaninca production key ile degistirilecek
-  static const _apiKeyAndroid = 'goog_FcjENVZJSseGJJQvdBjuFvhEZkp';
+  static final SubscriptionService _instance = SubscriptionService._();
+  factory SubscriptionService() => _instance;
+  SubscriptionService._();
+
+  static const _apiKeyiOS = String.fromEnvironment(
+    'REVENUECAT_IOS_KEY',
+    defaultValue: 'test_TzkrDTMSSUVFIReOIcxWQsVUWkr',
+  );
+  static const _apiKeyAndroid = String.fromEnvironment(
+    'REVENUECAT_ANDROID_KEY',
+    defaultValue: 'goog_FcjENVZJSseGJJQvdBjuFvhEZkp',
+  );
 
   bool _initialized = false;
   bool get isInitialized => _initialized;
 
   static bool get _isTestKey {
     if (defaultTargetPlatform == TargetPlatform.iOS) {
-      return _apiKeyiOS.startsWith('test_');
+      return _apiKeyiOS.isEmpty || _apiKeyiOS.startsWith('test_');
     }
-    return _apiKeyAndroid.startsWith('test_');
+    return _apiKeyAndroid.isEmpty || _apiKeyAndroid.startsWith('test_');
   }
 
   Future<void> initialize() async {
-    if (kReleaseMode && _isTestKey) {
-      debugPrint('RevenueCat skipped: test key in release mode');
-      return;
+    if (_initialized) return;
+
+    if (_isTestKey && kReleaseMode) {
+      debugPrint('RevenueCat: test key detected in release mode, initializing anyway for testing');
     }
 
     try {

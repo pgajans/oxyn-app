@@ -162,7 +162,9 @@ class _NewsCard extends StatelessWidget {
   }
 
   Future<void> _openUrl(String url) async {
-    final uri = Uri.parse(url);
+    final uri = Uri.tryParse(url);
+    if (uri == null) return;
+    if (uri.scheme != 'https' && uri.scheme != 'http') return;
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }

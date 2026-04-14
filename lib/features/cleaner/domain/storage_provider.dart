@@ -150,12 +150,10 @@ class ScanResultNotifier extends AsyncNotifier<ScanResult> {
     StorageRepository repo,
     ScanProgressNotifier progress,
   ) async {
-    await Future.any([
-      _performScan(repo, progress),
-      Future.delayed(const Duration(seconds: 45), () {
-        throw TimeoutException('Scan timed out');
-      }),
-    ]);
+    await _performScan(repo, progress).timeout(
+      const Duration(seconds: 45),
+      onTimeout: () => throw TimeoutException('Scan timed out'),
+    );
   }
 
   Future<void> _performScan(

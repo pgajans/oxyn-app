@@ -5,7 +5,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../domain/news_model.dart';
 
 class NewsService {
-  static const _geminiApiKey = 'AIzaSyA76EiMgXRB2Sb2yumt4P6iVM-OrRtNNJc';
+  static const _geminiApiKey = String.fromEnvironment(
+    'GEMINI_API_KEY',
+    defaultValue: '',
+  );
   static const _cacheKey = 'news_cache';
   static const _cacheTimeKey = 'news_cache_time';
   static const _cacheDuration = Duration(hours: 1);
@@ -144,6 +147,7 @@ class NewsService {
 
   Future<List<NewsArticle>> _translateBatch(List<NewsArticle> articles) async {
     if (articles.isEmpty) return articles;
+    if (_geminiApiKey.isEmpty) return articles;
 
     final result = <NewsArticle>[];
     const batchSize = 5;

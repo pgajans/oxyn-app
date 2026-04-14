@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -238,7 +239,9 @@ class _ScanScreenState extends State<_ScanScreen>
       await prefs.setInt('last_optimize_time', DateTime.now().millisecondsSinceEpoch);
       await prefs.setInt('last_free_clean_time', DateTime.now().millisecondsSinceEpoch);
       await prefs.setBool('free_clean_used', true);
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('Onboarding optimization error: $e');
+    }
   }
 
   void _updateTask() {

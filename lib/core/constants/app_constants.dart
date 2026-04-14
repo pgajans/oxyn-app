@@ -12,7 +12,7 @@ class AppConstants {
 
   // Scan
   static const Duration scanDuration = Duration(seconds: 60);
-  static const int largeFIleThresholdMB = 50;
+  static const int largeFileThresholdMB = 50;
 
   // Battery
   static const int chargeAlarmPercent = 80;

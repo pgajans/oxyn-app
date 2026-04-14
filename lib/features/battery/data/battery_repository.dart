@@ -7,7 +7,6 @@ import '../domain/energy_consumer.dart';
 
 class BatteryRepository {
   final Battery _battery = Battery();
-  StreamSubscription<BatteryState>? _stateSubscription;
 
   Future<BatteryInfo> getBatteryInfo() async {
     try {
@@ -49,16 +48,22 @@ class BatteryRepository {
   }
 
   Future<int> _getHealthPercentage() async {
-    // Android BatteryManager doesn't expose cycle-based health easily.
-    // We estimate based on temperature patterns and charging behavior.
-    // Will be refined with manufacturer-specific APIs.
-    return 94;
+    try {
+      final data = await NativePlatformChannel.getBatteryDetails();
+      final health = data['health'];
+      if (health is int && health > 0 && health <= 100) return health;
+    } catch (_) {}
+    // Fallback: standard APIs don't expose health on most devices
+    return -1;
   }
 
   Future<int> _getCycleCount() async {
-    // Cycle count is not available through standard Android/iOS APIs.
-    // Some manufacturers expose it, will be added per-device.
-    return 0;
+    try {
+      final data = await NativePlatformChannel.getBatteryDetails();
+      final cycles = data['cycleCount'];
+      if (cycles is int && cycles >= 0) return cycles;
+    } catch (_) {}
+    return -1;
   }
 
   String _mapChargingSource(BatteryState state) {
@@ -89,6 +94,6 @@ class BatteryRepository {
   }
 
   void dispose() {
-    _stateSubscription?.cancel();
+    // Reserved for future stream subscription cleanup
   }
 }

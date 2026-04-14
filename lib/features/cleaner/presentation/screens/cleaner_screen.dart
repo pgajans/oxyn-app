@@ -66,11 +66,10 @@ class CleanerScreen extends ConsumerWidget {
                 height: 50,
                 child: ElevatedButton.icon(
                   onPressed: () {
-                    // TODO: Show rewarded ad via AppLovin MAX
                     Navigator.pop(ctx, true);
                   },
-                  icon: const Icon(Icons.play_circle_outline, color: AppColors.background),
-                  label: const Text('Reklam İzle ve Temizle'),
+                  icon: const Icon(Icons.cleaning_services, color: AppColors.background),
+                  label: const Text('Temizle'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.secondary,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),

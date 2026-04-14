@@ -20,9 +20,13 @@ class SubscriptionStatusNotifier extends AsyncNotifier<SubscriptionStatus> {
 
   Future<void> purchase(Package package) async {
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(
-      () => ref.read(subscriptionServiceProvider).purchase(package),
-    );
+    try {
+      final result = await ref.read(subscriptionServiceProvider).purchase(package);
+      state = AsyncValue.data(result);
+    } catch (e, s) {
+      state = AsyncValue.error(e, s);
+      rethrow;
+    }
   }
 
   Future<void> restore() async {

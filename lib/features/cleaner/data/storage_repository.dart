@@ -71,7 +71,9 @@ class StorageRepository {
           }
         }
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('Dir size calculation error: $e');
+    }
     return size;
   }
 
@@ -88,7 +90,9 @@ class StorageRepository {
             } else if (entity is Directory) {
               await entity.delete(recursive: true);
             }
-          } catch (_) {}
+          } catch (e) {
+            debugPrint('Cache item delete error: $e');
+          }
         }
       }
 
@@ -327,7 +331,8 @@ class StorageRepository {
       final asset = await AssetEntity.fromId(assetId);
       if (asset == null) return null;
       return asset.thumbnailDataWithSize(const ThumbnailSize(200, 200));
-    } catch (_) {
+    } catch (e) {
+      debugPrint('Thumbnail load error for $assetId: $e');
       return null;
     }
   }

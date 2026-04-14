@@ -63,6 +63,7 @@ class _TriviaScreenState extends State<TriviaScreen>
 
   Future<void> _loadHighScore() async {
     final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
     setState(() {
       _highScore = prefs.getInt('trivia_high_score') ?? 0;
     });
@@ -71,6 +72,7 @@ class _TriviaScreenState extends State<TriviaScreen>
   Future<void> _saveHighScore(int score) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('trivia_high_score', score);
+    if (!mounted) return;
     setState(() {
       _highScore = score;
     });
@@ -763,7 +765,6 @@ class _TriviaScreenState extends State<TriviaScreen>
               ),
               const SizedBox(height: 28),
 
-              // TODO: Integrate rewarded ad SDK. For now this just restarts the game.
               SizedBox(
                 width: double.infinity,
                 height: 52,
@@ -775,8 +776,8 @@ class _TriviaScreenState extends State<TriviaScreen>
                     });
                     _nextQuestion();
                   },
-                  icon: const Icon(Icons.play_circle_outline, size: 20),
-                  label: const Text('Reklam Izle ve Devam Et (+1 Can)'),
+                  icon: const Icon(Icons.refresh, size: 20),
+                  label: const Text('Devam Et (+1 Can)'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.secondary,
                     side: const BorderSide(color: AppColors.secondary),

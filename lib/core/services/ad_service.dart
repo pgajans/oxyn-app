@@ -9,13 +9,28 @@ class AdService {
   bool _initialized = false;
   VoidCallback? _pendingRewardCallback;
 
-  static const _sdkKey = 'YOUR_APPLOVIN_SDK_KEY';
+  static const _sdkKey = String.fromEnvironment(
+    'APPLOVIN_SDK_KEY',
+    defaultValue: '',
+  );
 
-  static const _interstitialAdUnitId = 'YOUR_INTERSTITIAL_AD_UNIT_ID';
-  static const _rewardedAdUnitId = 'YOUR_REWARDED_AD_UNIT_ID';
-  static const _bannerAdUnitId = 'YOUR_BANNER_AD_UNIT_ID';
+  static const _interstitialAdUnitId = String.fromEnvironment(
+    'APPLOVIN_INTERSTITIAL_ID',
+    defaultValue: '',
+  );
+  static const _rewardedAdUnitId = String.fromEnvironment(
+    'APPLOVIN_REWARDED_ID',
+    defaultValue: '',
+  );
+  static const _bannerAdUnitId = String.fromEnvironment(
+    'APPLOVIN_BANNER_ID',
+    defaultValue: '',
+  );
 
-  static bool get _isPlaceholderKey => _sdkKey.startsWith('YOUR_');
+  static bool get isAdsAvailable => !_isPlaceholderKey;
+
+  static bool get _isPlaceholderKey =>
+      _sdkKey.isEmpty || _sdkKey.startsWith('YOUR_');
 
   Future<void> initialize() async {
     if (_initialized) return;

@@ -45,8 +45,6 @@ class _AiDoctorScreenState extends ConsumerState<AiDoctorScreen> {
     final isPremium = ref.read(isPremiumProvider);
 
     if (!isPremium) {
-      // TODO: Show rewarded ad, then proceed
-      // For now, show ad placeholder and allow once
       final canAnalyze = _canAnalyze ?? false;
       if (!canAnalyze) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -427,6 +425,7 @@ class _DoctorAnalysisScreenState extends State<_DoctorAnalysisScreen>
     if (!mounted) return;
     setState(() => _logLines.add(line));
     Future.delayed(const Duration(milliseconds: 50), () {
+      if (!mounted) return;
       if (_scrollCtrl.hasClients) {
         _scrollCtrl.animateTo(
           _scrollCtrl.position.maxScrollExtent,
@@ -445,8 +444,8 @@ class _DoctorAnalysisScreenState extends State<_DoctorAnalysisScreen>
     _addLog('[AI] Gemini 2.0 Flash bağlantısı kuruluyor...');
     await Future.delayed(const Duration(milliseconds: 600));
 
-    late final dynamic batteryInfo;
-    late final dynamic storageInfo;
+    dynamic batteryInfo;
+    dynamic storageInfo;
 
     try {
       _addLog('[BAT] Batarya verileri okunuyor...');
@@ -461,7 +460,7 @@ class _DoctorAnalysisScreenState extends State<_DoctorAnalysisScreen>
       _addLog('[BAT] Durum: ${batteryInfo.isCharging ? "Şarj oluyor" : "Pilde çalışıyor"}');
       await Future.delayed(const Duration(milliseconds: 500));
     } catch (_) {
-      _addLog('[BAT] Batarya verisi alınamadı');
+      _addLog('[BAT] Batarya verisi alınamadı, varsayılan değerler kullanılıyor');
       await Future.delayed(const Duration(milliseconds: 300));
     }
 
@@ -476,7 +475,7 @@ class _DoctorAnalysisScreenState extends State<_DoctorAnalysisScreen>
       _addLog('[DISK] Doluluk: %${storageInfo.usedPercent.toStringAsFixed(0)}');
       await Future.delayed(const Duration(milliseconds: 500));
     } catch (_) {
-      _addLog('[DISK] Depolama verisi alınamadı');
+      _addLog('[DISK] Depolama verisi alınamadı, varsayılan değerler kullanılıyor');
       await Future.delayed(const Duration(milliseconds: 300));
     }
 
@@ -501,14 +500,20 @@ class _DoctorAnalysisScreenState extends State<_DoctorAnalysisScreen>
     _addLog('[AI] Analiz ediliyor... Lütfen bekleyin.');
     await Future.delayed(const Duration(milliseconds: 500));
 
+    final int bLevel = batteryInfo?.level ?? 50;
+    final double bTemp = (batteryInfo?.temperature ?? 25.0).toDouble();
+    final int bHealth = batteryInfo?.healthPercentage ?? 80;
+    final double sUsedPct = (storageInfo?.usedPercent ?? 50.0).toDouble();
+    final String sFree = storageInfo?.freeFormatted ?? 'Bilinmiyor';
+
     try {
       final service = widget.ref.read(_aiDoctorServiceProvider);
       final result = await service.analyzeDevice(
-        batteryLevel: batteryInfo.level,
-        batteryTemperature: batteryInfo.temperature,
-        batteryHealth: batteryInfo.healthPercentage,
-        usedStoragePercent: storageInfo.usedPercent,
-        freeStorage: storageInfo.freeFormatted,
+        batteryLevel: bLevel,
+        batteryTemperature: bTemp,
+        batteryHealth: bHealth,
+        usedStoragePercent: sUsedPct,
+        freeStorage: sFree,
       );
       _aiResult = result;
       _addLog('[AI] Analiz tamamlandı!');
