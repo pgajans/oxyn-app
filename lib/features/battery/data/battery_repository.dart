@@ -52,7 +52,9 @@ class BatteryRepository {
       final data = await NativePlatformChannel.getBatteryDetails();
       final health = data['health'];
       if (health is int && health > 0 && health <= 100) return health;
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('Battery health fetch error: $e');
+    }
     // Fallback: standard APIs don't expose health on most devices
     return -1;
   }
@@ -62,7 +64,9 @@ class BatteryRepository {
       final data = await NativePlatformChannel.getBatteryDetails();
       final cycles = data['cycleCount'];
       if (cycles is int && cycles >= 0) return cycles;
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('Battery cycle count fetch error: $e');
+    }
     return -1;
   }
 

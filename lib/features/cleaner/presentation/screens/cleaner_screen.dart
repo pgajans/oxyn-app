@@ -6,7 +6,6 @@ import 'package:photo_manager/photo_manager.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/oxyn_card.dart';
-import '../../data/storage_repository.dart';
 import '../../domain/storage_info.dart';
 import '../../domain/storage_provider.dart';
 import '../../../subscription/domain/subscription_provider.dart';
@@ -1086,15 +1085,15 @@ class _FileListPageState extends State<_FileListPage> {
   }
 }
 
-class _ThumbnailWidget extends StatefulWidget {
+class _ThumbnailWidget extends ConsumerStatefulWidget {
   final String assetId;
   const _ThumbnailWidget({required this.assetId});
 
   @override
-  State<_ThumbnailWidget> createState() => _ThumbnailWidgetState();
+  ConsumerState<_ThumbnailWidget> createState() => _ThumbnailWidgetState();
 }
 
-class _ThumbnailWidgetState extends State<_ThumbnailWidget> {
+class _ThumbnailWidgetState extends ConsumerState<_ThumbnailWidget> {
   Uint8List? _data;
 
   @override
@@ -1104,7 +1103,7 @@ class _ThumbnailWidgetState extends State<_ThumbnailWidget> {
   }
 
   Future<void> _loadThumbnail() async {
-    final repo = StorageRepository();
+    final repo = ref.read(storageRepositoryProvider);
     final data = await repo.getThumbnail(widget.assetId);
     if (mounted) {
       setState(() => _data = data);
@@ -1187,20 +1186,14 @@ class _StorageOverview extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.sm),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              Text(
-                'Kullanılan: $used',
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: AppColors.textSecondary,
-                ),
-              ),
               Text(
                 'Boş: $free',
                 style: const TextStyle(
                   fontSize: 12,
                   color: AppColors.success,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
