@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/localization/generated/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/oxyn_card.dart';
@@ -13,10 +14,11 @@ class BatteryScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final t = AppLocalizations.of(context)!;
     final batteryAsync = ref.watch(batteryInfoProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Batarya')),
+      appBar: AppBar(title: Text(t.battery)),
       body: batteryAsync.when(
         loading: () => const Center(
           child: CircularProgressIndicator(color: AppColors.primary),
@@ -28,13 +30,13 @@ class BatteryScreen extends ConsumerWidget {
               const Icon(Icons.error_outline,
                   color: AppColors.danger, size: 48),
               const SizedBox(height: 12),
-              Text('Hata: $e',
+              Text(t.error(e.toString()),
                   style: const TextStyle(color: AppColors.textSecondary)),
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () =>
                     ref.read(batteryInfoProvider.notifier).refresh(),
-                child: const Text('Tekrar Dene'),
+                child: Text(t.tryAgain),
               ),
             ],
           ),
@@ -81,6 +83,7 @@ class _BatteryHealthBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context)!;
     final healthColor = _healthColor(info.healthPercentage);
     final isAndroid = Platform.isAndroid;
 
@@ -94,11 +97,10 @@ class _BatteryHealthBar extends StatelessWidget {
               Icon(Icons.favorite, color: healthColor, size: 22),
               const SizedBox(width: 8),
               Text(
-                isAndroid ? 'Tahmini Pil Sağlığı' : 'Pil Sağlığı',
+                isAndroid ? t.estimatedBatteryHealth : t.batteryHealth,
                 style: const TextStyle(
                   fontWeight: FontWeight.w600,
                   fontSize: 16,
-                  color: AppColors.textPrimary,
                 ),
               ),
               const Spacer(),
@@ -128,8 +130,8 @@ class _BatteryHealthBar extends StatelessWidget {
               Expanded(
                 child: _HealthDataTile(
                   icon: Icons.timer_outlined,
-                  label: 'Tahmini Kalan',
-                  value: info.isCharging ? 'Şarj oluyor' : info.remainingText,
+                  label: t.estimatedRemainingLabel,
+                  value: info.isCharging ? t.charging : info.remainingText,
                   color: AppColors.primary,
                 ),
               ),
@@ -137,7 +139,7 @@ class _BatteryHealthBar extends StatelessWidget {
               Expanded(
                 child: _HealthDataTile(
                   icon: Icons.thermostat,
-                  label: 'Pil Sıcaklığı',
+                  label: t.batteryTemperatureLabel,
                   value: info.temperatureText,
                   color: info.isOverheating
                       ? AppColors.danger
@@ -160,9 +162,7 @@ class _BatteryHealthBar extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    isAndroid
-                        ? 'Pil sağlığı %80\'in altına düştüğünde cihaz performansı etkilenebilir. Telefon sağlığınız için önemlidir.'
-                        : 'Pil sağlığı %80\'in altına düştüğünde cihaz performansı etkilenebilir. Telefon sağlığınız için önemlidir.',
+                    t.batteryHealthExplain,
                     style: const TextStyle(
                       fontSize: 11,
                       color: AppColors.textTertiary,
@@ -237,6 +237,7 @@ class _BatteryInfoGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context)!;
     final isAndroid = Platform.isAndroid;
 
     return Row(
@@ -246,7 +247,7 @@ class _BatteryInfoGrid extends StatelessWidget {
             icon: Icons.battery_std,
             iconColor: info.isLow ? AppColors.danger : AppColors.success,
             value: info.levelText,
-            label: 'Şarj Seviyesi',
+            label: t.chargeLevelLabel,
           ),
         ),
         const SizedBox(width: 12),
@@ -257,7 +258,7 @@ class _BatteryInfoGrid extends StatelessWidget {
             value: isAndroid
                 ? info.screenOnTime
                 : (info.cycleCount > 0 ? '${info.cycleCount}' : '—'),
-            label: isAndroid ? 'Ekran Süresi' : 'Döngü',
+            label: isAndroid ? t.screenOnTimeLabel : t.cycle,
           ),
         ),
         const SizedBox(width: 12),
@@ -266,8 +267,8 @@ class _BatteryInfoGrid extends StatelessWidget {
             icon: info.isCharging ? Icons.bolt : Icons.power_off,
             iconColor:
                 info.isCharging ? AppColors.success : AppColors.textTertiary,
-            value: info.isCharging ? 'Evet' : 'Hayır',
-            label: 'Şarjda',
+            value: info.isCharging ? t.yes : t.no,
+            label: t.charging,
           ),
         ),
       ],
@@ -323,6 +324,7 @@ class _ChargeAlarmCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context)!;
     final enabled = ref.watch(chargeAlarmEnabledProvider);
     final percent = ref.watch(chargeAlarmPercentProvider);
 
@@ -345,15 +347,14 @@ class _ChargeAlarmCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Şarj Alarmı',
-                      style: TextStyle(
+                    Text(
+                      t.chargeAlarm,
+                      style: const TextStyle(
                         fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
                       ),
                     ),
                     Text(
-                      '%$percent\'de bildirim al',
+                      t.notifyAt('%$percent'),
                       style: const TextStyle(
                         fontSize: 12,
                         color: AppColors.textSecondary,
@@ -409,9 +410,9 @@ class _ChargeAlarmCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 4),
-            const Text(
-              'Batarya sağlığı için %80 önerilir. Pilin yıpranmasını azaltır.',
-              style: TextStyle(
+            Text(
+              t.chargeAlarmHint,
+              style: const TextStyle(
                 fontSize: 11,
                 color: AppColors.textTertiary,
                 fontStyle: FontStyle.italic,
@@ -430,19 +431,19 @@ class _EnergyConsumersCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context)!;
     return OxynCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'Enerji Tüketenler',
-                  style: TextStyle(
+                  t.energyConsumers,
+                  style: const TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 16,
-                    color: AppColors.textPrimary,
                   ),
                 ),
               ),
@@ -468,11 +469,7 @@ class _EnergyConsumersCard extends StatelessWidget {
                 await NativePlatformChannel.openBatterySettings();
               },
               icon: const Icon(Icons.battery_saver, size: 18),
-              label: Text(
-                Platform.isAndroid
-                    ? 'Pil ayarlarına git'
-                    : 'Pil ayarlarına git',
-              ),
+              label: Text(t.goToBatterySettings),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary.withValues(alpha: 0.15),
                 foregroundColor: AppColors.primary,
@@ -489,23 +486,23 @@ class _EnergyConsumersCard extends StatelessWidget {
   }
 
   void _showInfoPopup(BuildContext context) {
+    final t = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Row(
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
           children: [
-            Icon(Icons.info_outline, color: AppColors.primary, size: 22),
-            SizedBox(width: 8),
-            Text('Enerji Tüketenler',
-                style: TextStyle(fontSize: 16)),
+            const Icon(Icons.info_outline,
+                color: AppColors.primary, size: 22),
+            const SizedBox(width: 8),
+            Text(t.energyConsumers, style: const TextStyle(fontSize: 16)),
           ],
         ),
-        content: const Text(
-          'iOS ve Android güvenlik kısıtlamaları nedeniyle uygulama bazlı enerji tüketim verisi sınırlıdır. '
-          'Detaylı batarya kullanım bilgisi için cihaz ayarlarındaki Batarya bölümünü kontrol edebilirsiniz.',
-          style: TextStyle(
+        content: Text(
+          '${t.batterySecurityNote} ${t.batterySettingsHint}',
+          style: const TextStyle(
             color: AppColors.textSecondary,
             fontSize: 14,
             height: 1.5,
@@ -514,7 +511,7 @@ class _EnergyConsumersCard extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Tamam'),
+            child: Text(t.ok),
           ),
         ],
       ),
@@ -525,6 +522,7 @@ class _EnergyConsumersCard extends StatelessWidget {
 class _NotificationSettingsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context)!;
     return OxynCard(
       onTap: () async {
         await NativePlatformChannel.openNotificationSettings();
@@ -541,21 +539,20 @@ class _NotificationSettingsCard extends StatelessWidget {
                 color: AppColors.secondary, size: 24),
           ),
           const SizedBox(width: AppSpacing.md),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Bildirimleri Yönet',
-                  style: TextStyle(
+                  t.manageNotifications,
+                  style: const TextStyle(
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
                   ),
                 ),
-                SizedBox(height: 2),
+                const SizedBox(height: 2),
                 Text(
-                  'Gereksiz bildirimler pil tüketir',
-                  style: TextStyle(
+                  t.notificationsDrainBattery,
+                  style: const TextStyle(
                     fontSize: 12,
                     color: AppColors.textSecondary,
                   ),
@@ -598,36 +595,37 @@ class _BatteryReportButtonState extends State<_BatteryReportButton>
     super.dispose();
   }
 
-  String _generateReport() {
+  String _generateReport(AppLocalizations t) {
     final lines = <String>[];
 
     if (widget.info.healthPercentage >= 80) {
-      lines.add('Piliniz iyi durumda (%${widget.info.healthPercentage}). Günlük kullanım için yeterli kapasite sunuyor.');
+      lines.add(t.reportContentGood(widget.info.healthPercentage));
     } else if (widget.info.healthPercentage >= 60) {
-      lines.add('Piliniz orta seviyede yıpranmış (%${widget.info.healthPercentage}). Şarj süreleri kısalmış olabilir.');
+      lines.add(t.reportContentMedium(widget.info.healthPercentage));
     } else {
-      lines.add('Piliniz ciddi şekilde yıpranmış (%${widget.info.healthPercentage}). Pil değişimi önerilir.');
+      lines.add(t.reportContentBad(widget.info.healthPercentage));
     }
 
     if (widget.info.temperature > 40) {
-      lines.add('Pil sıcaklığı yüksek (${widget.info.temperatureText}). Cihazı serin bir yerde kullanın.');
+      lines.add(t.reportTempHigh(widget.info.temperatureText));
     } else if (widget.info.temperature > 35) {
-      lines.add('Pil sıcaklığı normal üstü (${widget.info.temperatureText}). Uzun süre oyun oynamamaya dikkat edin.');
+      lines.add(t.reportTempWarm(widget.info.temperatureText));
     } else {
-      lines.add('Pil sıcaklığı normal aralıkta (${widget.info.temperatureText}).');
+      lines.add(t.reportTempNormal(widget.info.temperatureText));
     }
 
     if (widget.info.level < 20) {
-      lines.add('Batarya seviyesi düşük (%${widget.info.level}). Şarj etmeniz önerilir.');
+      lines.add(t.reportLevelLow(widget.info.level));
     }
 
-    lines.add('Pil ömrünü uzatmak için: %20-80 aralığında şarj edin, aşırı sıcaktan kaçının.');
+    lines.add(t.reportLifeTip);
 
     return lines.join('\n\n');
   }
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context)!;
     if (_showReport) {
       return OxynCard(
         padding: const EdgeInsets.all(20),
@@ -642,22 +640,22 @@ class _BatteryReportButtonState extends State<_BatteryReportButton>
                     color: AppColors.primary.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.assignment, color: AppColors.primary, size: 20),
+                  child: const Icon(Icons.assignment,
+                      color: AppColors.primary, size: 20),
                 ),
                 const SizedBox(width: 12),
-                const Text(
-                  'Pil Sağlığı Raporu',
-                  style: TextStyle(
+                Text(
+                  t.batteryReportTitle,
+                  style: const TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 16,
-                    color: AppColors.textPrimary,
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 16),
             Text(
-              _generateReport(),
+              _generateReport(t),
               style: const TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 14,
@@ -668,7 +666,7 @@ class _BatteryReportButtonState extends State<_BatteryReportButton>
             TextButton.icon(
               onPressed: () => setState(() => _showReport = false),
               icon: const Icon(Icons.close, size: 16),
-              label: const Text('Kapat'),
+              label: Text(t.close),
             ),
           ],
         ),
@@ -700,14 +698,15 @@ class _BatteryReportButtonState extends State<_BatteryReportButton>
             child: InkWell(
               borderRadius: BorderRadius.circular(16),
               onTap: () => setState(() => _showReport = true),
-              child: const Row(
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.assignment, color: AppColors.background, size: 22),
-                  SizedBox(width: 10),
+                  const Icon(Icons.assignment,
+                      color: AppColors.background, size: 22),
+                  const SizedBox(width: 10),
                   Text(
-                    'Pil Sağlığı Raporu',
-                    style: TextStyle(
+                    t.batteryReportTitle,
+                    style: const TextStyle(
                       color: AppColors.background,
                       fontSize: 16,
                       fontWeight: FontWeight.w700,

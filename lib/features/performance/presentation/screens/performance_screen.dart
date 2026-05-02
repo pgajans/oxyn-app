@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/localization/generated/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/oxyn_card.dart';
@@ -13,12 +14,13 @@ class PerformanceScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final t = AppLocalizations.of(context)!;
     final score = ref.watch(healthScoreProvider);
     final deviceAsync = ref.watch(deviceInfoProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Performans'),
+        title: Text(t.performance),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios),
           onPressed: () => context.pop(),
@@ -34,7 +36,7 @@ class PerformanceScreen extends ConsumerWidget {
               child: Column(
                 children: [
                   Text(
-                    'Performans Skoru',
+                    t.performanceScore,
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   const SizedBox(height: AppSpacing.md),

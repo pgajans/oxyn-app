@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/localization/generated/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/oxyn_card.dart';
@@ -92,10 +93,11 @@ class _AiDoctorScreenState extends ConsumerState<AiDoctorScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context)!;
     final isPremium = ref.watch(isPremiumProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('AI Cihaz Doktoru')),
+      appBar: AppBar(title: Text(t.aiDeviceDoctor)),
       body: SingleChildScrollView(
         padding: AppSpacing.screenPadding,
         child: Column(
@@ -114,12 +116,11 @@ class _AiDoctorScreenState extends ConsumerState<AiDoctorScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            const Text(
-              'AI Cihaz Doktoru',
-              style: TextStyle(
+            Text(
+              t.aiDeviceDoctor,
+              style: const TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w800,
-                color: AppColors.textPrimary,
               ),
             ),
             const SizedBox(height: 6),

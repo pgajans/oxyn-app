@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../../core/localization/generated/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../domain/news_model.dart';
@@ -11,15 +12,12 @@ class NewsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final t = AppLocalizations.of(context)!;
     final newsAsync = ref.watch(newsProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Telefon Haberleri'),
-        backgroundColor: AppColors.background,
-        foregroundColor: AppColors.textPrimary,
-        elevation: 0,
+        title: Text(t.newsTab),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh_rounded, size: 22),
@@ -30,13 +28,13 @@ class NewsScreen extends ConsumerWidget {
       body: newsAsync.when(
         loading: () => const _ShimmerList(),
         error: (e, _) => _ErrorView(
-          message: 'Haberler yüklenirken hata oluştu',
+          message: t.error('').replaceAll(': ', ''),
           onRetry: () => ref.read(newsProvider.notifier).refresh(),
         ),
         data: (articles) {
           if (articles.isEmpty) {
             return _ErrorView(
-              message: 'Henüz haber bulunamadı',
+              message: t.error('').replaceAll(': ', ''),
               onRetry: () => ref.read(newsProvider.notifier).refresh(),
             );
           }

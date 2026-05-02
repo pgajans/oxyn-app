@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../../core/localization/generated/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/oxyn_card.dart';
@@ -84,11 +85,12 @@ class CustomizationScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final t = AppLocalizations.of(context)!;
     final selectedAsync = ref.watch(selectedAnimationProvider);
     final selectedIndex = selectedAsync.value ?? 0;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Stil')),
+      appBar: AppBar(title: Text(t.style)),
       body: SingleChildScrollView(
         padding: AppSpacing.screenPadding,
         child: Column(
@@ -96,7 +98,7 @@ class CustomizationScreen extends ConsumerWidget {
           children: [
             const SizedBox(height: AppSpacing.md),
             Text(
-              'Şarj Animasyonları',
+              t.chargingAnimations,
               style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: AppSpacing.md),
@@ -117,7 +119,7 @@ class CustomizationScreen extends ConsumerWidget {
             ),
             const SizedBox(height: AppSpacing.xl),
             Text(
-              'Widget\'lar',
+              t.widgets,
               style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: AppSpacing.md),
@@ -198,9 +200,9 @@ class _AnimationCard extends StatelessWidget {
                   ),
                   if (isSelected) ...[
                     const SizedBox(height: 4),
-                    const Text(
-                      'Aktif',
-                      style: TextStyle(
+                    Text(
+                      AppLocalizations.of(context)!.active,
+                      style: const TextStyle(
                         color: AppColors.success,
                         fontWeight: FontWeight.w600,
                         fontSize: 11,

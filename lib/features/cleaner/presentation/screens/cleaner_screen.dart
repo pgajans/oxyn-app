@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:photo_manager/photo_manager.dart';
+import '../../../../core/localization/generated/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/oxyn_card.dart';
@@ -20,11 +21,10 @@ class CleanerScreen extends ConsumerWidget {
     final freeAvailable = await ref.read(freeCleanAvailableProvider.future);
     if (freeAvailable) return true;
 
-    // Free clean used - show rewarded ad option
     if (context.mounted) {
+      final t = AppLocalizations.of(context)!;
       final result = await showModalBottomSheet<bool>(
         context: context,
-        backgroundColor: AppColors.surface,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
@@ -34,9 +34,10 @@ class CleanerScreen extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 40, height: 4,
+                width: 40,
+                height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceLight,
+                  color: Theme.of(ctx).dividerColor,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -44,34 +45,36 @@ class CleanerScreen extends ConsumerWidget {
               const Icon(Icons.play_circle_outline,
                   color: AppColors.secondary, size: 48),
               const SizedBox(height: 16),
-              const Text(
-                'Ücretsiz temizleme hakkınız doldu',
+              Text(
+                t.freeCleanUsedTitle,
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: AppColors.textPrimary,
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
-                'Reklam izleyerek temizleme yapabilir veya Premium\'a geçebilirsiniz.',
+              Text(
+                t.freeCleanUsedDesc,
                 textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 13, height: 1.4),
+                style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 13,
+                    height: 1.4),
               ),
               const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.pop(ctx, true);
-                  },
-                  icon: const Icon(Icons.cleaning_services, color: AppColors.background),
-                  label: const Text('Temizle'),
+                  onPressed: () => Navigator.pop(ctx, true),
+                  icon: const Icon(Icons.cleaning_services,
+                      color: AppColors.background),
+                  label: Text(t.clean),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.secondary,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14)),
                   ),
                 ),
               ),
@@ -86,18 +89,20 @@ class CleanerScreen extends ConsumerWidget {
                   },
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: AppColors.tertiary),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14)),
                   ),
-                  child: const Text(
-                    'Premium\'a Geç',
-                    style: TextStyle(color: AppColors.tertiary),
+                  child: Text(
+                    t.upgradeToPremiumShort,
+                    style: const TextStyle(color: AppColors.tertiary),
                   ),
                 ),
               ),
               const SizedBox(height: 8),
               TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
-                child: const Text('Vazgeç', style: TextStyle(color: AppColors.textTertiary)),
+                child: Text(t.giveUp,
+                    style: const TextStyle(color: AppColors.textTertiary)),
               ),
             ],
           ),
@@ -112,6 +117,7 @@ class CleanerScreen extends ConsumerWidget {
       BuildContext context, WidgetRef ref) async {
     final ps = await PhotoManager.requestPermissionExtend();
     if (!context.mounted) return;
+    final t = AppLocalizations.of(context)!;
 
     if (ps.isAuth || ps == PermissionState.limited) {
       ref.read(scanResultProvider.notifier).startScan();
@@ -119,23 +125,19 @@ class CleanerScreen extends ConsumerWidget {
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
-          backgroundColor: AppColors.surface,
-          title: const Text('İzin Gerekli'),
-          content: const Text(
-            'Fotoğraflarınızı taramak için galeri erişim izni gereklidir. '
-            'Ayarlardan izin verebilirsiniz.',
-          ),
+          title: Text(t.permissionRequired),
+          content: Text(t.galleryPermissionMsg),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('İptal'),
+              child: Text(t.cancel),
             ),
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(ctx);
                 PhotoManager.openSetting();
               },
-              child: const Text('Ayarlara Git'),
+              child: Text(t.goToSettings),
             ),
           ],
         ),
@@ -145,12 +147,13 @@ class CleanerScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final t = AppLocalizations.of(context)!;
     final storageAsync = ref.watch(storageInfoProvider);
     final scanAsync = ref.watch(scanResultProvider);
     final scanProgress = ref.watch(scanProgressProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Temizlik')),
+      appBar: AppBar(title: Text(t.cleaner)),
       body: SingleChildScrollView(
         padding: AppSpacing.screenPadding,
         child: Column(
@@ -165,7 +168,7 @@ class CleanerScreen extends ConsumerWidget {
                 ),
               ),
               error: (e, _) => OxynCard(
-                child: Text('Depolama bilgisi alınamadı: $e'),
+                child: Text(t.storageInfoError(e.toString())),
               ),
               data: (storage) => _StorageOverview(
                 total: storage.totalFormatted,
@@ -179,10 +182,10 @@ class CleanerScreen extends ConsumerWidget {
               _ScanProgressCard(progress: scanProgress)
             else
               scanAsync.when(
-                loading: () => const _ScanProgressCard(
+                loading: () => _ScanProgressCard(
                   progress: ScanProgress(
                     isScanning: true,
-                    currentStep: 'Başlatılıyor...',
+                    currentStep: t.starting,
                   ),
                 ),
                 error: (e, s) => const SizedBox.shrink(),
@@ -197,7 +200,7 @@ class CleanerScreen extends ConsumerWidget {
                             onPressed: () =>
                                 _requestPermissionAndScan(context, ref),
                             icon: const Icon(Icons.search),
-                            label: const Text('Taramayı Başlat'),
+                            label: Text(t.startScanButton),
                           ),
                         ),
                       ],
@@ -214,10 +217,10 @@ class CleanerScreen extends ConsumerWidget {
                 children: [
                   _CleaningCategory(
                     icon: Icons.photo_library,
-                    title: 'Silmek İsteyebileceğiniz Fotoğraflar',
+                    title: t.maybeDeletePhotos,
                     subtitle: scan.hasScanned
-                        ? '${scan.similarPhotoGroups.length} grup bulundu'
-                        : 'Galeriyi tarayarak benzer fotoğrafları bul',
+                        ? t.groupsFound(scan.similarPhotoGroups.length)
+                        : t.scanGalleryForSimilar,
                     size: scan.hasScanned && scan.similarPhotosBytes > 0
                         ? StorageInfo.formatBytes(scan.similarPhotosBytes)
                         : '—',
@@ -226,8 +229,8 @@ class CleanerScreen extends ConsumerWidget {
                       if (!scan.hasScanned ||
                           scan.similarPhotoGroups.isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Önce taramayı başlatın'),
+                          SnackBar(
+                            content: Text(t.startScanFirst),
                             behavior: SnackBarBehavior.floating,
                           ),
                         );
@@ -243,10 +246,10 @@ class CleanerScreen extends ConsumerWidget {
                   const SizedBox(height: AppSpacing.md),
                   _CleaningCategory(
                     icon: Icons.file_present,
-                    title: 'Büyük Dosyalar',
+                    title: t.largeFiles,
                     subtitle: scan.hasScanned
-                        ? '${scan.largeFiles.length} dosya (10MB+)'
-                        : '10MB üzeri dosyalar',
+                        ? t.largeFilesCount10MB(scan.largeFiles.length)
+                        : t.largeFiles10MB,
                     size: scan.hasScanned && scan.largeFilesBytes > 0
                         ? StorageInfo.formatBytes(scan.largeFilesBytes)
                         : '—',
@@ -256,8 +259,8 @@ class CleanerScreen extends ConsumerWidget {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(scan.hasScanned
-                                ? '10MB üzeri dosya bulunamadı'
-                                : 'Önce taramayı başlatın'),
+                                ? t.noLargeFiles10MB
+                                : t.startScanFirst),
                             behavior: SnackBarBehavior.floating,
                           ),
                         );
@@ -272,10 +275,10 @@ class CleanerScreen extends ConsumerWidget {
                   const SizedBox(height: AppSpacing.md),
                   _CleaningCategory(
                     icon: Icons.screenshot,
-                    title: 'Ekran Görüntüleri',
+                    title: t.screenshots,
                     subtitle: scan.hasScanned
-                        ? '${scan.screenshots.length} ekran görüntüsü'
-                        : 'Eski ekran görüntülerini temizle',
+                        ? t.screenshotCount(scan.screenshots.length)
+                        : t.cleanOldScreenshots,
                     size: scan.hasScanned && scan.screenshotsBytes > 0
                         ? StorageInfo.formatBytes(scan.screenshotsBytes)
                         : '—',
@@ -285,8 +288,8 @@ class CleanerScreen extends ConsumerWidget {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(scan.hasScanned
-                                ? 'Ekran görüntüsü bulunamadı'
-                                : 'Önce taramayı başlatın'),
+                                ? t.noScreenshots
+                                : t.startScanFirst),
                             behavior: SnackBarBehavior.floating,
                           ),
                         );
@@ -327,10 +330,11 @@ class CleanerScreen extends ConsumerWidget {
     WidgetRef ref,
     List<CleanableItem> files,
   ) {
+    final t = AppLocalizations.of(context)!;
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => _FileListPage(
-          title: 'Büyük Dosyalar',
+          title: t.largeFiles,
           items: files,
           ref: ref,
         ),
@@ -343,10 +347,11 @@ class CleanerScreen extends ConsumerWidget {
     WidgetRef ref,
     List<CleanableItem> screenshots,
   ) {
+    final t = AppLocalizations.of(context)!;
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => _FileListPage(
-          title: 'Ekran Görüntüleri',
+          title: t.screenshots,
           items: screenshots,
           ref: ref,
         ),
@@ -361,6 +366,7 @@ class _ScanProgressCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context)!;
     return OxynCard(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -369,18 +375,18 @@ class _ScanProgressCard extends StatelessWidget {
             const Icon(Icons.warning_amber,
                 color: AppColors.warning, size: 40),
             const SizedBox(height: 12),
-            const Text(
-              'Tarama tamamlanamadı',
-              style: TextStyle(
+            Text(
+              t.scanComplete,
+              style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
                 color: AppColors.warning,
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
-              'Lütfen tekrar deneyin',
-              style: TextStyle(
+            Text(
+              t.tryAgain,
+              style: const TextStyle(
                   color: AppColors.textSecondary, fontSize: 13),
             ),
           ] else ...[
@@ -420,15 +426,15 @@ class _ScanProgressCard extends StatelessWidget {
                 color: AppColors.warning.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Row(
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.info_outline,
+                  const Icon(Icons.info_outline,
                       size: 14, color: AppColors.warning),
-                  SizedBox(width: 6),
+                  const SizedBox(width: 6),
                   Text(
-                    'Tarama bitene kadar ekranı kapatmayın',
-                    style: TextStyle(
+                    t.dontCloseScanScreen,
+                    style: const TextStyle(
                       color: AppColors.warning,
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
@@ -479,16 +485,26 @@ class _ScanResultCardState extends State<_ScanResultCard>
 
   Future<void> _revealStats() async {
     await Future.delayed(const Duration(milliseconds: 600));
+    if (!mounted) return;
+    final t = AppLocalizations.of(context)!;
     final scan = widget.scan;
     final stats = <_ScanStat>[
-      _ScanStat(Icons.photo_library, 'Fotoğraflar',
-          '${scan.similarPhotoGroups.length} grup bulundu', AppColors.secondary),
-      _ScanStat(Icons.file_present, 'Büyük Dosyalar',
-          '${scan.largeFiles.length} dosya (10MB+)', AppColors.danger),
-      _ScanStat(Icons.screenshot, 'Ekran Görüntüleri',
-          '${scan.screenshots.length} adet', AppColors.primary),
-      _ScanStat(Icons.cached, 'Önbellek',
-          'Temizlenebilir alan mevcut', AppColors.warning),
+      _ScanStat(
+          Icons.photo_library,
+          t.similarPhotos,
+          t.groupsFound(scan.similarPhotoGroups.length),
+          AppColors.secondary),
+      _ScanStat(
+          Icons.file_present,
+          t.largeFiles,
+          t.largeFilesCount10MB(scan.largeFiles.length),
+          AppColors.danger),
+      _ScanStat(
+          Icons.screenshot,
+          t.screenshots,
+          t.itemsFound(scan.screenshots.length),
+          AppColors.primary),
+      _ScanStat(Icons.cached, t.cache, t.cleanableSpace, AppColors.warning),
     ];
     for (final stat in stats) {
       await Future.delayed(const Duration(milliseconds: 300));
@@ -507,6 +523,7 @@ class _ScanResultCardState extends State<_ScanResultCard>
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context)!;
     final totalCleanable = widget.scan.totalCleanableBytes;
     final hasItems = totalCleanable > 0;
     final isPremium = widget.ref.watch(isPremiumProvider);
@@ -556,18 +573,17 @@ class _ScanResultCardState extends State<_ScanResultCard>
             child: Column(
               children: [
                 Text(
-                  hasItems ? 'Tarama Tamamlandı!' : 'Cihazın Temiz!',
+                  hasItems ? t.scanCompleteHeading : t.yourDeviceIsCleanShort,
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 6),
                 Text(
                   hasItems
-                      ? 'Temizlenebilir: ${widget.scan.totalCleanableFormatted}'
-                      : 'Harika! Temizlenecek bir şey bulunamadı.',
+                      ? t.cleanable(widget.scan.totalCleanableFormatted)
+                      : t.nothingToCleanDesc,
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -577,7 +593,7 @@ class _ScanResultCardState extends State<_ScanResultCard>
                 if (hasItems) ...[
                   const SizedBox(height: 4),
                   Text(
-                    '${widget.scan.totalItemCount} öğe bulundu',
+                    t.itemsFound(widget.scan.totalItemCount),
                     style: const TextStyle(
                         fontSize: 12, color: AppColors.textTertiary),
                   ),
@@ -639,9 +655,9 @@ class _ScanResultCardState extends State<_ScanResultCard>
                   color: AppColors.success.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Text(
-                  'Haftalık ücretsiz temizleme hakkınız var!',
-                  style: TextStyle(
+                child: Text(
+                  t.weeklyFreeCleanAvailable,
+                  style: const TextStyle(
                     color: AppColors.success,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -653,7 +669,7 @@ class _ScanResultCardState extends State<_ScanResultCard>
                 widget.ref.read(scanResultProvider.notifier).startScan();
               },
               icon: const Icon(Icons.refresh, size: 18),
-              label: const Text('Tekrar Tara'),
+              label: Text(t.scanAgain),
             ),
           ],
         ],
@@ -688,9 +704,10 @@ class _SimilarPhotosPageState extends State<_SimilarPhotosPage> {
     final allItems = widget.groups.expand((g) => g).toList();
     final allSelected = _selected.length == allItems.length && allItems.isNotEmpty;
 
+    final t = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Fotoğraflar'),
+        title: Text(t.similarPhotos),
         actions: [
           TextButton(
             onPressed: () {
@@ -703,7 +720,7 @@ class _SimilarPhotosPageState extends State<_SimilarPhotosPage> {
               });
             },
             child: Text(
-              allSelected ? 'Seçimi Kaldır' : 'Tümünü Seç',
+              allSelected ? t.deselectAll : t.selectAll,
               style: const TextStyle(fontSize: 13),
             ),
           ),
@@ -712,7 +729,7 @@ class _SimilarPhotosPageState extends State<_SimilarPhotosPage> {
               onPressed: () => _deleteSelected(),
               icon: const Icon(Icons.delete, color: AppColors.danger),
               label: Text(
-                '$totalSelected sil',
+                t.deleteCount(totalSelected, ''),
                 style: const TextStyle(color: AppColors.danger),
               ),
             ),
@@ -729,10 +746,9 @@ class _SimilarPhotosPageState extends State<_SimilarPhotosPage> {
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 child: Text(
-                  'Grup ${groupIndex + 1} (${group.length} fotoğraf)',
+                  t.groupNumber(groupIndex + 1, group.length),
                   style: const TextStyle(
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
                     fontSize: 14,
                   ),
                 ),
@@ -823,23 +839,22 @@ class _SimilarPhotosPageState extends State<_SimilarPhotosPage> {
   Future<void> _deleteSelected() async {
     if (_selected.isEmpty) return;
 
+    final t = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: const Text('Fotoğrafları Sil'),
-        content:
-            Text('${_selected.length} fotoğraf silinecek. Emin misiniz?'),
+        title: Text(t.deletePhotos),
+        content: Text(t.deletePhotosConfirm(_selected.length)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('İptal'),
+            child: Text(t.cancel),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.danger),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Sil'),
+            child: Text(t.delete),
           ),
         ],
       ),
@@ -862,7 +877,7 @@ class _SimilarPhotosPageState extends State<_SimilarPhotosPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('${items.length} fotoğraf silindi'),
+          content: Text(t.photosDeleted(items.length)),
           backgroundColor: AppColors.success,
           behavior: SnackBarBehavior.floating,
         ),
@@ -870,8 +885,8 @@ class _SimilarPhotosPageState extends State<_SimilarPhotosPage> {
       Navigator.pop(context);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Silme işlemi başarısız oldu'),
+        SnackBar(
+          content: Text(t.deleteFailed),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -905,6 +920,7 @@ class _FileListPageState extends State<_FileListPage> {
 
     final allSelected = _selected.length == widget.items.length;
 
+    final t = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
@@ -920,7 +936,7 @@ class _FileListPageState extends State<_FileListPage> {
               });
             },
             child: Text(
-              allSelected ? 'Seçimi Kaldır' : 'Hepsini Seç',
+              allSelected ? t.deselectAll : t.selectAll,
               style: const TextStyle(fontSize: 13),
             ),
           ),
@@ -929,7 +945,7 @@ class _FileListPageState extends State<_FileListPage> {
               onPressed: () => _deleteSelected(),
               icon: const Icon(Icons.delete, color: AppColors.danger),
               label: Text(
-                '${_selected.length} sil',
+                t.deleteCount(_selected.length, ''),
                 style: const TextStyle(color: AppColors.danger),
               ),
             ),
@@ -1014,7 +1030,8 @@ class _FileListPageState extends State<_FileListPage> {
                   onPressed: _deleteSelected,
                   icon: const Icon(Icons.delete_sweep),
                   label: Text(
-                    '${_selected.length} Dosya Sil (${StorageInfo.formatBytes(totalBytes)})',
+                    t.deleteFilesButton(
+                        _selected.length, StorageInfo.formatBytes(totalBytes)),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.danger,
@@ -1029,24 +1046,23 @@ class _FileListPageState extends State<_FileListPage> {
 
   Future<void> _deleteSelected() async {
     if (_selected.isEmpty) return;
+    final t = AppLocalizations.of(context)!;
 
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: const Text('Dosyaları Sil'),
-        content: Text(
-            '${_selected.length} dosya silinecek. Bu işlem geri alınamaz. Emin misiniz?'),
+        title: Text(t.deleteFiles),
+        content: Text(t.deleteFilesConfirm(_selected.length)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('İptal'),
+            child: Text(t.cancel),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.danger),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Sil'),
+            child: Text(t.delete),
           ),
         ],
       ),
@@ -1068,7 +1084,7 @@ class _FileListPageState extends State<_FileListPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('${items.length} dosya silindi'),
+          content: Text(t.filesDeleted(items.length)),
           backgroundColor: AppColors.success,
           behavior: SnackBarBehavior.floating,
         ),
@@ -1076,8 +1092,8 @@ class _FileListPageState extends State<_FileListPage> {
       Navigator.pop(context);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Silme işlemi başarısız oldu'),
+        SnackBar(
+          content: Text(t.deleteFailed),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -1140,14 +1156,15 @@ class _StorageOverview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context)!;
     return OxynCard(
       padding: const EdgeInsets.all(24),
       child: Column(
         children: [
-          const Text(
-            'Depolama',
-            style:
-                TextStyle(color: AppColors.textSecondary, fontSize: 14),
+          Text(
+            t.storage,
+            style: const TextStyle(
+                color: AppColors.textSecondary, fontSize: 14),
           ),
           const SizedBox(height: AppSpacing.sm),
           Row(
@@ -1189,7 +1206,7 @@ class _StorageOverview extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               Text(
-                'Boş: $free',
+                t.free(free),
                 style: const TextStyle(
                   fontSize: 12,
                   color: AppColors.success,
@@ -1289,23 +1306,22 @@ class _CacheCategory extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context)!;
     return OxynCard(
       onTap: () async {
         final confirmed = await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
-            backgroundColor: AppColors.surface,
-            title: const Text('Önbellek Temizle'),
-            content: const Text(
-                'Uygulama önbelleğini temizlemek istediğinize emin misiniz?'),
+            title: Text(t.clearCache),
+            content: Text(t.clearCacheConfirm),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
-                child: const Text('İptal'),
+                child: Text(t.cancel),
               ),
               ElevatedButton(
                 onPressed: () => Navigator.pop(ctx, true),
-                child: const Text('Temizle'),
+                child: Text(t.clean),
               ),
             ],
           ),
@@ -1320,7 +1336,7 @@ class _CacheCategory extends StatelessWidget {
             final mb = (cleaned / (1024 * 1024)).toStringAsFixed(1);
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('$mb MB önbellek temizlendi!'),
+                content: Text(t.cacheCleared(mb)),
                 behavior: SnackBarBehavior.floating,
                 backgroundColor: AppColors.success,
               ),
@@ -1340,21 +1356,18 @@ class _CacheCategory extends StatelessWidget {
                 color: AppColors.tertiary, size: 24),
           ),
           const SizedBox(width: AppSpacing.md),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Önbellek',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
+                  t.appCache,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
-                SizedBox(height: 2),
+                const SizedBox(height: 2),
                 Text(
-                  'Uygulama önbelleğini temizle',
-                  style: TextStyle(
+                  t.clearAppCache,
+                  style: const TextStyle(
                     fontSize: 12,
                     color: AppColors.textSecondary,
                   ),

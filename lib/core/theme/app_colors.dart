@@ -31,6 +31,15 @@ class AppColors {
   static const Color textSecondary = Color(0xFF8892A0);
   static const Color textTertiary = Color(0xFF5A6270);
 
+  // Light theme palette (used by AppTheme.lightTheme)
+  static const Color lightBackground = Color(0xFFF6F8FB);
+  static const Color lightSurface = Color(0xFFFFFFFF);
+  static const Color lightSurfaceAlt = Color(0xFFEEF1F6);
+  static const Color lightDivider = Color(0xFFE2E6EE);
+  static const Color lightTextPrimary = Color(0xFF0E1726);
+  static const Color lightTextSecondary = Color(0xFF4B5563);
+  static const Color lightTextTertiary = Color(0xFF8A93A2);
+
   // Score gradient
   static const List<Color> scoreGradientGood = [
     Color(0xFF00E676),

@@ -1,11 +1,17 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:in_app_review/in_app_review.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+import '../../../../core/localization/generated/app_localizations.dart';
+import '../../../../core/localization/locale_provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/theme_provider.dart';
 import '../../../../platform/native_platform_channel.dart';
 import '../../../subscription/domain/subscription_provider.dart';
 
@@ -19,47 +25,54 @@ class SettingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final t = AppLocalizations.of(context)!;
     final isPremium = ref.watch(isPremiumProvider);
     final appVersion = ref.watch(_appVersionProvider).value ?? '...';
+    final currentLocale = ref.watch(localeProvider);
+    final themeMode = ref.watch(themeModeProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Ayarlar')),
+      appBar: AppBar(title: Text(t.settings)),
       body: ListView(
         padding: AppSpacing.screenPadding,
         children: [
           const SizedBox(height: AppSpacing.md),
           if (!isPremium) ...[
-            _PremiumBanner(onTap: () => context.push('/paywall')),
+            _PremiumBanner(
+              onTap: () => context.push('/paywall'),
+              title: t.upgradeToPlusLong,
+              subtitle: t.unlimitedCleaningAllAnimationsNoAds,
+            ),
             const SizedBox(height: AppSpacing.lg),
           ],
           _SettingsSection(
-            title: 'Abonelik',
+            title: t.subscription,
             children: [
               if (!isPremium)
                 _SettingsTile(
                   icon: Icons.star_outline,
                   iconColor: AppColors.tertiary,
-                  title: 'Ücretsiz Sürümdesiniz',
-                  subtitle: 'Premium\'a geçmek için dokunun',
+                  title: t.freeVersion,
+                  subtitle: t.tapToUpgradeToPremium,
                   onTap: () => context.push('/paywall'),
                 ),
               if (isPremium)
                 _SettingsTile(
                   icon: Icons.star,
                   iconColor: AppColors.tertiary,
-                  title: 'Oxyn Plus Aktif',
-                  subtitle: 'Aboneliğini yönet',
+                  title: t.oxynPlusActive,
+                  subtitle: t.manageYourSubscription,
                   onTap: () => _openSubscriptionManagement(),
                 ),
               _SettingsTile(
                 icon: Icons.restore,
                 iconColor: AppColors.primary,
-                title: 'Satın Alımları Geri Yükle',
+                title: t.restorePurchases,
                 onTap: () {
                   ref.read(subscriptionStatusProvider.notifier).restore();
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Satın alımlar kontrol ediliyor...'),
+                    SnackBar(
+                      content: Text(t.checkingPurchases),
                       behavior: SnackBarBehavior.floating,
                     ),
                   );
@@ -69,57 +82,72 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: AppSpacing.lg),
           _SettingsSection(
-            title: 'Genel',
+            title: t.general,
             children: [
               _SettingsTile(
                 icon: Icons.language,
                 iconColor: AppColors.primary,
-                title: 'Dil',
-                subtitle: 'Türkçe',
-                onTap: () => _showLanguageDialog(context),
+                title: t.language,
+                subtitle: _languageDisplayName(t, currentLocale),
+                onTap: () => _showLanguageDialog(context, ref, currentLocale),
+              ),
+              _SettingsTile(
+                icon: Icons.palette_outlined,
+                iconColor: AppColors.tertiary,
+                title: t.theme,
+                subtitle: _themeDisplayName(t, themeMode),
+                onTap: () => _showThemeDialog(context, ref, themeMode),
               ),
               _SettingsTile(
                 icon: Icons.notifications_outlined,
                 iconColor: AppColors.secondary,
-                title: 'Bildirimler',
+                title: t.notifications,
                 onTap: () => _openNotificationSettings(),
+              ),
+              _SettingsTile(
+                icon: Icons.thumb_up_outlined,
+                iconColor: AppColors.success,
+                title: t.rateApp,
+                subtitle: t.rateAppSubtitle,
+                onTap: () => _requestReview(context, t),
               ),
             ],
           ),
           const SizedBox(height: AppSpacing.lg),
           _SettingsSection(
-            title: 'Özellikler',
+            title: t.features,
             children: [
               _SettingsTile(
                 icon: Icons.health_and_safety,
                 iconColor: AppColors.success,
-                title: 'AI Cihaz Doktoru',
-                subtitle: isPremium ? 'Günde 1 analiz hakkı' : 'Premium özellik',
+                title: t.aiDeviceDoctor,
+                subtitle:
+                    isPremium ? t.aiAnalysisDailyOne : t.premiumFeature,
                 onTap: () => context.push('/ai-doctor'),
               ),
             ],
           ),
           const SizedBox(height: AppSpacing.lg),
           _SettingsSection(
-            title: 'Hakkında',
+            title: t.about,
             children: [
               _SettingsTile(
                 icon: Icons.info_outline,
                 iconColor: AppColors.textSecondary,
-                title: 'Versiyon',
+                title: t.version,
                 subtitle: appVersion,
-                onTap: () => _showVersionDialog(context),
+                onTap: () => _showVersionDialog(context, t),
               ),
               _SettingsTile(
                 icon: Icons.privacy_tip_outlined,
                 iconColor: AppColors.textSecondary,
-                title: 'Gizlilik Politikası',
+                title: t.privacyPolicy,
                 onTap: () => context.push('/privacy'),
               ),
               _SettingsTile(
                 icon: Icons.description_outlined,
                 iconColor: AppColors.textSecondary,
-                title: 'Kullanım Şartları',
+                title: t.termsOfUse,
                 onTap: () => context.push('/terms'),
               ),
             ],
@@ -134,14 +162,15 @@ class SettingsScreen extends ConsumerWidget {
                 color: AppColors.warning.withValues(alpha: 0.3),
               ),
             ),
-            child: const Row(
+            child: Row(
               children: [
-                Icon(Icons.info_outline, color: AppColors.warning, size: 20),
-                SizedBox(width: 12),
+                const Icon(Icons.info_outline,
+                    color: AppColors.warning, size: 20),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Uygulamayı silmek aboneliği iptal etmez. İptal için mağaza ayarlarını kullanın.',
-                    style: TextStyle(
+                    t.cancelSubscriptionNote,
+                    style: const TextStyle(
                       color: AppColors.warning,
                       fontSize: 12,
                       height: 1.4,
@@ -157,33 +186,195 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  void _showLanguageDialog(BuildContext context) {
+  String _languageDisplayName(AppLocalizations t, Locale? locale) {
+    if (locale == null) return t.themeSystem;
+    switch (locale.languageCode) {
+      case 'en':
+        return t.english;
+      case 'tr':
+        return t.turkish;
+      case 'es':
+        return t.spanish;
+      case 'pt':
+        return t.portuguese;
+      case 'ar':
+        return t.arabic;
+      default:
+        return locale.languageCode;
+    }
+  }
+
+  String _themeDisplayName(AppLocalizations t, ThemeMode mode) {
+    switch (mode) {
+      case ThemeMode.light:
+        return t.themeLight;
+      case ThemeMode.dark:
+        return t.themeDark;
+      case ThemeMode.system:
+        return t.themeSystem;
+    }
+  }
+
+  void _showLanguageDialog(
+      BuildContext context, WidgetRef ref, Locale? current) {
+    final t = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: const Text('Dil Seçimi'),
+        title: Text(t.languageSelection),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _LanguageTile(name: 'Türkçe', code: 'tr', isSelected: true),
-            _LanguageTile(name: 'English', code: 'en', isSelected: false),
-            _LanguageTile(name: 'Español', code: 'es', isSelected: false),
-            _LanguageTile(name: 'Português', code: 'pt', isSelected: false),
-            _LanguageTile(name: 'العربية', code: 'ar', isSelected: false),
+            _LanguageTile(
+              name: t.themeSystem,
+              isSelected: current == null,
+              onTap: () {
+                ref.read(localeProvider.notifier).setLocale(null);
+                Navigator.pop(ctx);
+              },
+            ),
+            const Divider(height: 1),
+            _LanguageTile(
+              name: 'English',
+              isSelected: current?.languageCode == 'en',
+              onTap: () {
+                ref
+                    .read(localeProvider.notifier)
+                    .setLocale(const Locale('en'));
+                Navigator.pop(ctx);
+              },
+            ),
+            _LanguageTile(
+              name: 'Türkçe',
+              isSelected: current?.languageCode == 'tr',
+              onTap: () {
+                ref
+                    .read(localeProvider.notifier)
+                    .setLocale(const Locale('tr'));
+                Navigator.pop(ctx);
+              },
+            ),
+            _LanguageTile(
+              name: 'Español',
+              isSelected: current?.languageCode == 'es',
+              onTap: () {
+                ref
+                    .read(localeProvider.notifier)
+                    .setLocale(const Locale('es'));
+                Navigator.pop(ctx);
+              },
+            ),
+            _LanguageTile(
+              name: 'Português',
+              isSelected: current?.languageCode == 'pt',
+              onTap: () {
+                ref
+                    .read(localeProvider.notifier)
+                    .setLocale(const Locale('pt'));
+                Navigator.pop(ctx);
+              },
+            ),
+            _LanguageTile(
+              name: 'العربية',
+              isSelected: current?.languageCode == 'ar',
+              onTap: () {
+                ref
+                    .read(localeProvider.notifier)
+                    .setLocale(const Locale('ar'));
+                Navigator.pop(ctx);
+              },
+            ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Kapat'),
+            child: Text(t.close),
           ),
         ],
       ),
     );
   }
 
-  Future<void> _showVersionDialog(BuildContext context) async {
+  void _showThemeDialog(
+      BuildContext context, WidgetRef ref, ThemeMode current) {
+    final t = AppLocalizations.of(context)!;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(t.themeSelection),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _ThemeTile(
+              icon: Icons.brightness_auto,
+              name: t.themeSystem,
+              isSelected: current == ThemeMode.system,
+              onTap: () {
+                ref
+                    .read(themeModeProvider.notifier)
+                    .setMode(ThemeMode.system);
+                Navigator.pop(ctx);
+              },
+            ),
+            _ThemeTile(
+              icon: Icons.light_mode,
+              name: t.themeLight,
+              isSelected: current == ThemeMode.light,
+              onTap: () {
+                ref
+                    .read(themeModeProvider.notifier)
+                    .setMode(ThemeMode.light);
+                Navigator.pop(ctx);
+              },
+            ),
+            _ThemeTile(
+              icon: Icons.dark_mode,
+              name: t.themeDark,
+              isSelected: current == ThemeMode.dark,
+              onTap: () {
+                ref
+                    .read(themeModeProvider.notifier)
+                    .setMode(ThemeMode.dark);
+                Navigator.pop(ctx);
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(t.close),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _requestReview(BuildContext context, AppLocalizations t) async {
+    final inApp = InAppReview.instance;
+    try {
+      if (await inApp.isAvailable()) {
+        await inApp.requestReview();
+      } else {
+        await inApp.openStoreListing(
+          appStoreId: 'PUT_YOUR_APP_STORE_ID',
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(t.rateAppFailed),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _showVersionDialog(
+      BuildContext context, AppLocalizations t) async {
     PackageInfo? info;
     try {
       info = await PackageInfo.fromPlatform();
@@ -195,19 +386,18 @@ class SettingsScreen extends ConsumerWidget {
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
-          backgroundColor: AppColors.surface,
-          title: const Text('Versiyon Bilgisi'),
+          title: Text(t.versionInfo),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _VersionRow('Uygulama', info?.appName ?? 'Oxyn'),
-              _VersionRow('Versiyon', info?.version ?? '1.0.0'),
-              _VersionRow('Build', info?.buildNumber ?? '1'),
+              _VersionRow(t.application, info?.appName ?? 'Oxyn'),
+              _VersionRow(t.version, info?.version ?? '1.0.0'),
+              _VersionRow(t.build, info?.buildNumber ?? '1'),
               const SizedBox(height: 12),
-              const Text(
-                'Oxyn - Telefon Bakım ve Optimizasyon',
-                style: TextStyle(
+              Text(
+                t.oxynDescription,
+                style: const TextStyle(
                   fontSize: 12,
                   color: AppColors.textTertiary,
                 ),
@@ -217,7 +407,7 @@ class SettingsScreen extends ConsumerWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Tamam'),
+              child: Text(t.ok),
             ),
           ],
         ),
@@ -250,40 +440,75 @@ class SettingsScreen extends ConsumerWidget {
 
 class _LanguageTile extends StatelessWidget {
   final String name;
-  final String code;
   final bool isSelected;
+  final VoidCallback onTap;
 
   const _LanguageTile({
     required this.name,
-    required this.code,
     required this.isSelected,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return ListTile(
       dense: true,
       title: Text(
         name,
         style: TextStyle(
-          color: isSelected ? AppColors.primary : AppColors.textPrimary,
+          color: isSelected
+              ? theme.colorScheme.primary
+              : theme.textTheme.bodyLarge?.color,
           fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
         ),
       ),
       trailing: isSelected
-          ? const Icon(Icons.check_circle, color: AppColors.primary, size: 20)
+          ? Icon(Icons.check_circle,
+              color: theme.colorScheme.primary, size: 20)
           : null,
-      onTap: () {
-        if (!isSelected) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('$name dil desteği yakında aktif olacak'),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
-        Navigator.pop(context);
-      },
+      onTap: onTap,
+    );
+  }
+}
+
+class _ThemeTile extends StatelessWidget {
+  final IconData icon;
+  final String name;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _ThemeTile({
+    required this.icon,
+    required this.name,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return ListTile(
+      leading: Icon(
+        icon,
+        color: isSelected
+            ? theme.colorScheme.primary
+            : theme.iconTheme.color?.withValues(alpha: 0.8),
+      ),
+      title: Text(
+        name,
+        style: TextStyle(
+          color: isSelected
+              ? theme.colorScheme.primary
+              : theme.textTheme.bodyLarge?.color,
+          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+        ),
+      ),
+      trailing: isSelected
+          ? Icon(Icons.check_circle,
+              color: theme.colorScheme.primary, size: 20)
+          : null,
+      onTap: onTap,
     );
   }
 }
@@ -304,10 +529,7 @@ class _VersionRow extends StatelessWidget {
               style: const TextStyle(
                   color: AppColors.textSecondary, fontSize: 14)),
           Text(value,
-              style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontWeight: FontWeight.w500,
-                  fontSize: 14)),
+              style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
         ],
       ),
     );
@@ -316,7 +538,13 @@ class _VersionRow extends StatelessWidget {
 
 class _PremiumBanner extends StatelessWidget {
   final VoidCallback onTap;
-  const _PremiumBanner({required this.onTap});
+  final String title;
+  final String subtitle;
+  const _PremiumBanner({
+    required this.onTap,
+    required this.title,
+    required this.subtitle,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -348,22 +576,21 @@ class _PremiumBanner extends StatelessWidget {
                   const Icon(Icons.bolt, color: AppColors.primary, size: 24),
             ),
             const SizedBox(width: 16),
-            const Expanded(
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Oxyn Plus\'a Yükselt',
-                    style: TextStyle(
+                    title,
+                    style: const TextStyle(
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
                       fontSize: 16,
                     ),
                   ),
-                  SizedBox(height: 4),
+                  const SizedBox(height: 4),
                   Text(
-                    'Sınırsız temizlik, AI analiz, reklamsız',
-                    style: TextStyle(
+                    subtitle,
+                    style: const TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 12,
                     ),
@@ -387,11 +614,13 @@ class _SettingsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          title,
+          title.toUpperCase(),
           style: const TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
@@ -402,9 +631,11 @@ class _SettingsSection extends StatelessWidget {
         const SizedBox(height: AppSpacing.sm),
         Container(
           decoration: BoxDecoration(
-            color: AppColors.surface,
+            color: theme.colorScheme.surface,
             borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-            border: Border.all(color: AppColors.surfaceLight),
+            border: Border.all(
+              color: isDark ? AppColors.surfaceLight : AppColors.lightDivider,
+            ),
           ),
           child: Column(children: children),
         ),
@@ -441,7 +672,7 @@ class _SettingsTile extends StatelessWidget {
       ),
       title: Text(
         title,
-        style: const TextStyle(color: AppColors.textPrimary, fontSize: 15),
+        style: const TextStyle(fontSize: 15),
       ),
       subtitle: subtitle != null
           ? Text(

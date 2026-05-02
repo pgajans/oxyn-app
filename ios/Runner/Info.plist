@@ -5,7 +5,15 @@
 		<key>CADisableMinimumFrameDurationOnPhone</key>
 		<true/>
 		<key>CFBundleDevelopmentRegion</key>
-		<string>$(DEVELOPMENT_LANGUAGE)</string>
+		<string>en</string>
+		<key>CFBundleLocalizations</key>
+		<array>
+			<string>en</string>
+			<string>tr</string>
+			<string>es</string>
+			<string>pt</string>
+			<string>ar</string>
+		</array>
 		<key>CFBundleDisplayName</key>
 		<string>Oxyn</string>
 		<key>CFBundleExecutable</key>

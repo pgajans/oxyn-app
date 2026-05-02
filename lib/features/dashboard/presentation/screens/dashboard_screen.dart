@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../../core/localization/generated/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/oxyn_card.dart';
@@ -72,8 +73,8 @@ class _ScoreSection extends StatelessWidget {
           Row(
             children: [
               Text(
-                'Günlük Skor',
-                style: TextStyle(
+                AppLocalizations.of(context)!.dailyScore,
+                style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                   color: AppColors.textSecondary,
@@ -181,6 +182,7 @@ class _ModuleGrid extends StatelessWidget {
       data: (info) => info.freeFormatted,
     );
 
+    final t = AppLocalizations.of(context)!;
     return GridView.count(
       crossAxisCount: 2,
       mainAxisSpacing: 12,
@@ -194,7 +196,7 @@ class _ModuleGrid extends StatelessWidget {
         ),
         _ModuleCard(
           icon: Icons.speed,
-          label: 'Performans',
+          label: t.performance,
           value: batteryText,
           color: AppColors.success,
           onTap: () => context.go('/battery'),
@@ -202,7 +204,7 @@ class _ModuleGrid extends StatelessWidget {
         const _DashboardNewsCard(),
         _ModuleCard(
           icon: Icons.star_rounded,
-          label: 'Premium',
+          label: t.premium,
           value: 'Oxyn Plus',
           color: AppColors.tertiary,
           onTap: () => context.push('/paywall'),
@@ -389,9 +391,9 @@ class _CleanerCardState extends State<_CleanerCard> with SingleTickerProviderSta
                       color: AppColors.danger.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Text(
-                      'Temizle!',
-                      style: TextStyle(
+                    child: Text(
+                      AppLocalizations.of(context)!.cleanBadge,
+                      style: const TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
                         color: AppColors.danger,
@@ -404,9 +406,9 @@ class _CleanerCardState extends State<_CleanerCard> with SingleTickerProviderSta
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (_needsClean)
-                  const Text(
-                    'Hemen Temizle',
-                    style: TextStyle(
+                  Text(
+                    AppLocalizations.of(context)!.cleanNow,
+                    style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
                       color: AppColors.secondary,
@@ -424,9 +426,9 @@ class _CleanerCardState extends State<_CleanerCard> with SingleTickerProviderSta
                 const SizedBox(height: 2),
                 Text(
                   _needsClean
-                      ? 'Telefon sağlığınız için'
-                      : 'Sonraki temizlik',
-                  style: TextStyle(
+                      ? AppLocalizations.of(context)!.cleanForPhoneHealth
+                      : AppLocalizations.of(context)!.nextClean,
+                  style: const TextStyle(
                     fontSize: 11,
                     color: AppColors.textSecondary,
                   ),
@@ -466,18 +468,17 @@ class _DashboardNewsCard extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Haberler',
-                style: TextStyle(
+              Text(
+                AppLocalizations.of(context)!.newsTab,
+                style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 2),
-              const Text(
-                'Güncel akıllı telefon haberleri',
-                style: TextStyle(
+              Text(
+                AppLocalizations.of(context)!.newsCardSubtitle,
+                style: const TextStyle(
                   fontSize: 11,
                   color: AppColors.textSecondary,
                 ),
@@ -660,10 +661,12 @@ class _OptimizeButtonState extends State<_OptimizeButton>
       return Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.timer_outlined, color: AppColors.textSecondary, size: 20),
+          const Icon(Icons.timer_outlined,
+              color: AppColors.textSecondary, size: 20),
           const SizedBox(width: 8),
           Text(
-            'Sonraki optimizasyon: ${_formatDuration(_remaining)}',
+            AppLocalizations.of(context)!
+                .nextOptimizationCountdown(_formatDuration(_remaining)),
             style: const TextStyle(
               color: AppColors.textSecondary,
               fontSize: 15,
@@ -674,14 +677,14 @@ class _OptimizeButtonState extends State<_OptimizeButton>
       );
     }
 
-    return const Row(
+    return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(Icons.bolt, color: AppColors.background, size: 24),
-        SizedBox(width: 8),
+        const Icon(Icons.bolt, color: AppColors.background, size: 24),
+        const SizedBox(width: 8),
         Text(
-          'Optimize Et',
-          style: TextStyle(
+          AppLocalizations.of(context)!.optimizeButtonLabel,
+          style: const TextStyle(
             color: AppColors.background,
             fontSize: 18,
             fontWeight: FontWeight.w700,
@@ -984,9 +987,9 @@ class _HackerOptimizationScreenState extends State<_HackerOptimizationScreen>
                         borderRadius: BorderRadius.circular(14),
                       ),
                     ),
-                    child: const Text(
-                      'Tamamlandı - Sonuçları Gör',
-                      style: TextStyle(
+                    child: Text(
+                      AppLocalizations.of(context)!.viewResults,
+                      style: const TextStyle(
                         color: AppColors.background,
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
@@ -1072,12 +1075,11 @@ class _OptimizationResultPopupState extends State<_OptimizationResultPopup> {
                 child: const Icon(Icons.check_circle, color: AppColors.success, size: 48),
               ),
               const SizedBox(height: 16),
-              const Text(
-                'Optimizasyon Tamamlandı!',
-                style: TextStyle(
+              Text(
+                AppLocalizations.of(context)!.optimizationCompleteTitle,
+                style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
-                  color: AppColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 20),
@@ -1095,9 +1097,9 @@ class _OptimizationResultPopupState extends State<_OptimizationResultPopup> {
                         borderRadius: BorderRadius.circular(14),
                       ),
                     ),
-                    child: const Text(
-                      'Tamam',
-                      style: TextStyle(
+                    child: Text(
+                      AppLocalizations.of(context)!.ok,
+                      style: const TextStyle(
                         color: AppColors.background,
                         fontSize: 16,
                         fontWeight: FontWeight.w700,

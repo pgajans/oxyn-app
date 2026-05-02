@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../../core/localization/generated/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/services/router.dart';
@@ -17,30 +18,7 @@ class OnboardingScreen extends StatefulWidget {
 class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
-
-  final _pages = const [
-    _OnboardingPage(
-      icon: Icons.favorite_border,
-      title: 'Cihazının Sağlığını Takip Et',
-      description:
-          'Batarya durumu, sıcaklık ve performans skorunu her gün gör.',
-      color: AppColors.primary,
-    ),
-    _OnboardingPage(
-      icon: Icons.cleaning_services_outlined,
-      title: 'Akıllıca Temizle',
-      description:
-          'Benzer fotoğrafları bul, büyük dosyaları tespit et ve güvenle temizle.',
-      color: AppColors.secondary,
-    ),
-    _OnboardingPage(
-      icon: Icons.bolt_outlined,
-      title: 'Kişiselleştir',
-      description:
-          'Şarj animasyonları ve widget\'lar ile telefonunu özelleştir.',
-      color: AppColors.tertiary,
-    ),
-  ];
+  static const int _totalPages = 3;
 
   @override
   void dispose() {
@@ -49,7 +27,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   void _next() {
-    if (_currentPage < _pages.length - 1) {
+    if (_currentPage < _totalPages - 1) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
@@ -65,6 +43,28 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context)!;
+    final pages = <_OnboardingPage>[
+      _OnboardingPage(
+        icon: Icons.favorite_border,
+        title: t.onboarding1Title,
+        description: t.onboarding1Desc,
+        color: AppColors.primary,
+      ),
+      _OnboardingPage(
+        icon: Icons.cleaning_services_outlined,
+        title: t.onboarding2Title,
+        description: t.onboarding2Desc,
+        color: AppColors.secondary,
+      ),
+      _OnboardingPage(
+        icon: Icons.bolt_outlined,
+        title: t.onboarding3Title,
+        description: t.onboarding3Desc,
+        color: AppColors.tertiary,
+      ),
+    ];
+
     return Scaffold(
       body: SafeArea(
         child: Column(
@@ -81,9 +81,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       MaterialPageRoute(builder: (_) => const _ScanScreen()),
                     );
                   },
-                  child: const Text(
-                    'Atla',
-                    style: TextStyle(color: AppColors.textSecondary),
+                  child: Text(
+                    t.skip,
+                    style: const TextStyle(color: AppColors.textSecondary),
                   ),
                 ),
               ),
@@ -92,7 +92,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               child: PageView(
                 controller: _pageController,
                 onPageChanged: (i) => setState(() => _currentPage = i),
-                children: _pages,
+                children: pages,
               ),
             ),
             Padding(
@@ -100,7 +100,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(
-                  _pages.length,
+                  pages.length,
                   (i) => AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -109,7 +109,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     decoration: BoxDecoration(
                       color: i == _currentPage
                           ? AppColors.primary
-                          : AppColors.surfaceLight,
+                          : Theme.of(context).dividerColor,
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
@@ -124,7 +124,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 child: ElevatedButton(
                   onPressed: _next,
                   child: Text(
-                    _currentPage == _pages.length - 1 ? 'Taramayı Başlat' : 'İleri',
+                    _currentPage == pages.length - 1
+                        ? t.startScanButton
+                        : t.next,
                   ),
                 ),
               ),
@@ -186,8 +188,6 @@ class _OnboardingPage extends StatelessWidget {
   }
 }
 
-// --- Scan Screen (PRD: 60 saniye tarama) ---
-
 class _ScanScreen extends StatefulWidget {
   const _ScanScreen();
 
@@ -198,17 +198,8 @@ class _ScanScreen extends StatefulWidget {
 class _ScanScreenState extends State<_ScanScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-  String _currentTask = 'Batarya analiz ediliyor...';
   int _taskIndex = 0;
-
-  final _tasks = [
-    'Batarya analiz ediliyor...',
-    'Depolama taranıyor...',
-    'Fotoğraflar kontrol ediliyor...',
-    'Büyük dosyalar aranıyor...',
-    'Performans değerlendiriliyor...',
-    'Sağlık skoru hesaplanıyor...',
-  ];
+  int _totalTasks = 6;
 
   @override
   void initState() {
@@ -235,8 +226,10 @@ class _ScanScreenState extends State<_ScanScreen>
       final repo = StorageRepository();
       await repo.clearAppCache();
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setInt('last_optimize_time', DateTime.now().millisecondsSinceEpoch);
-      await prefs.setInt('last_free_clean_time', DateTime.now().millisecondsSinceEpoch);
+      await prefs.setInt(
+          'last_optimize_time', DateTime.now().millisecondsSinceEpoch);
+      await prefs.setInt(
+          'last_free_clean_time', DateTime.now().millisecondsSinceEpoch);
       await prefs.setBool('free_clean_used', true);
     } catch (e) {
       debugPrint('Onboarding optimization error: $e');
@@ -244,11 +237,10 @@ class _ScanScreenState extends State<_ScanScreen>
   }
 
   void _updateTask() {
-    final newIndex = (_controller.value * _tasks.length).floor();
-    if (newIndex != _taskIndex && newIndex < _tasks.length) {
+    final newIndex = (_controller.value * _totalTasks).floor();
+    if (newIndex != _taskIndex && newIndex < _totalTasks) {
       setState(() {
         _taskIndex = newIndex;
-        _currentTask = _tasks[newIndex];
       });
     }
   }
@@ -269,6 +261,18 @@ class _ScanScreenState extends State<_ScanScreen>
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context)!;
+    final tasks = [
+      t.analyzingBattery,
+      t.scanningStorage,
+      t.checkingPhotos,
+      t.searchingLargeFiles,
+      t.evaluatingPerformance,
+      t.calculatingHealthScore,
+    ];
+    _totalTasks = tasks.length;
+    final currentTask = tasks[_taskIndex.clamp(0, tasks.length - 1)];
+
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -286,7 +290,8 @@ class _ScanScreenState extends State<_ScanScreen>
                     CircularProgressIndicator(
                       value: _controller.value,
                       strokeWidth: 8,
-                      backgroundColor: AppColors.surfaceLight,
+                      backgroundColor:
+                          Theme.of(context).dividerColor.withValues(alpha: 0.3),
                       valueColor: const AlwaysStoppedAnimation<Color>(
                         AppColors.primary,
                       ),
@@ -297,7 +302,6 @@ class _ScanScreenState extends State<_ScanScreen>
                       style: const TextStyle(
                         fontSize: 36,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
                       ),
                     ),
                   ],
@@ -305,15 +309,15 @@ class _ScanScreenState extends State<_ScanScreen>
               ),
               const SizedBox(height: AppSpacing.xl),
               Text(
-                'Cihazın taranıyor',
+                t.scanningYourDevice,
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
               const SizedBox(height: AppSpacing.md),
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 300),
                 child: Text(
-                  _currentTask,
-                  key: ValueKey(_currentTask),
+                  currentTask,
+                  key: ValueKey(currentTask),
                   style: const TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 15,
@@ -321,9 +325,9 @@ class _ScanScreenState extends State<_ScanScreen>
                 ),
               ),
               const Spacer(),
-              const Text(
-                'Bu işlem genellikle birkaç saniye sürer',
-                style: TextStyle(
+              Text(
+                t.scanTakesSeconds,
+                style: const TextStyle(
                   color: AppColors.textTertiary,
                   fontSize: 12,
                 ),
@@ -337,13 +341,12 @@ class _ScanScreenState extends State<_ScanScreen>
   }
 }
 
-// --- Scan Result Screen ---
-
 class _ScanResultScreen extends StatelessWidget {
   const _ScanResultScreen();
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context)!;
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -358,22 +361,39 @@ class _ScanResultScreen extends StatelessWidget {
                   color: AppColors.success.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.check_circle, color: AppColors.success, size: 56),
+                child: const Icon(Icons.check_circle,
+                    color: AppColors.success, size: 56),
               ),
               const SizedBox(height: AppSpacing.lg),
-              Text('İlk Optimizasyon Tamamlandı!', style: Theme.of(context).textTheme.headlineMedium),
+              Text(t.optimizationComplete,
+                  style: Theme.of(context).textTheme.headlineMedium),
               const SizedBox(height: AppSpacing.md),
-              const Text(
-                'Cihazınız optimize edildi.\nHaftalık ücretsiz temizleme hakkınızı kullandınız.',
+              Text(
+                t.weeklyFreeCleanAvailable,
                 textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 15, height: 1.5),
+                style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 15,
+                    height: 1.5),
               ),
               const SizedBox(height: AppSpacing.xl),
-              _ResultCard(icon: Icons.cached, label: 'Önbellek Temizlendi', value: '✓', color: AppColors.primary),
+              _ResultCard(
+                  icon: Icons.cached,
+                  label: t.cache,
+                  value: '✓',
+                  color: AppColors.primary),
               const SizedBox(height: 12),
-              _ResultCard(icon: Icons.memory, label: 'RAM Optimize', value: '✓', color: AppColors.secondary),
+              _ResultCard(
+                  icon: Icons.memory,
+                  label: t.ram,
+                  value: '✓',
+                  color: AppColors.secondary),
               const SizedBox(height: 12),
-              _ResultCard(icon: Icons.battery_std, label: 'Pil Analizi', value: '✓', color: AppColors.success),
+              _ResultCard(
+                  icon: Icons.battery_std,
+                  label: t.batteryHealth,
+                  value: '✓',
+                  color: AppColors.success),
               const Spacer(),
               SizedBox(
                 width: double.infinity,
@@ -381,17 +401,21 @@ class _ScanResultScreen extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: () async {
                     await Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const PaywallScreen(), fullscreenDialog: true),
+                      MaterialPageRoute(
+                          builder: (_) => const PaywallScreen(),
+                          fullscreenDialog: true),
                     );
                     if (context.mounted) context.go('/dashboard');
                   },
-                  child: const Text('Premium\'u Keşfet'),
+                  child: Text(t.upgradeToPlusShort),
                 ),
               ),
               const SizedBox(height: 12),
               TextButton(
                 onPressed: () => context.go('/dashboard'),
-                child: const Text('Ücretsiz olarak devam et', style: TextStyle(color: AppColors.textSecondary)),
+                child: Text(t.continueForFree,
+                    style:
+                        const TextStyle(color: AppColors.textSecondary)),
               ),
               const SizedBox(height: AppSpacing.lg),
             ],
@@ -417,12 +441,13 @@ class _ResultCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.surfaceLight),
+        border: Border.all(color: theme.dividerColor),
       ),
       child: Row(
         children: [

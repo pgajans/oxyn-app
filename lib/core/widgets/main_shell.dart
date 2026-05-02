@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../localization/generated/app_localizations.dart';
 import '../theme/app_colors.dart';
 
 class MainShell extends StatelessWidget {
@@ -18,20 +19,22 @@ class MainShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
     final index = _currentIndex(context);
 
     return Scaffold(
       body: child,
       bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: AppColors.surface,
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
           border: Border(
-            top: BorderSide(color: AppColors.surfaceLight, width: 0.5),
+            top: BorderSide(color: theme.dividerColor, width: 0.5),
           ),
         ),
         child: NavigationBar(
-          backgroundColor: AppColors.surface,
-          indicatorColor: AppColors.primary.withValues(alpha: 0.15),
+          backgroundColor: theme.colorScheme.surface,
+          indicatorColor: theme.colorScheme.primary.withValues(alpha: 0.15),
           selectedIndex: index,
           labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
           onDestinationSelected: (i) {
@@ -49,40 +52,46 @@ class MainShell extends StatelessWidget {
             }
           },
           destinations: [
-            const NavigationDestination(
-              icon: Icon(Icons.dashboard_outlined, size: 22),
-              selectedIcon: Icon(Icons.dashboard, color: AppColors.primary, size: 22),
-              label: 'Ana Sayfa',
+            NavigationDestination(
+              icon: const Icon(Icons.dashboard_outlined, size: 22),
+              selectedIcon: Icon(Icons.dashboard,
+                  color: theme.colorScheme.primary, size: 22),
+              label: t.home,
             ),
-            const NavigationDestination(
-              icon: Icon(Icons.quiz_outlined, size: 22),
-              selectedIcon: Icon(Icons.quiz, color: AppColors.primary, size: 22),
+            NavigationDestination(
+              icon: const Icon(Icons.quiz_outlined, size: 22),
+              selectedIcon: Icon(Icons.quiz,
+                  color: theme.colorScheme.primary, size: 22),
               label: 'Trivia',
             ),
-            const NavigationDestination(
-              icon: Icon(Icons.health_and_safety_outlined, size: 22),
-              selectedIcon: Icon(Icons.health_and_safety, color: AppColors.success, size: 22),
-              label: 'Doktor',
+            NavigationDestination(
+              icon: const Icon(Icons.health_and_safety_outlined, size: 22),
+              selectedIcon: const Icon(Icons.health_and_safety,
+                  color: AppColors.success, size: 22),
+              label: t.doctor,
             ),
             NavigationDestination(
               icon: ShaderMask(
                 shaderCallback: (bounds) => const LinearGradient(
                   colors: [AppColors.primary, AppColors.tertiary],
                 ).createShader(bounds),
-                child: const Icon(Icons.workspace_premium, color: Colors.white, size: 22),
+                child: const Icon(Icons.workspace_premium,
+                    color: Colors.white, size: 22),
               ),
               selectedIcon: ShaderMask(
                 shaderCallback: (bounds) => const LinearGradient(
                   colors: [AppColors.primary, AppColors.tertiary],
                 ).createShader(bounds),
-                child: const Icon(Icons.workspace_premium, color: Colors.white, size: 22),
+                child: const Icon(Icons.workspace_premium,
+                    color: Colors.white, size: 22),
               ),
-              label: 'Premium',
+              label: t.premium,
             ),
-            const NavigationDestination(
-              icon: Icon(Icons.settings_outlined, size: 22),
-              selectedIcon: Icon(Icons.settings, color: AppColors.primary, size: 22),
-              label: 'Ayarlar',
+            NavigationDestination(
+              icon: const Icon(Icons.settings_outlined, size: 22),
+              selectedIcon: Icon(Icons.settings,
+                  color: theme.colorScheme.primary, size: 22),
+              label: t.settings,
             ),
           ],
         ),
