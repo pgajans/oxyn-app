@@ -112,7 +112,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                 '• Verilerinizin silinmesini isteme\n'
                 '• Reklam izlemeyi reddetme (iOS ATT / Android Ad Settings)\n'
                 '• Bildirimleri kapatma\n\n'
-                'Bu haklarınızı kullanmak için bize oxynapp@gmail.com adresinden ulaşabilirsiniz.',
+                'Bu haklarınızı kullanmak için bize pgajans@gmail.com adresinden ulaşabilirsiniz.',
           ),
           _Section(
             title: '9. Politika Değişiklikleri',
@@ -125,7 +125,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
             title: '10. İletişim',
             body:
                 'Gizlilik politikamız hakkında sorularınız için:\n\n'
-                'E-posta: oxynapp@gmail.com',
+                'E-posta: pgajans@gmail.com',
           ),
           SizedBox(height: 40),
         ],

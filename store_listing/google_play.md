@@ -58,7 +58,7 @@ Tools (Araçlar)
 Everyone / Herkes (PEGI 3)
 
 ## İletişim E-postası
-oxynapp@gmail.com
+pgajans@gmail.com
 
 ## Gizlilik Politikası URL
 https://pgajans.github.io/oxyn-pages/privacy.html

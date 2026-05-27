@@ -55,7 +55,7 @@ Secondary: Productivity (Verimlilik)
 4+ (reklam içerir notu ile)
 
 ## İletişim
-oxynapp@gmail.com
+pgajans@gmail.com
 
 ## Gizlilik Politikası URL
 https://pgajans.github.io/oxyn-pages/privacy.html

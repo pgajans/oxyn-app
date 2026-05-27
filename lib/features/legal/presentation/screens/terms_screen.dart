@@ -132,7 +132,7 @@ class TermsScreen extends StatelessWidget {
             title: '12. İletişim',
             body:
                 'Kullanım şartları hakkında sorularınız için:\n\n'
-                'E-posta: oxynapp@gmail.com',
+                'E-posta: pgajans@gmail.com',
           ),
           SizedBox(height: 40),
         ],
