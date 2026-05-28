@@ -219,7 +219,7 @@
             align-items: center;
         }
         @media (min-width: 920px) {
-            .hero-inner { grid-template-columns: 1.05fr 0.95fr; gap: 64px; }
+            .hero-inner { grid-template-columns: 1.25fr 0.75fr; gap: 56px; }
             .hero { padding: 80px 0 96px; }
         }
         .hero-copy { text-align: center; }
@@ -240,6 +240,19 @@
             font-weight: 800;
             color: var(--accent);
             letter-spacing: -2px;
+        }
+        .hero-eyebrow {
+            display: inline-block;
+            margin-bottom: 14px;
+            padding: 6px 14px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--accent);
+            background: var(--accent-soft);
+            border: 1px solid rgba(0, 229, 255, 0.22);
+            border-radius: 999px;
         }
         h1 {
             font-size: clamp(36px, 5.4vw, 60px);
@@ -360,17 +373,22 @@
         .hero-visual::before {
             content: "";
             position: absolute;
-            inset: -40px;
+            inset: -30px;
             background: radial-gradient(ellipse at center, rgba(0, 229, 255, 0.18) 0%, transparent 65%);
             z-index: 0;
         }
         .hero-phone {
             position: relative;
             z-index: 1;
-            max-width: 360px;
+            width: 100%;
+            max-width: 280px;
+            height: auto;
             border-radius: 22px;
             box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5), 0 0 80px rgba(0, 229, 255, 0.18);
             animation: float 6s ease-in-out infinite;
+        }
+        @media (min-width: 1200px) {
+            .hero-phone { max-width: 300px; }
         }
         @keyframes float {
             0%, 100% { transform: translateY(0); }
@@ -402,6 +420,122 @@
             gap: 8px;
         }
         .trust-strip-inner svg { width: 16px; height: 16px; color: var(--accent); flex-shrink: 0; }
+
+        /* ------- Differentiators ------- */
+        .differentiators {
+            padding: 80px 0;
+            background: var(--bg);
+        }
+        .diff-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+            margin-top: 40px;
+        }
+        @media (min-width: 920px) {
+            .diff-grid { grid-template-columns: 1.4fr 1fr; align-items: stretch; }
+        }
+        .diff-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 32px;
+        }
+        .diff-vs {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+        }
+        @media (min-width: 640px) {
+            .diff-vs { grid-template-columns: 1fr 1fr; gap: 20px; }
+        }
+        .diff-them, .diff-us {
+            padding: 24px;
+            border-radius: 14px;
+            border: 1px solid var(--border);
+        }
+        .diff-them {
+            background: rgba(245, 158, 11, 0.04);
+            border-color: rgba(245, 158, 11, 0.18);
+        }
+        .diff-us {
+            background: var(--accent-soft);
+            border-color: rgba(0, 229, 255, 0.30);
+        }
+        .diff-label {
+            display: inline-block;
+            margin-bottom: 14px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+        .diff-them .diff-label {
+            color: var(--warning);
+            background: rgba(245, 158, 11, 0.12);
+        }
+        .diff-us .diff-label {
+            color: var(--accent);
+            background: rgba(0, 229, 255, 0.18);
+        }
+        .diff-them ul, .diff-us ul {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .diff-them li, .diff-us li {
+            color: var(--text);
+            font-size: 14px;
+            line-height: 1.5;
+            position: relative;
+            padding-left: 22px;
+        }
+        .diff-them li::before {
+            content: "✕";
+            position: absolute;
+            left: 0;
+            color: var(--warning);
+            font-weight: 700;
+        }
+        .diff-us li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: var(--accent);
+            font-weight: 700;
+        }
+        .diff-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+        .diff-stat {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 22px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-height: 110px;
+        }
+        .diff-num {
+            font-size: 40px;
+            font-weight: 800;
+            color: var(--accent);
+            line-height: 1;
+            margin-bottom: 6px;
+            letter-spacing: -1px;
+        }
+        .diff-stat-label {
+            color: var(--muted);
+            font-size: 13px;
+            font-weight: 500;
+        }
 
         /* ------- Features ------- */
         .feature-grid {
@@ -676,6 +810,17 @@
             margin-top: 4px;
         }
         .price-list li .dim { color: var(--muted); }
+        .pricing-fine {
+            margin-top: 28px;
+            text-align: center;
+            font-size: 12px;
+            color: var(--muted);
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .pricing-fine a { color: var(--muted); border-bottom: 1px dashed var(--muted); }
+        .pricing-fine a:hover { color: var(--accent); border-bottom-color: var(--accent); }
 
         /* ------- FAQ ------- */
         .faq-list {
@@ -730,7 +875,12 @@
             background: radial-gradient(ellipse at center, rgba(0, 229, 255, 0.1) 0%, transparent 70%);
         }
         .cta-wrap h2 { margin-bottom: 16px; }
-        .cta-wrap p { color: var(--muted); margin: 0 auto 28px; max-width: 520px; }
+        .cta-wrap p { color: var(--muted); margin: 0 auto 28px; max-width: 560px; }
+        .cta-footnote {
+            margin-top: 20px;
+            font-size: 12px;
+            color: var(--muted-soft);
+        }
 
         /* ------- Footer ------- */
         footer {
@@ -826,21 +976,21 @@
 
     <header class="topnav" id="topnav">
         <div class="topnav-inner">
-            <a href="/" class="brand" aria-label="Oxyn home">
+            <a href="index.html" class="brand" aria-label="Oxyn home">
                 <span class="brand-mark">O</span>
                 <span>Oxyn</span>
             </a>
             <nav class="nav-links" aria-label="Primary">
+                <a href="#why">Why Oxyn</a>
                 <a href="#features">Features</a>
-                <a href="#how">How it works</a>
                 <a href="#screenshots">Screenshots</a>
                 <a href="#pricing">Pricing</a>
                 <a href="#faq">FAQ</a>
             </nav>
             <nav class="lang-switch" aria-label="Language">
-                <a href="/" class="active" aria-current="page">EN</a>
+                <a href="index.html" class="active" aria-current="page">EN</a>
                 <span class="lang-sep">·</span>
-                <a href="/tr.html">TR</a>
+                <a href="tr.html">TR</a>
             </nav>
         </div>
     </header>
@@ -852,39 +1002,42 @@
             <div class="hero-inner">
                 <div class="hero-copy">
                     <div class="hero-logo" aria-hidden="true">O</div>
-                    <h1>Take care of your phone, <span class="accent">effortlessly.</span></h1>
+                    <span class="hero-eyebrow">Phone care, reimagined</span>
+                    <h1>The smarter way to keep your phone <span class="accent">healthy.</span></h1>
                     <p class="tagline">
-                        Oxyn is your smart device care assistant. Battery health, storage cleanup,
-                        AI-powered analysis, and one-tap optimization — all in one privacy-first app.
+                        Battery diagnostics, storage cleanup, AI device doctor, and one-tap optimization —
+                        wrapped in a beautifully simple app that respects your privacy. No accounts. No tracking. No noise.
                     </p>
 
                     <div class="trust-line" aria-label="Highlights">
-                        <span class="chip">Built for iOS 16+ &amp; Android 9+</span>
+                        <span class="chip">iOS 16+ &amp; Android 9+</span>
                         <span class="dot" aria-hidden="true">•</span>
-                        <span class="chip">No account required</span>
+                        <span class="chip">5 languages</span>
                         <span class="dot" aria-hidden="true">•</span>
-                        <span class="chip">100% privacy-first</span>
+                        <span class="chip">37&nbsp;MB download</span>
+                        <span class="dot" aria-hidden="true">•</span>
+                        <span class="chip">Zero trackers</span>
                     </div>
 
                     <div class="badges">
                         <a href="https://apps.apple.com/" class="badge soon" aria-label="App Store — coming soon">
                             <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg>
                             <span>
-                                <span class="badge-store">Coming soon to</span>
+                                <span class="badge-store">In App Store review</span>
                                 <span class="badge-name">App Store</span>
                             </span>
                         </a>
                         <a href="https://play.google.com/" class="badge soon" aria-label="Google Play — coming soon">
                             <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3.609 1.814 13.792 12 3.61 22.186a.996.996 0 0 1-.61-.92V2.734a1 1 0 0 1 .609-.92zm10.89 10.893 2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.198 2.807 1.626a1 1 0 0 1 0 1.73l-2.808 1.626L15.207 12l2.491-2.491zM5.864 2.658 16.802 8.99l-2.302 2.302-8.636-8.635z"/></svg>
                             <span>
-                                <span class="badge-store">Coming soon to</span>
+                                <span class="badge-store">In open beta</span>
                                 <span class="badge-name">Google Play</span>
                             </span>
                         </a>
                     </div>
                     <p class="availability">
                         <span class="pulse" aria-hidden="true"></span>
-                        App Store review in progress · Android in closed beta · 5 languages
+                        Launching shortly · <a href="mailto:support@oxynapp.net?subject=Notify%20me%20when%20Oxyn%20launches" style="color: var(--accent); border-bottom: 1px dashed currentColor;">Get a one-time launch email</a>
                     </p>
                 </div>
 
@@ -917,6 +1070,58 @@
             </div>
         </div>
     </div>
+
+    <section class="differentiators" id="why">
+        <div class="container">
+            <div class="section-eyebrow">Why Oxyn</div>
+            <h2>The phone-care app that gets out of your way</h2>
+            <p class="section-sub">Most cleaner apps are bloated, ad-loaded, and built to harvest data. Oxyn is built differently — focused, fast, and respectful.</p>
+
+            <div class="diff-grid">
+                <div class="diff-card">
+                    <div class="diff-vs">
+                        <div class="diff-them">
+                            <span class="diff-label">Most cleaner apps</span>
+                            <ul>
+                                <li>Bloated 200&nbsp;MB install</li>
+                                <li>15+ third-party trackers</li>
+                                <li>Aggressive subscription paywalls</li>
+                                <li>"Speed boost" placebo animations</li>
+                            </ul>
+                        </div>
+                        <div class="diff-us">
+                            <span class="diff-label">Oxyn</span>
+                            <ul>
+                                <li>37&nbsp;MB lean install</li>
+                                <li>Zero data brokers, zero tracking SDKs</li>
+                                <li>Free forever — optional Premium</li>
+                                <li>Real numbers, real recommendations</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="diff-stats">
+                    <div class="diff-stat">
+                        <div class="diff-num">0</div>
+                        <div class="diff-stat-label">Tracking SDKs</div>
+                    </div>
+                    <div class="diff-stat">
+                        <div class="diff-num">5</div>
+                        <div class="diff-stat-label">Languages</div>
+                    </div>
+                    <div class="diff-stat">
+                        <div class="diff-num">8</div>
+                        <div class="diff-stat-label">Focused tools</div>
+                    </div>
+                    <div class="diff-stat">
+                        <div class="diff-num">$0</div>
+                        <div class="diff-stat-label">Core features</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
     <section class="features" id="features">
         <div class="container">
@@ -1128,38 +1333,42 @@
     <section class="pricing" id="pricing">
         <div class="container">
             <div class="section-eyebrow">Pricing</div>
-            <h2>Free to use. Premium when you want more.</h2>
-            <p class="section-sub">Transparent, friendly pricing. No locked-in subscriptions to get started.</p>
+            <h2>Start free. Upgrade when you're ready.</h2>
+            <p class="section-sub">Transparent, friendly pricing. No locked-in trials, no surprise charges, no dark patterns. The full free tier is genuinely useful — Premium is for power users who want more.</p>
 
             <div class="pricing-grid">
                 <div class="price-card">
                     <h3>Free</h3>
-                    <p class="price-sub">Everything you need for healthy phone care.</p>
+                    <p class="price-sub">Everything you need for healthy day-to-day phone care.</p>
                     <div class="price-amount">$0<span class="small">/forever</span></div>
                     <p class="price-note">No card. No trial. No catch.</p>
                     <ul class="price-list">
-                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 8"/></svg>Battery health &amp; charge alarm</li>
-                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 8"/></svg>Storage cleanup essentials</li>
-                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 8"/></svg>One-tap optimize</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 8"/></svg>Battery health &amp; 80% charge alarm</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 8"/></svg>Storage overview &amp; cleanup essentials</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 8"/></svg>One-tap optimize (RAM &amp; cache)</li>
                         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 8"/></svg>Daily tech news &amp; trivia</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 8"/></svg>5 languages, 3 themes</li>
                         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 8"/></svg><span class="dim">Minimal, non-intrusive ads</span></li>
                     </ul>
                 </div>
                 <div class="price-card featured">
-                    <span class="price-tag">Coming soon</span>
+                    <span class="price-tag">Most popular</span>
                     <h3>Premium</h3>
-                    <p class="price-sub">Unlock the full power of Oxyn.</p>
+                    <p class="price-sub">Unlock the full power of Oxyn, ad-free.</p>
                     <div class="price-amount">$4.99<span class="small">/month</span></div>
-                    <p class="price-note">or $29.99/year — cancel anytime.</p>
+                    <p class="price-note">or <strong>$29.99/year</strong> — save 50% · cancel anytime</p>
                     <ul class="price-list">
-                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 8"/></svg>Everything in Free</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 8"/></svg><strong>Everything in Free</strong></li>
                         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 8"/></svg>Full AI Device Doctor reports</li>
                         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 8"/></svg>Advanced duplicate &amp; junk scans</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 8"/></svg>Deep battery health trends</li>
                         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 8"/></svg>Completely ad-free experience</li>
-                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 8"/></svg>Priority support</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 8"/></svg>Priority support (24h reply)</li>
                     </ul>
                 </div>
             </div>
+
+            <p class="pricing-fine">Subscriptions are billed through your Apple ID or Google account. Pricing may vary by region. All taxes included where applicable. <a href="terms.html">Terms</a> · <a href="privacy-policy.html">Privacy</a></p>
         </div>
     </section>
 
@@ -1172,27 +1381,43 @@
             <div class="faq-list">
                 <details class="faq" open>
                     <summary>Is Oxyn really free?</summary>
-                    <div class="faq-body">Yes. The core experience — battery health, storage cleanup, one-tap optimize, daily tech news, and trivia — is completely free. Premium is an optional, transparent upgrade with no forced trial.</div>
+                    <div class="faq-body">Yes. The core experience — battery health, storage cleanup, one-tap optimize, daily tech news, and trivia — is completely free, forever. Premium is an optional upgrade with no forced trial, no credit card to sign up, and you can cancel any time.</div>
                 </details>
                 <details class="faq">
                     <summary>Does it work offline?</summary>
-                    <div class="faq-body">Yes. All core analysis runs on your device, so it works without an internet connection. Only optional features like Daily Tech News and Tech Trivia need a connection to refresh content.</div>
+                    <div class="faq-body">Yes. All core analysis — battery health, storage scanning, junk detection, optimize — runs on your device and works without an internet connection. Only optional content (Daily Tech News, Tech Trivia, AI Doctor reports) needs a connection.</div>
                 </details>
                 <details class="faq">
                     <summary>What data does Oxyn collect?</summary>
-                    <div class="faq-body">Only the minimum needed to make the app work and stay stable — anonymous crash diagnostics and basic usage events. We never collect contacts, photos, messages, or location. Full details in our <a href="privacy-policy.html">Privacy Policy</a>.</div>
+                    <div class="faq-body">Only the minimum needed to keep the app working and stable. That means anonymous crash diagnostics and a handful of basic, non-personal usage counters. We never collect your contacts, photos, messages, location, or any identifiable personal information. Full details in our <a href="privacy-policy.html">Privacy Policy</a>.</div>
                 </details>
                 <details class="faq">
                     <summary>Does it really improve battery life?</summary>
-                    <div class="faq-body">Oxyn doesn't pretend to magically extend battery capacity — no app can. What it does is help you build healthier charging habits (like the 80% smart alarm), monitor temperature, and avoid the patterns that wear batteries out faster. Over time, that makes a real difference.</div>
+                    <div class="faq-body">Oxyn doesn't pretend to magically extend battery capacity — no app can rewrite physics. What it does is help you build healthier charging habits (like the 80% smart charge alarm), monitor temperature to avoid heat damage, and stop the patterns that wear batteries out faster. Over months, that makes a real difference in how long your battery lasts.</div>
+                </details>
+                <details class="faq">
+                    <summary>How is Oxyn different from other cleaner apps?</summary>
+                    <div class="faq-body">Three big differences: <strong>(1)</strong> Zero tracking SDKs — most cleaner apps embed 10–20 third-party trackers; we use zero. <strong>(2)</strong> No fake "boost" placebos — we show real numbers from real system APIs. <strong>(3)</strong> A genuine free tier, not a 3-day trial dressed up as free. We make money from optional Premium, not from your data.</div>
                 </details>
                 <details class="faq">
                     <summary>Is there an Android version?</summary>
-                    <div class="faq-body">Yes. Oxyn is built with Flutter for both iOS and Android. The Android version is currently in closed beta on Google Play; an open release follows the iOS launch.</div>
+                    <div class="faq-body">Yes. Oxyn is built with Flutter for both iOS and Android — the same beautiful experience on both platforms. The Android version is currently in <strong>open beta</strong> on Google Play; full Production release is planned alongside the iOS launch. <a href="mailto:support@oxynapp.net?subject=Android%20beta">Email us</a> if you'd like to join the Android beta.</div>
+                </details>
+                <details class="faq">
+                    <summary>Which languages does Oxyn support?</summary>
+                    <div class="faq-body">Five at launch: English, Turkish, Spanish, Portuguese, and Arabic. Oxyn automatically picks the right language based on your system settings, and you can switch any time from Settings.</div>
+                </details>
+                <details class="faq">
+                    <summary>Does Oxyn run on iPad?</summary>
+                    <div class="faq-body">Yes. Oxyn is a Universal app — the same purchase works on both iPhone and iPad. Premium subscriptions are linked to your Apple ID and sync across all your devices automatically.</div>
+                </details>
+                <details class="faq">
+                    <summary>What happens if I cancel Premium?</summary>
+                    <div class="faq-body">You keep Premium until your billing period ends. After that, the app falls back to the Free tier — you still have battery health, basic storage tools, one-tap optimize, and daily content. Premium features (full AI Doctor, ad-free) simply pause until you re-subscribe.</div>
                 </details>
                 <details class="faq">
                     <summary>How can I contact support?</summary>
-                    <div class="faq-body">Email <a href="mailto:support@oxynapp.net">support@oxynapp.net</a> — we read every message and typically reply within 24–48 hours. You can also visit our <a href="support.html">Support page</a>.</div>
+                    <div class="faq-body">Email <a href="mailto:support@oxynapp.net">support@oxynapp.net</a> — a real human reads every message, typically replying within 24–48 hours. You can also visit our <a href="support.html">Support page</a> for help articles.</div>
                 </details>
             </div>
         </div>
@@ -1201,16 +1426,17 @@
     <section class="cta-wrap">
         <div class="container">
             <h2>Ready to give your phone the care it deserves?</h2>
-            <p>Oxyn launches soon on the App Store and Google Play. Want to know the moment it's live?</p>
+            <p>Oxyn is launching shortly on the App Store and Google Play. Want a one-time email the day it goes live? No spam, no marketing list — we'll write you once.</p>
             <div class="badges" style="justify-content: center;">
-                <a href="mailto:support@oxynapp.net?subject=Notify%20me%20when%20Oxyn%20launches" class="badge" aria-label="Notify me by email">
+                <a href="mailto:support@oxynapp.net?subject=Notify%20me%20when%20Oxyn%20launches&amp;body=Please%20email%20me%20once%20when%20Oxyn%20is%20live%20on%20the%20App%20Store%20%2F%20Google%20Play." class="badge" aria-label="Notify me by email">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
                     <span>
-                        <span class="badge-store">Get notified at</span>
+                        <span class="badge-store">Get one launch email at</span>
                         <span class="badge-name">support@oxynapp.net</span>
                     </span>
                 </a>
             </div>
+            <p class="cta-footnote">No newsletter. No tracking pixel. We email you once and that's it.</p>
         </div>
     </section>
 
@@ -1244,7 +1470,7 @@
                     <li><a href="privacy-policy.html">Privacy Policy</a></li>
                     <li><a href="terms.html">Terms of Use</a></li>
                     <li><a href="mailto:support@oxynapp.net">support@oxynapp.net</a></li>
-                    <li><a href="/tr.html">Türkçe</a></li>
+                    <li><a href="tr.html">Türkçe</a></li>
                 </ul>
             </div>
         </div>

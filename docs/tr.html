@@ -216,7 +216,7 @@
             align-items: center;
         }
         @media (min-width: 920px) {
-            .hero-inner { grid-template-columns: 1.05fr 0.95fr; gap: 64px; }
+            .hero-inner { grid-template-columns: 1.25fr 0.75fr; gap: 56px; }
             .hero { padding: 80px 0 96px; }
         }
         .hero-copy { text-align: center; }
@@ -237,6 +237,19 @@
             font-weight: 800;
             color: var(--accent);
             letter-spacing: -2px;
+        }
+        .hero-eyebrow {
+            display: inline-block;
+            margin-bottom: 14px;
+            padding: 6px 14px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--accent);
+            background: var(--accent-soft);
+            border: 1px solid rgba(0, 229, 255, 0.22);
+            border-radius: 999px;
         }
         h1 {
             font-size: clamp(36px, 5.4vw, 60px);
@@ -357,17 +370,22 @@
         .hero-visual::before {
             content: "";
             position: absolute;
-            inset: -40px;
+            inset: -30px;
             background: radial-gradient(ellipse at center, rgba(0, 229, 255, 0.18) 0%, transparent 65%);
             z-index: 0;
         }
         .hero-phone {
             position: relative;
             z-index: 1;
-            max-width: 360px;
+            width: 100%;
+            max-width: 280px;
+            height: auto;
             border-radius: 22px;
             box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5), 0 0 80px rgba(0, 229, 255, 0.18);
             animation: float 6s ease-in-out infinite;
+        }
+        @media (min-width: 1200px) {
+            .hero-phone { max-width: 300px; }
         }
         @keyframes float {
             0%, 100% { transform: translateY(0); }
@@ -398,6 +416,122 @@
             gap: 8px;
         }
         .trust-strip-inner svg { width: 16px; height: 16px; color: var(--accent); flex-shrink: 0; }
+
+        /* ------- Differentiators ------- */
+        .differentiators {
+            padding: 80px 0;
+            background: var(--bg);
+        }
+        .diff-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+            margin-top: 40px;
+        }
+        @media (min-width: 920px) {
+            .diff-grid { grid-template-columns: 1.4fr 1fr; align-items: stretch; }
+        }
+        .diff-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 32px;
+        }
+        .diff-vs {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+        }
+        @media (min-width: 640px) {
+            .diff-vs { grid-template-columns: 1fr 1fr; gap: 20px; }
+        }
+        .diff-them, .diff-us {
+            padding: 24px;
+            border-radius: 14px;
+            border: 1px solid var(--border);
+        }
+        .diff-them {
+            background: rgba(245, 158, 11, 0.04);
+            border-color: rgba(245, 158, 11, 0.18);
+        }
+        .diff-us {
+            background: var(--accent-soft);
+            border-color: rgba(0, 229, 255, 0.30);
+        }
+        .diff-label {
+            display: inline-block;
+            margin-bottom: 14px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+        .diff-them .diff-label {
+            color: var(--warning);
+            background: rgba(245, 158, 11, 0.12);
+        }
+        .diff-us .diff-label {
+            color: var(--accent);
+            background: rgba(0, 229, 255, 0.18);
+        }
+        .diff-them ul, .diff-us ul {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .diff-them li, .diff-us li {
+            color: var(--text);
+            font-size: 14px;
+            line-height: 1.5;
+            position: relative;
+            padding-left: 22px;
+        }
+        .diff-them li::before {
+            content: "✕";
+            position: absolute;
+            left: 0;
+            color: var(--warning);
+            font-weight: 700;
+        }
+        .diff-us li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: var(--accent);
+            font-weight: 700;
+        }
+        .diff-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+        .diff-stat {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 22px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-height: 110px;
+        }
+        .diff-num {
+            font-size: 40px;
+            font-weight: 800;
+            color: var(--accent);
+            line-height: 1;
+            margin-bottom: 6px;
+            letter-spacing: -1px;
+        }
+        .diff-stat-label {
+            color: var(--muted);
+            font-size: 13px;
+            font-weight: 500;
+        }
 
         .feature-grid {
             display: grid;
@@ -667,6 +801,17 @@
             margin-top: 4px;
         }
         .price-list li .dim { color: var(--muted); }
+        .pricing-fine {
+            margin-top: 28px;
+            text-align: center;
+            font-size: 12px;
+            color: var(--muted);
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .pricing-fine a { color: var(--muted); border-bottom: 1px dashed var(--muted); }
+        .pricing-fine a:hover { color: var(--accent); border-bottom-color: var(--accent); }
 
         .faq-list {
             max-width: 760px;
@@ -719,7 +864,12 @@
             background: radial-gradient(ellipse at center, rgba(0, 229, 255, 0.1) 0%, transparent 70%);
         }
         .cta-wrap h2 { margin-bottom: 16px; }
-        .cta-wrap p { color: var(--muted); margin: 0 auto 28px; max-width: 520px; }
+        .cta-wrap p { color: var(--muted); margin: 0 auto 28px; max-width: 560px; }
+        .cta-footnote {
+            margin-top: 20px;
+            font-size: 12px;
+            color: var(--muted-soft);
+        }
 
         footer {
             border-top: 1px solid var(--border);
@@ -813,21 +963,21 @@
 
     <header class="topnav" id="topnav">
         <div class="topnav-inner">
-            <a href="/tr.html" class="brand" aria-label="Oxyn ana sayfa">
+            <a href="tr.html" class="brand" aria-label="Oxyn ana sayfa">
                 <span class="brand-mark">O</span>
                 <span>Oxyn</span>
             </a>
             <nav class="nav-links" aria-label="Birincil">
+                <a href="#why">Neden Oxyn</a>
                 <a href="#features">Özellikler</a>
-                <a href="#how">Nasıl çalışır</a>
                 <a href="#screenshots">Ekranlar</a>
                 <a href="#pricing">Fiyatlandırma</a>
                 <a href="#faq">SSS</a>
             </nav>
             <nav class="lang-switch" aria-label="Dil">
-                <a href="/">EN</a>
+                <a href="index.html">EN</a>
                 <span class="lang-sep">·</span>
-                <a href="/tr.html" class="active" aria-current="page">TR</a>
+                <a href="tr.html" class="active" aria-current="page">TR</a>
             </nav>
         </div>
     </header>
@@ -839,39 +989,42 @@
             <div class="hero-inner">
                 <div class="hero-copy">
                     <div class="hero-logo" aria-hidden="true">O</div>
-                    <h1>Telefonuna sahip çık, <span class="accent">zahmetsizce.</span></h1>
+                    <span class="hero-eyebrow">Telefon bakımı, yeniden tasarlandı</span>
+                    <h1>Telefonunu sağlıklı tutmanın <span class="accent">akıllı yolu.</span></h1>
                     <p class="tagline">
-                        Oxyn, telefonun için akıllı bakım asistanı. Pil sağlığı, depolama temizliği,
-                        yapay zeka destekli analiz ve tek dokunuşla optimizasyon — tek bir gizlilik öncelikli uygulamada.
+                        Pil sağlığı, depolama temizliği, yapay zekâ destekli cihaz doktoru ve tek dokunuşla optimizasyon —
+                        gizliliğine saygı duyan zarif ve sade bir uygulamada. Hesap yok, takip yok, gereksiz gürültü yok.
                     </p>
 
                     <div class="trust-line" aria-label="Öne çıkanlar">
-                        <span class="chip">iOS 16+ ve Android 9+ için</span>
+                        <span class="chip">iOS 16+ ve Android 9+</span>
                         <span class="dot" aria-hidden="true">•</span>
-                        <span class="chip">Hesap zorunluluğu yok</span>
+                        <span class="chip">5 dil</span>
                         <span class="dot" aria-hidden="true">•</span>
-                        <span class="chip">%100 gizlilik öncelikli</span>
+                        <span class="chip">37&nbsp;MB indirme</span>
+                        <span class="dot" aria-hidden="true">•</span>
+                        <span class="chip">Sıfır takipçi</span>
                     </div>
 
                     <div class="badges">
                         <a href="https://apps.apple.com/" class="badge soon" aria-label="App Store — yakında">
                             <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg>
                             <span>
-                                <span class="badge-store">Yakında</span>
+                                <span class="badge-store">App Store incelemesinde</span>
                                 <span class="badge-name">App Store</span>
                             </span>
                         </a>
                         <a href="https://play.google.com/" class="badge soon" aria-label="Google Play — yakında">
                             <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3.609 1.814 13.792 12 3.61 22.186a.996.996 0 0 1-.61-.92V2.734a1 1 0 0 1 .609-.92zm10.89 10.893 2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.198 2.807 1.626a1 1 0 0 1 0 1.73l-2.808 1.626L15.207 12l2.491-2.491zM5.864 2.658 16.802 8.99l-2.302 2.302-8.636-8.635z"/></svg>
                             <span>
-                                <span class="badge-store">Yakında</span>
+                                <span class="badge-store">Açık betada</span>
                                 <span class="badge-name">Google Play</span>
                             </span>
                         </a>
                     </div>
                     <p class="availability">
                         <span class="pulse" aria-hidden="true"></span>
-                        App Store inceleme aşamasında · Android kapalı betada · 5 dil
+                        Çok yakında yayında · <a href="mailto:support@oxynapp.net?subject=Oxyn%20yayina%20girdiginde%20haber%20ver" style="color: var(--accent); border-bottom: 1px dashed currentColor;">Yayına girdiğinde tek seferlik e-posta al</a>
                     </p>
                 </div>
 
@@ -904,6 +1057,58 @@
             </div>
         </div>
     </div>
+
+    <section class="differentiators" id="why">
+        <div class="container">
+            <div class="section-eyebrow">Neden Oxyn</div>
+            <h2>Yoluna çıkmayan telefon-bakım uygulaması</h2>
+            <p class="section-sub">Çoğu temizleyici uygulama şişirilmiş, reklam yüklü ve veri toplamak için yapılmıştır. Oxyn farklı: odaklı, hızlı ve sana saygılı.</p>
+
+            <div class="diff-grid">
+                <div class="diff-card">
+                    <div class="diff-vs">
+                        <div class="diff-them">
+                            <span class="diff-label">Diğer temizleyiciler</span>
+                            <ul>
+                                <li>200&nbsp;MB şişkin kurulum</li>
+                                <li>15+ üçüncü taraf takipçi</li>
+                                <li>Agresif abonelik tuzakları</li>
+                                <li>Yapmacık "hızlandırma" animasyonları</li>
+                            </ul>
+                        </div>
+                        <div class="diff-us">
+                            <span class="diff-label">Oxyn</span>
+                            <ul>
+                                <li>37&nbsp;MB yalın kurulum</li>
+                                <li>Sıfır veri komisyoncusu, sıfır takipçi SDK'sı</li>
+                                <li>Sonsuza dek ücretsiz — Premium isteğe bağlı</li>
+                                <li>Gerçek rakamlar, gerçek öneriler</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="diff-stats">
+                    <div class="diff-stat">
+                        <div class="diff-num">0</div>
+                        <div class="diff-stat-label">Takipçi SDK'sı</div>
+                    </div>
+                    <div class="diff-stat">
+                        <div class="diff-num">5</div>
+                        <div class="diff-stat-label">Dil</div>
+                    </div>
+                    <div class="diff-stat">
+                        <div class="diff-num">8</div>
+                        <div class="diff-stat-label">Odaklı araç</div>
+                    </div>
+                    <div class="diff-stat">
+                        <div class="diff-num">₺0</div>
+                        <div class="diff-stat-label">Temel özellikler</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
     <section class="features" id="features">
         <div class="container">
@@ -1115,38 +1320,42 @@
     <section class="pricing" id="pricing">
         <div class="container">
             <div class="section-eyebrow">Fiyatlandırma</div>
-            <h2>Ücretsiz kullan. Daha fazlasını isteyince Premium.</h2>
-            <p class="section-sub">Şeffaf, dostane fiyatlandırma. Başlamak için zorunlu abonelik yok.</p>
+            <h2>Ücretsiz başla. Hazır olunca yükselt.</h2>
+            <p class="section-sub">Şeffaf, dostane fiyatlandırma. Zorunlu deneme yok, sürpriz ücret yok, karanlık kalıp yok. Ücretsiz katman gerçekten doyurucu — Premium ise daha fazlasını isteyen güç kullanıcıları için.</p>
 
             <div class="pricing-grid">
                 <div class="price-card">
                     <h3>Ücretsiz</h3>
-                    <p class="price-sub">Sağlıklı telefon bakımı için ihtiyacın olan her şey.</p>
-                    <div class="price-amount">$0<span class="small">/sonsuza dek</span></div>
+                    <p class="price-sub">Günlük sağlıklı telefon bakımı için ihtiyacın olan her şey.</p>
+                    <div class="price-amount">₺0<span class="small">/sonsuza dek</span></div>
                     <p class="price-note">Kart yok. Deneme yok. Pürüz yok.</p>
                     <ul class="price-list">
-                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 8"/></svg>Pil sağlığı ve şarj alarmı</li>
-                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 8"/></svg>Temel depolama temizliği</li>
-                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 8"/></svg>Tek dokunuşla optimize</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 8"/></svg>Pil sağlığı ve %80 şarj alarmı</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 8"/></svg>Depolama özeti ve temel temizlik</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 8"/></svg>Tek dokunuşla optimize (RAM ve önbellek)</li>
                         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 8"/></svg>Günlük teknoloji haberleri ve trivia</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 8"/></svg>5 dil, 3 tema</li>
                         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 8"/></svg><span class="dim">Hafif, rahatsız etmeyen reklamlar</span></li>
                     </ul>
                 </div>
                 <div class="price-card featured">
-                    <span class="price-tag">Yakında</span>
+                    <span class="price-tag">En popüler</span>
                     <h3>Premium</h3>
-                    <p class="price-sub">Oxyn'in tüm gücünü aç.</p>
-                    <div class="price-amount">$4.99<span class="small">/ay</span></div>
-                    <p class="price-note">veya $29.99/yıl — istediğin zaman iptal et.</p>
+                    <p class="price-sub">Oxyn'in tüm gücünü aç, reklamsız.</p>
+                    <div class="price-amount">₺149<span class="small">/ay</span></div>
+                    <p class="price-note">veya <strong>₺899/yıl</strong> — %50 tasarruf · istediğin zaman iptal</p>
                     <ul class="price-list">
-                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 8"/></svg>Ücretsizdeki her şey</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 8"/></svg><strong>Ücretsizdeki her şey</strong></li>
                         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 8"/></svg>Tam AI Cihaz Doktoru raporları</li>
-                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 8"/></svg>Gelişmiş çoğaltma ve gereksiz dosya taramaları</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 8"/></svg>Gelişmiş yinelenen ve gereksiz dosya taraması</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 8"/></svg>Derinlemesine pil sağlığı trendleri</li>
                         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 8"/></svg>Tamamen reklamsız deneyim</li>
-                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 8"/></svg>Öncelikli destek</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 8"/></svg>Öncelikli destek (24 saat içinde yanıt)</li>
                     </ul>
                 </div>
             </div>
+
+            <p class="pricing-fine">Abonelikler Apple Kimliğin veya Google hesabın üzerinden faturalandırılır. Fiyatlar ülkeye göre değişebilir. Geçerli olduğunda tüm vergiler dahildir. <a href="terms.html">Kullanım Koşulları</a> · <a href="privacy-policy.html">Gizlilik</a></p>
         </div>
     </section>
 
@@ -1159,27 +1368,43 @@
             <div class="faq-list">
                 <details class="faq" open>
                     <summary>Oxyn gerçekten ücretsiz mi?</summary>
-                    <div class="faq-body">Evet. Çekirdek deneyim — pil sağlığı, depolama temizliği, tek dokunuşla optimize, günlük teknoloji haberleri ve trivia — tamamen ücretsiz. Premium şeffaf, isteğe bağlı bir yükseltme; zorunlu deneme yok.</div>
+                    <div class="faq-body">Evet. Çekirdek deneyim — pil sağlığı, depolama temizliği, tek dokunuşla optimize, günlük teknoloji haberleri ve trivia — sonsuza dek tamamen ücretsiz. Premium isteğe bağlı bir yükseltme; zorunlu deneme yok, kayıt için kart gerekmez, istediğin an iptal edebilirsin.</div>
                 </details>
                 <details class="faq">
                     <summary>Çevrimdışı çalışır mı?</summary>
-                    <div class="faq-body">Evet. Tüm temel analizler cihazında çalışır, bu yüzden internet bağlantısı olmadan da kullanılabilir. Yalnızca Günlük Teknoloji Haberleri ve Bilgi Yarışması gibi isteğe bağlı özellikler içerik yenilemek için bağlantı gerektirir.</div>
+                    <div class="faq-body">Evet. Tüm temel analizler — pil sağlığı, depolama tarama, gereksiz dosya tespiti, optimize — cihazında çalışır ve internet bağlantısı olmadan kullanılabilir. Yalnızca isteğe bağlı içerikler (Günlük Teknoloji Haberleri, Bilgi Yarışması, AI Doktor raporları) bağlantı gerektirir.</div>
                 </details>
                 <details class="faq">
                     <summary>Oxyn hangi verileri topluyor?</summary>
-                    <div class="faq-body">Yalnızca uygulamanın çalışması ve kararlı kalması için gereken minimum — anonim çökme tanılaması ve temel kullanım olayları. Rehber, fotoğraf, mesaj ya da konum asla toplamayız. Tüm detaylar <a href="privacy-policy.html">Gizlilik Politikamız</a>'da.</div>
+                    <div class="faq-body">Yalnızca uygulamanın çalışması ve kararlı kalması için gereken minimum: anonim çökme tanılaması ve birkaç temel, kişisel olmayan kullanım sayacı. Rehberini, fotoğraflarını, mesajlarını, konumunu ya da kimliklenebilir herhangi bir kişisel veriyi <strong>asla</strong> toplamayız. Tüm detaylar <a href="privacy-policy.html">Gizlilik Politikamız</a>'da.</div>
                 </details>
                 <details class="faq">
                     <summary>Gerçekten pil ömrünü uzatır mı?</summary>
-                    <div class="faq-body">Oxyn pil kapasitesini sihirli şekilde uzatma iddiasında değil — hiçbir uygulama bunu yapamaz. Yaptığı şey, daha sağlıklı şarj alışkanlıkları kurmana (akıllı %80 alarmı gibi), sıcaklığı izlemene ve pili daha hızlı yıpratan davranışlardan kaçınmana yardım etmek. Zamanla bu gerçek bir fark yaratır.</div>
+                    <div class="faq-body">Oxyn pil kapasitesini sihirli şekilde uzatma iddiasında değil — hiçbir uygulama fiziği yeniden yazamaz. Yaptığı şey daha sağlıklı şarj alışkanlıkları kurmana (akıllı %80 alarmı gibi), ısı hasarından kaçınmak için sıcaklığı izlemene ve pili daha hızlı yıpratan davranışları durdurmana yardım etmek. Aylar içinde bu, pilinin ne kadar dayanacağında gerçek bir fark yaratır.</div>
+                </details>
+                <details class="faq">
+                    <summary>Oxyn diğer temizleyici uygulamalardan farkı ne?</summary>
+                    <div class="faq-body">Üç büyük fark: <strong>(1)</strong> Sıfır takipçi SDK'sı — çoğu temizleyici 10-20 üçüncü taraf takipçi gömüyor; biz sıfır kullanıyoruz. <strong>(2)</strong> Sahte "hızlandırma" animasyonları yok — gerçek sistem API'lerinden gerçek rakamlar gösteriyoruz. <strong>(3)</strong> Gerçek bir ücretsiz katman, ücretsiz kılığına sokulmuş 3 günlük deneme değil. Para kazancımız isteğe bağlı Premium'dan, verinden değil.</div>
                 </details>
                 <details class="faq">
                     <summary>Android sürümü var mı?</summary>
-                    <div class="faq-body">Evet. Oxyn, Flutter ile hem iOS hem de Android için geliştirildi. Android sürümü şu anda Google Play'de kapalı betada; açık sürüm iOS lansmanını takiben yayınlanacak.</div>
+                    <div class="faq-body">Evet. Oxyn, Flutter ile hem iOS hem Android için geliştirildi — her iki platformda da aynı zarif deneyim. Android sürümü şu anda Google Play'de <strong>açık betada</strong>; tam Production sürümü iOS lansmanıyla birlikte planlanıyor. Android beta'sına katılmak istersen <a href="mailto:support@oxynapp.net?subject=Android%20beta">bize yaz</a>.</div>
+                </details>
+                <details class="faq">
+                    <summary>Oxyn hangi dilleri destekliyor?</summary>
+                    <div class="faq-body">Lansmanda beş dil: İngilizce, Türkçe, İspanyolca, Portekizce ve Arapça. Oxyn sistem ayarlarına göre otomatik olarak doğru dili seçer; Ayarlar'dan istediğin zaman değiştirebilirsin.</div>
+                </details>
+                <details class="faq">
+                    <summary>Oxyn iPad'de çalışır mı?</summary>
+                    <div class="faq-body">Evet. Oxyn Universal bir uygulama — aynı satın alma hem iPhone'da hem iPad'de çalışır. Premium abonelikler Apple Kimliğine bağlıdır ve tüm cihazların arasında otomatik olarak senkronize olur.</div>
+                </details>
+                <details class="faq">
+                    <summary>Premium'u iptal edersem ne olur?</summary>
+                    <div class="faq-body">Fatura döneminin sonuna kadar Premium'u kullanmaya devam edersin. Sonra uygulama Ücretsiz katmana düşer — pil sağlığı, temel depolama araçları, tek dokunuşla optimize ve günlük içerik hâlâ açık kalır. Premium özellikler (tam AI Doktor, reklamsız) sen yeniden abone olana kadar pasifleşir.</div>
                 </details>
                 <details class="faq">
                     <summary>Destekle nasıl iletişime geçebilirim?</summary>
-                    <div class="faq-body"><a href="mailto:support@oxynapp.net">support@oxynapp.net</a> adresine e-posta gönder — her mesajı okuyoruz ve genellikle 24–48 saat içinde yanıtlıyoruz. <a href="support.html">Destek sayfamıza</a> da göz atabilirsin.</div>
+                    <div class="faq-body"><a href="mailto:support@oxynapp.net">support@oxynapp.net</a> adresine e-posta gönder — gerçek bir insan her mesajı okuyor, genellikle 24-48 saat içinde yanıtlıyoruz. Yardım makaleleri için <a href="support.html">Destek sayfamıza</a> da göz atabilirsin.</div>
                 </details>
             </div>
         </div>
@@ -1188,16 +1413,17 @@
     <section class="cta-wrap">
         <div class="container">
             <h2>Telefonuna hak ettiği bakımı vermeye hazır mısın?</h2>
-            <p>Oxyn yakında App Store ve Google Play'de. Lansman anında haberdar olmak ister misin?</p>
+            <p>Oxyn çok yakında App Store ve Google Play'de. Yayına girdiği gün tek seferlik bir e-posta ister misin? Spam yok, pazarlama listesi yok — sana sadece bir kez yazıyoruz.</p>
             <div class="badges" style="justify-content: center;">
-                <a href="mailto:support@oxynapp.net?subject=Oxyn%20lansman%C4%B1nda%20bana%20haber%20ver" class="badge" aria-label="E-posta ile bana bildir">
+                <a href="mailto:support@oxynapp.net?subject=Oxyn%20yayina%20girdiginde%20haber%20ver&amp;body=Oxyn%20App%20Store%20%2F%20Google%20Play'de%20yayina%20girdiginde%20bana%20bir%20kez%20e-posta%20gonderir%20misiniz." class="badge" aria-label="E-posta ile bana bildir">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
                     <span>
-                        <span class="badge-store">Şu adrese yaz</span>
+                        <span class="badge-store">Tek seferlik lansman e-postası</span>
                         <span class="badge-name">support@oxynapp.net</span>
                     </span>
                 </a>
             </div>
+            <p class="cta-footnote">Bülten yok. Takip pikseli yok. Sana sadece bir kez yazarız, hepsi bu.</p>
         </div>
     </section>
 
@@ -1231,7 +1457,7 @@
                     <li><a href="privacy-policy.html">Gizlilik Politikası</a></li>
                     <li><a href="terms.html">Kullanım Koşulları</a></li>
                     <li><a href="mailto:support@oxynapp.net">support@oxynapp.net</a></li>
-                    <li><a href="/">English</a></li>
+                    <li><a href="index.html">English</a></li>
                 </ul>
             </div>
         </div>
