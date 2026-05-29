@@ -58,3 +58,8 @@ android/app/*.jks
 
 # Debug logs
 .cursor/debug-*.log
+
+# Internal credentials & notes (NEVER COMMIT)
+OXYN-CREDENTIALS.md
+*-CREDENTIALS.md
+*.credentials.md

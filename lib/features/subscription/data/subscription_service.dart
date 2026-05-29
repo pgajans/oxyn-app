@@ -29,8 +29,15 @@ class SubscriptionService {
   Future<void> initialize() async {
     if (_initialized) return;
 
+    // CRITICAL: RevenueCat SDK intentionally crashes (assertionFailure) in release
+    // builds when a test/sandbox API key (prefix `test_`) is detected. To prevent
+    // a hard crash on launch, we skip Purchases.configure entirely when this
+    // unsafe combination is present. Without configure, all entitlement checks
+    // return free tier, which is the safest default.
     if (_isTestKey && kReleaseMode) {
-      debugPrint('RevenueCat: test key detected in release mode, initializing anyway for testing');
+      debugPrint(
+          'RevenueCat: test key in release build detected, SKIPPING initialization to avoid SDK assertion crash');
+      return;
     }
 
     try {
