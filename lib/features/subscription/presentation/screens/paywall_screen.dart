@@ -214,11 +214,36 @@ class _PricingCard extends StatelessWidget {
   final WidgetRef ref;
   const _PricingCard({required this.package, required this.ref});
 
+  String _unitLabel(PeriodUnit unit) {
+    switch (unit) {
+      case PeriodUnit.day:
+        return 'gün';
+      case PeriodUnit.week:
+        return 'hafta';
+      case PeriodUnit.month:
+        return 'ay';
+      case PeriodUnit.year:
+        return 'yıl';
+      case PeriodUnit.unknown:
+        return '';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final product = package.storeProduct;
     final isWeekly = package.packageType == PackageType.weekly;
     final isAnnual = package.packageType == PackageType.annual;
+
+    // Only advertise a free trial / intro offer when the store product
+    // actually provides one. Claiming "3 gün ücretsiz deneme" on a product
+    // without a configured trial is a deceptive purchase experience and
+    // violates store policy.
+    final intro = product.introductoryPrice;
+    final hasFreeTrial = intro != null && intro.price == 0;
+    final String? subtitleText = hasFreeTrial
+        ? '${intro.periodNumberOfUnits} ${_unitLabel(intro.periodUnit)} ücretsiz deneme'
+        : (isAnnual ? 'Yıllık fatura' : null);
 
     return GestureDetector(
       onTap: () async {
@@ -295,11 +320,13 @@ class _PricingCard extends StatelessWidget {
                       ],
                     ],
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '3 gün ücretsiz deneme',
-                    style: TextStyle(color: AppColors.textSecondary, fontSize: 11),
-                  ),
+                  if (subtitleText != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitleText,
+                      style: const TextStyle(color: AppColors.textSecondary, fontSize: 11),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -318,120 +345,64 @@ class _PricingCard extends StatelessWidget {
   }
 }
 
+/// Shown only when RevenueCat offerings could not be loaded (e.g. no network
+/// or store not yet ready). We intentionally DO NOT show any hardcoded prices
+/// here: displaying a fixed currency (e.g. "$2.99") while the store would
+/// charge in the user's local currency violates Google Play's Subscriptions
+/// policy ("currency differences with prominent display price"). Instead we
+/// offer a retry so real, localized store prices can load.
 class _FallbackPricing extends StatelessWidget {
   final WidgetRef ref;
   const _FallbackPricing({required this.ref});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        _FallbackCard(
-          title: 'Haftalık', price: '\$2.99/hafta',
-          subtitle: '3 gün ücretsiz deneme', isPopular: true,
-          onTap: () => _showConfiguring(context),
-        ),
-        const SizedBox(height: 10),
-        _FallbackCard(
-          title: 'Aylık', price: '\$6.99/ay',
-          subtitle: 'En çok tercih edilen', isPopular: false,
-          onTap: () => _showConfiguring(context),
-        ),
-        const SizedBox(height: 10),
-        _FallbackCard(
-          title: 'Yıllık', price: '\$49.99/yıl',
-          subtitle: '%58 tasarruf', isPopular: false, isSaving: true,
-          onTap: () => _showConfiguring(context),
-        ),
-      ],
-    );
-  }
-
-  void _showConfiguring(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Abonelik sistemi yapılandırılıyor, yakında aktif olacak'),
-        behavior: SnackBarBehavior.floating,
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.surfaceLight),
       ),
-    );
-  }
-}
-
-class _FallbackCard extends StatelessWidget {
-  final String title;
-  final String price;
-  final String subtitle;
-  final bool isPopular;
-  final bool isSaving;
-  final VoidCallback onTap;
-
-  const _FallbackCard({
-    required this.title,
-    required this.price,
-    required this.subtitle,
-    required this.isPopular,
-    this.isSaving = false,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isPopular ? AppColors.primary.withValues(alpha: 0.1) : AppColors.surface,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: isPopular ? AppColors.primary : AppColors.surfaceLight,
-            width: isPopular ? 2 : 1,
+      child: Column(
+        children: [
+          const Icon(Icons.cloud_off, color: AppColors.textSecondary, size: 32),
+          const SizedBox(height: 12),
+          const Text(
+            'Abonelik seçenekleri şu anda yüklenemedi',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        title,
-                        style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary, fontSize: 14),
-                      ),
-                      if (isPopular) ...[
-                        const SizedBox(width: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(4)),
-                          child: const Text('Popüler', style: TextStyle(color: AppColors.background, fontSize: 9, fontWeight: FontWeight.w600)),
-                        ),
-                      ],
-                      if (isSaving) ...[
-                        const SizedBox(width: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(color: AppColors.success, borderRadius: BorderRadius.circular(4)),
-                          child: const Text('Tasarruf', style: TextStyle(color: AppColors.background, fontSize: 9, fontWeight: FontWeight.w600)),
-                        ),
-                      ],
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Text(subtitle, style: const TextStyle(color: AppColors.textSecondary, fontSize: 11)),
-                ],
+          const SizedBox(height: 6),
+          const Text(
+            'İnternet bağlantını kontrol edip tekrar dene.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => ref.invalidate(offeringsProvider),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: AppColors.background,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
+              child: const Text(
+                'Tekrar Dene',
+                style: TextStyle(fontWeight: FontWeight.w700),
               ),
             ),
-            Text(
-              price,
-              style: TextStyle(
-                fontSize: 16, fontWeight: FontWeight.w700,
-                color: isPopular ? AppColors.primary : AppColors.textPrimary,
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
