@@ -711,7 +711,7 @@ class _HackerOptimizationScreenState extends State<_HackerOptimizationScreen>
   int _cacheCleared = 0;
   bool _completed = false;
 
-  static const _totalDuration = Duration(seconds: 35);
+  static const _totalDuration = Duration(seconds: 7);
 
   @override
   void initState() {
@@ -743,9 +743,9 @@ class _HackerOptimizationScreenState extends State<_HackerOptimizationScreen>
   }
 
   Future<void> _runOptimization() async {
-    _addLog('[SYS] Oxyn Optimization Engine v1.2.0 başlatılıyor...');
+    _addLog('[SYS] Oxyn cihaz analizi başlatılıyor...');
     await Future.delayed(const Duration(milliseconds: 600));
-    _addLog('[SYS] Cihaz bilgileri alınıyor...');
+    _addLog('[SYS] Cihaz bilgileri okunuyor...');
     await Future.delayed(const Duration(milliseconds: 400));
 
     try {
@@ -760,24 +760,10 @@ class _HackerOptimizationScreenState extends State<_HackerOptimizationScreen>
       _addLog('[BAT] Batarya bilgisi alınamadı, devam ediliyor...');
     }
 
-    _addLog('[MEM] RAM analizi başlatılıyor...');
-    await Future.delayed(const Duration(milliseconds: 800));
-    _addLog('[MEM] Aktif process\'ler taranıyor...');
-    await Future.delayed(const Duration(milliseconds: 600));
-    _addLog('[MEM] 47 arka plan işlemi tespit edildi');
-    await Future.delayed(const Duration(milliseconds: 400));
-    _addLog('[MEM] Gereksiz process\'ler sonlandırılıyor...');
-    await Future.delayed(const Duration(milliseconds: 1200));
-    _addLog('[MEM] 23 process optimize edildi');
-    await Future.delayed(const Duration(milliseconds: 500));
-
-    _addLog('[CACHE] Önbellek taraması başlatılıyor...');
-    await Future.delayed(const Duration(milliseconds: 700));
-
     try {
       final repo = widget.ref.read(storageRepositoryProvider);
       final storageInfo = await widget.ref.read(storageInfoProvider.future);
-      _addLog('[DISK] Toplam depolama taranıyor...');
+      _addLog('[DISK] Depolama durumu okunuyor...');
       await Future.delayed(const Duration(milliseconds: 500));
       _addLog('[DISK] Kullanılan alan: ${storageInfo.usedFormatted}');
       await Future.delayed(const Duration(milliseconds: 300));
@@ -788,60 +774,18 @@ class _HackerOptimizationScreenState extends State<_HackerOptimizationScreen>
       await Future.delayed(const Duration(milliseconds: 800));
       _cacheCleared = await repo.clearAppCache();
       final mb = (_cacheCleared / (1024 * 1024)).toStringAsFixed(1);
-      _addLog('[CACHE] $mb MB önbellek temizlendi');
+      _addLog('[CACHE] $mb MB uygulama önbelleği temizlendi');
       await Future.delayed(const Duration(milliseconds: 600));
     } catch (_) {
       _addLog('[CACHE] Önbellek temizleme hatası, devam ediliyor...');
     }
 
-    _addLog('[NET] Ağ bağlantıları kontrol ediliyor...');
-    await Future.delayed(const Duration(milliseconds: 900));
-    _addLog('[NET] DNS önbelleği temizleniyor...');
-    await Future.delayed(const Duration(milliseconds: 500));
-    _addLog('[NET] Ağ optimizasyonu tamamlandı');
-    await Future.delayed(const Duration(milliseconds: 400));
-
-    _addLog('[GPU] Grafik belleği optimize ediliyor...');
-    await Future.delayed(const Duration(milliseconds: 1000));
-    _addLog('[GPU] Texture cache temizlendi');
-    await Future.delayed(const Duration(milliseconds: 400));
-    _addLog('[GPU] Frame buffer optimize edildi');
-    await Future.delayed(const Duration(milliseconds: 600));
-
-    _addLog('[CPU] İşlemci yük analizi yapılıyor...');
-    await Future.delayed(const Duration(milliseconds: 800));
-    _addLog('[CPU] Termal dengeleme kontrol ediliyor...');
-    await Future.delayed(const Duration(milliseconds: 700));
-    _addLog('[CPU] İşlemci frekansları optimize edildi');
-    await Future.delayed(const Duration(milliseconds: 500));
-
-    _addLog('[IO] Disk I/O optimizasyonu başlatılıyor...');
-    await Future.delayed(const Duration(milliseconds: 900));
-    _addLog('[IO] Dosya sistemi indeksleri yenileniyor...');
-    await Future.delayed(const Duration(milliseconds: 1200));
-    _addLog('[IO] Geçici dosyalar temizleniyor...');
-    await Future.delayed(const Duration(milliseconds: 800));
-    _addLog('[IO] Disk optimizasyonu tamamlandı');
-    await Future.delayed(const Duration(milliseconds: 400));
-
-    _addLog('[SYS] Sistem servisleri yeniden başlatılıyor...');
-    await Future.delayed(const Duration(milliseconds: 1000));
-    _addLog('[SYS] Bildirim kuyruğu temizleniyor...');
-    await Future.delayed(const Duration(milliseconds: 500));
-    _addLog('[SYS] Sensör kalibrasyonu kontrol ediliyor...');
-    await Future.delayed(const Duration(milliseconds: 700));
-
-    _addLog('[SEC] Güvenlik taraması yapılıyor...');
-    await Future.delayed(const Duration(milliseconds: 1200));
-    _addLog('[SEC] Tehdit bulunamadı');
-    await Future.delayed(const Duration(milliseconds: 400));
-
     widget.ref.invalidate(batteryInfoProvider);
     widget.ref.invalidate(storageInfoProvider);
 
     _addLog('');
-    _addLog('[✓] TÜM OPTİMİZASYONLAR TAMAMLANDI');
-    _addLog('[✓] Cihazınız optimize edildi');
+    _addLog('[✓] Analiz tamamlandı');
+    _addLog('[✓] Cihaz durumu güncellendi');
 
     // Wait for progress bar to reach 100%
     if (!_progressCtrl.isCompleted) {
@@ -890,7 +834,7 @@ class _HackerOptimizationScreenState extends State<_HackerOptimizationScreen>
                   const Icon(Icons.terminal, color: AppColors.primary, size: 20),
                   const SizedBox(width: 8),
                   const Text(
-                    'OXYN OPTIMIZER',
+                    'OXYN ANALYZER',
                     style: TextStyle(
                       color: AppColors.primary,
                       fontSize: 14,
@@ -1026,12 +970,9 @@ class _OptimizationResultPopupState extends State<_OptimizationResultPopup> {
 
   Future<void> _animateResults() async {
     final items = [
-      _OptResult(Icons.cached, 'Önbellek Temizlendi', '${widget.cacheMB} MB serbest bırakıldı', AppColors.secondary),
-      _OptResult(Icons.memory, 'RAM Optimize Edildi', '1.2 GB bellek serbest bırakıldı', AppColors.primary),
-      _OptResult(Icons.apps, 'Arka Plan İşlemleri', '23 gereksiz işlem durduruldu', const Color(0xFF9CDCFE)),
-      _OptResult(Icons.folder_delete, 'Geçici Dosyalar', '234 geçici dosya temizlendi', const Color(0xFFCE9178)),
-      _OptResult(Icons.dns, 'Ağ Optimizasyonu', 'DNS önbelleği ve bağlantılar yenilendi', const Color(0xFFB5CEA8)),
-      _OptResult(Icons.security, 'Güvenlik Taraması', 'Tehdit bulunamadı - Cihaz güvende', AppColors.success),
+      _OptResult(Icons.cached, 'Önbellek Temizlendi', '${widget.cacheMB} MB uygulama önbelleği temizlendi', AppColors.secondary),
+      _OptResult(Icons.battery_charging_full, 'Batarya Kontrol Edildi', 'Güncel seviye ve sıcaklık görüntülendi', AppColors.primary),
+      _OptResult(Icons.storage, 'Depolama Analiz Edildi', 'Kullanılan ve boş alan güncellendi', const Color(0xFFD7BA7D)),
     ];
 
     for (final item in items) {

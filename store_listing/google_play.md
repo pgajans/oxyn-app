@@ -19,13 +19,12 @@ Oxyn ile telefonunu en iyi performansta tut! Batarya sağlığından depolama te
 • Benzer fotoğrafları bul ve gereksiz kopyaları sil
 • Büyük dosyaları tespit et ve depolama alanı aç
 • Ekran görüntülerini toplu yönet
-• Önbellek temizliği ile cihazını hızlandır
+• Uygulama önbelleğini temizleyerek yer aç
 
-📊 PERFORMANS İZLEME
-• CPU, RAM ve depolama kullanım analizi
+📊 CİHAZ DURUMU
 • Cihaz sağlık skoru ile genel durumu gör
-• Performans geçmişi ve trendler
-• Optimizasyon önerileri
+• Depolama ve batarya durumu analizi
+• Kişiselleştirilmiş öneriler
 
 ⚡ ŞARJ ANİMASYONLARI
 • 6 farklı premium şarj animasyonu

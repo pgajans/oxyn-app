@@ -384,8 +384,8 @@ class _ScanResultScreen extends StatelessWidget {
                   color: AppColors.primary),
               const SizedBox(height: 12),
               _ResultCard(
-                  icon: Icons.memory,
-                  label: t.ram,
+                  icon: Icons.storage,
+                  label: t.storage,
                   value: '✓',
                   color: AppColors.secondary),
               const SizedBox(height: 12),

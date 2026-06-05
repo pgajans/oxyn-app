@@ -15,10 +15,10 @@
   "yourDeviceNeedsAttention": "Cihazına dikkat et",
   "optimizeNow": "Optimize Et",
   "optimizing": "Optimize Ediliyor",
-  "optimizationComplete": "Optimizasyon Tamamlandı!",
+  "optimizationComplete": "Analiz Tamamlandı!",
   "optimizationError": "Optimizasyon sırasında bir hata oluştu",
   "clearingCache": "Önbellek temizleniyor...",
-  "optimizingRam": "RAM optimize ediliyor...",
+  "optimizingRam": "Cihaz analiz ediliyor...",
   "analyzingStorage": "Depolama analiz ediliyor...",
   "cache": "Önbellek",
   "ram": "RAM",
@@ -237,7 +237,7 @@
   "cleanBadge": "Temizle!",
   "optimizeButtonLabel": "Optimize Et",
 
-  "optimizationCompleteTitle": "Optimizasyon Tamamlandı!",
+  "optimizationCompleteTitle": "Analiz Tamamlandı!",
   "viewResults": "Tamamlandı - Sonuçları Gör",
   "doneShort": "Tamam",
 

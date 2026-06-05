@@ -56,7 +56,7 @@ SCREENS = [
     (
         "Gemini_Generated_Image_fcbokofcbokofcbo-6-dbaec5e3-ecd3-4e33-8f15-63fe4158fbc3.png",
         "06-performance.png",
-        ["Free Up RAM,", "Boost Performance."],
+        ["Track Your", "Device Health."],
     ),
     (
         "Gemini_Generated_Image_fcbokofcbokofcbo-7-8c34215f-6d5b-4b0f-babd-9c7b29b0e207.png",

@@ -17,10 +17,10 @@
   "yourDeviceNeedsAttention": "Your device needs attention",
   "optimizeNow": "Optimize Now",
   "optimizing": "Optimizing",
-  "optimizationComplete": "Optimization Complete!",
+  "optimizationComplete": "Analysis Complete!",
   "optimizationError": "An error occurred during optimization",
   "clearingCache": "Clearing cache...",
-  "optimizingRam": "Optimizing RAM...",
+  "optimizingRam": "Analyzing device...",
   "analyzingStorage": "Analyzing storage...",
   "cache": "Cache",
   "ram": "RAM",
@@ -264,7 +264,7 @@
   "cleanBadge": "Clean!",
   "optimizeButtonLabel": "Optimize",
 
-  "optimizationCompleteTitle": "Optimization Complete!",
+  "optimizationCompleteTitle": "Analysis Complete!",
   "viewResults": "Done - View Results",
   "doneShort": "Done",
 

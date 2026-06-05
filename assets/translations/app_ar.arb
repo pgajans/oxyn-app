@@ -14,10 +14,10 @@
   "yourDeviceNeedsAttention": "جهازك يحتاج اهتمام",
   "optimizeNow": "تحسين الآن",
   "optimizing": "جاري التحسين",
-  "optimizationComplete": "اكتمل التحسين!",
+  "optimizationComplete": "اكتمل التحليل!",
   "optimizationError": "حدث خطأ أثناء التحسين",
   "clearingCache": "جاري تنظيف الذاكرة المؤقتة...",
-  "optimizingRam": "جاري تحسين الذاكرة...",
+  "optimizingRam": "جاري تحليل الجهاز...",
   "analyzingStorage": "جاري تحليل التخزين...",
   "cache": "الذاكرة المؤقتة",
   "ram": "RAM",
@@ -228,7 +228,7 @@
   "cleanBadge": "نظّف!",
   "optimizeButtonLabel": "تحسين",
 
-  "optimizationCompleteTitle": "اكتمل التحسين!",
+  "optimizationCompleteTitle": "اكتمل التحليل!",
   "viewResults": "تم - عرض النتائج",
   "doneShort": "تم",
 
