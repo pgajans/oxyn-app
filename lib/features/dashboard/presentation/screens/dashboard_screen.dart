@@ -88,7 +88,7 @@ class _ScoreSection extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  score.statusMessage,
+                  _healthStatusText(AppLocalizations.of(context)!, score.statusLevel),
                   style: TextStyle(
                     color: color,
                     fontSize: 12,
@@ -1117,5 +1117,20 @@ class _OptResult {
   final String detail;
   final Color color;
   const _OptResult(this.icon, this.title, this.detail, this.color);
+}
+
+String _healthStatusText(AppLocalizations t, int level) {
+  switch (level) {
+    case 0:
+      return t.healthStatusHealthy;
+    case 1:
+      return t.healthStatusGood;
+    case 2:
+      return t.healthStatusImprovement;
+    case 3:
+      return t.healthStatusMaintenance;
+    default:
+      return t.healthStatusUrgent;
+  }
 }
 

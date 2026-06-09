@@ -156,7 +156,7 @@ class _CompactFeatures extends StatelessWidget {
       ),
       child: Column(
         children: [
-          _FeatureRow(Icons.all_inclusive, 'Sınırsız temizlik ve optimizasyon'),
+          _FeatureRow(Icons.all_inclusive, 'Sınırsız temizlik ve analiz'),
           _FeatureRow(Icons.health_and_safety, 'AI Cihaz Doktoru'),
           _FeatureRow(Icons.block, 'Reklamsız deneyim'),
           _FeatureRow(Icons.battery_full, 'Detaylı pil sağlığı raporu'),

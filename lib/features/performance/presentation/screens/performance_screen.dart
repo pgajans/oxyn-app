@@ -50,7 +50,7 @@ class PerformanceScreen extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      score.statusMessage,
+                      _healthStatusText(t, score.statusLevel),
                       style: TextStyle(
                         color: score.isGood ? AppColors.success : AppColors.secondary,
                         fontWeight: FontWeight.w500,
@@ -65,21 +65,21 @@ class PerformanceScreen extends ConsumerWidget {
             Row(
               children: [
                 _ScoreBreakdownTile(
-                  label: 'Batarya',
+                  label: t.battery,
                   score: score.batteryScore,
                   maxScore: 35,
                   color: AppColors.success,
                 ),
                 const SizedBox(width: 8),
                 _ScoreBreakdownTile(
-                  label: 'Depolama',
+                  label: t.storage,
                   score: score.storageScore,
                   maxScore: 40,
                   color: AppColors.primary,
                 ),
                 const SizedBox(width: 8),
                 _ScoreBreakdownTile(
-                  label: 'Sıcaklık',
+                  label: t.temperature,
                   score: score.temperatureScore,
                   maxScore: 25,
                   color: AppColors.secondary,
@@ -102,21 +102,21 @@ class PerformanceScreen extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Cihaz Bilgisi',
-                      style: TextStyle(
+                    Text(
+                      t.deviceInfo,
+                      style: const TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 16,
                         color: AppColors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: AppSpacing.md),
-                    _InfoItem(label: 'Model', value: device.model),
-                    _InfoItem(label: 'İşletim Sistemi', value: device.osVersion),
+                    _InfoItem(label: t.model, value: device.model),
+                    _InfoItem(label: t.operatingSystem, value: device.osVersion),
                     if (device.totalStorage != '—')
-                      _InfoItem(label: 'Depolama', value: device.totalStorage),
+                      _InfoItem(label: t.storage, value: device.totalStorage),
                     if (device.freeStorage != '—')
-                      _InfoItem(label: 'Boş Alan', value: device.freeStorage),
+                      _InfoItem(label: t.freeSpace, value: device.freeStorage),
                   ],
                 ),
               ),
@@ -179,6 +179,21 @@ class _ScoreBreakdownTile extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+String _healthStatusText(AppLocalizations t, int level) {
+  switch (level) {
+    case 0:
+      return t.healthStatusHealthy;
+    case 1:
+      return t.healthStatusGood;
+    case 2:
+      return t.healthStatusImprovement;
+    case 3:
+      return t.healthStatusMaintenance;
+    default:
+      return t.healthStatusUrgent;
   }
 }
 

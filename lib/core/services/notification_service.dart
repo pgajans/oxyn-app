@@ -148,8 +148,8 @@ class NotificationService {
 
     await _local.zonedSchedule(
       id: 'optimize_reminder'.hashCode,
-      title: 'Optimizasyon Gerekiyor',
-      body: 'Telefonunu optimize etme zamanı geldi. Performansını artır!',
+      title: 'Cihaz Analizi Zamanı',
+      body: 'Cihazının durumunu kontrol etme zamanı geldi. Depolama ve batarya analizini gör!',
       scheduledDate: scheduled,
       notificationDetails: details,
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,

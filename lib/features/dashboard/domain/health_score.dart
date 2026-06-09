@@ -80,12 +80,14 @@ class HealthScore {
         temperatureScore: 0,
       );
 
-  String get statusMessage {
-    if (total >= 85) return 'Cihazın sağlıklı';
-    if (total >= 70) return 'İyi durumda';
-    if (total >= 55) return 'İyileştirme önerisi var';
-    if (total >= 40) return 'Bakım gerekli';
-    return 'Acil bakım gerekli';
+  /// 0 = healthy, 1 = good, 2 = improvement, 3 = maintenance, 4 = urgent.
+  /// Used by the UI to pick a localized status message.
+  int get statusLevel {
+    if (total >= 85) return 0;
+    if (total >= 70) return 1;
+    if (total >= 55) return 2;
+    if (total >= 40) return 3;
+    return 4;
   }
 
   bool get isGood => total >= 70;
