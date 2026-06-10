@@ -4,13 +4,13 @@
 Oxyn - Telefon Bakımı
 
 ## Altyazı / Subtitle (30 karakter max)
-Temizle, Optimize Et, Kişiselleştir
+Batarya, Depolama ve Temizlik
 
 ## Tanıtım Metni / Promotional Text (170 karakter max)
-Telefonunu en iyi performansta tut! Batarya analizi, akıllı temizlik, şarj animasyonları ve daha fazlası. Ücretsiz dene!
+Cihazının durumunu takip et! Batarya analizi, akıllı temizlik, şarj animasyonları ve daha fazlası. Ücretsiz dene!
 
 ## Açıklama / Description (4000 karakter max)
-Oxyn ile telefonunu en iyi performansta tut! Batarya sağlığından depolama temizliğine, cihaz performans analizinden kişiselleştirmeye kadar her şey tek uygulamada.
+Oxyn ile cihazının durumunu takip et! Batarya sağlığından depolama temizliğine, cihaz sağlık analizinden kişiselleştirmeye kadar her şey tek uygulamada.
 
 BATARYA ANALİZİ
 • Gerçek zamanlı batarya durumu ve sıcaklık takibi
@@ -45,7 +45,7 @@ OXYN PLUS
 Oxyn, gizliliğine saygı duyar. Verilerini cihazında işler, sunuculara yüklemez.
 
 ## Anahtar Kelimeler / Keywords (100 karakter max, virgülle ayrılmış)
-temizleyici,batarya,depolama,optimizasyon,temizlik,şarj,performans,widget,bakım
+temizleyici,batarya,depolama,temizlik,şarj,cihaz sağlığı,widget,bakım,analiz
 
 ## Kategori
 Primary: Utilities (Yardımcı Programlar)

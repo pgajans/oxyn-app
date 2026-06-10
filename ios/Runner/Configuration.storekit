@@ -1,0 +1,100 @@
+{
+  "appPolicies" : {
+    "eula" : "",
+    "policies" : [
+      {
+        "locale" : "en_US",
+        "policyText" : "",
+        "policyURL" : ""
+      }
+    ]
+  },
+  "identifier" : "A4F2C1B8",
+  "nonRenewingSubscriptions" : [],
+  "products" : [],
+  "settings" : {
+    "_applicationInternalID" : "0000000000",
+    "_developerTeamID" : "PTK3UJA7VZ",
+    "_failTransactionsEnabled" : false,
+    "_lastSynchronizedDate" : 0,
+    "_locale" : "en_US",
+    "_storefront" : "USA",
+    "_storeKitErrors" : []
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "21500100",
+      "localizations" : [],
+      "name" : "Oxyn Plus",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [],
+          "codeOffers" : [],
+          "displayPrice" : "2.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "21500101",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Unlimited analysis and cleaning, billed weekly.",
+              "displayName" : "Oxyn Plus Weekly",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "oxyn_plus_weekly",
+          "recurringSubscriptionPeriod" : "P1W",
+          "referenceName" : "Oxyn Plus Weekly",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : []
+        },
+        {
+          "adHocOffers" : [],
+          "codeOffers" : [],
+          "displayPrice" : "6.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "21500102",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Unlimited analysis and cleaning, billed monthly.",
+              "displayName" : "Oxyn Plus Monthly",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "oxyn_plus_monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Oxyn Plus Monthly",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : []
+        },
+        {
+          "adHocOffers" : [],
+          "codeOffers" : [],
+          "displayPrice" : "29.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "21500103",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Unlimited analysis and cleaning, billed yearly.",
+              "displayName" : "Oxyn Plus Yearly",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "oxyn_pro_yearly",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "Oxyn Plus Yearly",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : []
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}
