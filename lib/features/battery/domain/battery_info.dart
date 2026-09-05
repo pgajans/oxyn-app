@@ -18,22 +18,32 @@ class BatteryInfo {
   });
 
   factory BatteryInfo.empty() => const BatteryInfo(
-        level: 0,
+        level: -1,
         isCharging: false,
-        temperature: 0,
-        healthPercentage: 100,
-        cycleCount: 0,
+        temperature: -1,
+        healthPercentage: -1,
+        cycleCount: -1,
         chargingSource: 'unknown',
         estimatedRemaining: Duration.zero,
       );
 
-  String get levelText => '$level%';
+  /// OS/API did not provide a real health percentage (common on iOS and many Androids).
+  bool get hasHealthData => healthPercentage >= 1 && healthPercentage <= 100;
 
-  String get temperatureText => '${temperature.toStringAsFixed(0)}°C';
+  /// Charge level was actually read (0% is valid; -1 means unavailable).
+  bool get hasLevelData => level >= 0 && level <= 100;
 
-  String get healthText => '$healthPercentage%';
+  bool get hasTemperatureData => temperature >= 0;
+
+  String get levelText => hasLevelData ? '$level%' : '—';
+
+  String get temperatureText =>
+      hasTemperatureData ? '${temperature.toStringAsFixed(0)}°C' : '—';
+
+  String get healthText => hasHealthData ? '$healthPercentage%' : '—';
 
   String get remainingText {
+    if (!hasLevelData) return '—';
     if (isCharging) return 'Şarj oluyor';
     final h = estimatedRemaining.inHours;
     final m = estimatedRemaining.inMinutes % 60;
@@ -41,10 +51,11 @@ class BatteryInfo {
     return '$m dakika';
   }
 
-  bool get isLow => level < 20;
-  bool get isOverheating => temperature > 40;
+  bool get isLow => hasLevelData && level < 20;
+  bool get isOverheating => hasTemperatureData && temperature > 40;
 
   String get screenOnTime {
+    if (!hasLevelData) return '—';
     final h = estimatedRemaining.inHours;
     final m = estimatedRemaining.inMinutes % 60;
     if (isCharging) return '~${(level * 0.15).toStringAsFixed(0)}s';
@@ -54,6 +65,7 @@ class BatteryInfo {
   }
 
   String get statusMessage {
+    if (!hasLevelData) return '—';
     if (isOverheating) return 'Cihaz aşırı ısınıyor!';
     if (isLow) return 'Batarya düşük';
     if (isCharging) return 'Şarj ediliyor';

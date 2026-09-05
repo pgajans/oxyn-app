@@ -1,5 +1,8 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
+import '../../../core/constants/app_constants.dart';
+import '../domain/offerings_load.dart';
 import '../domain/subscription_status.dart';
 
 class SubscriptionService {
@@ -19,12 +22,14 @@ class SubscriptionService {
   bool _initialized = false;
   bool get isInitialized => _initialized;
 
-  static bool get _isTestKey {
+  static bool get isUsingTestStoreKey {
     if (defaultTargetPlatform == TargetPlatform.iOS) {
       return _apiKeyiOS.isEmpty || _apiKeyiOS.startsWith('test_');
     }
     return _apiKeyAndroid.isEmpty || _apiKeyAndroid.startsWith('test_');
   }
+
+  static bool get _isTestKey => isUsingTestStoreKey;
 
   Future<void> initialize() async {
     if (_initialized) return;
@@ -70,24 +75,127 @@ class SubscriptionService {
     }
   }
 
-  Future<List<Package>> getOfferings() async {
-    if (!_initialized) return [];
+  Future<OfferingsLoadResult> getOfferings() async {
+    await initialize();
+    if (!_initialized) {
+      return OfferingsLoadResult(
+        packages: const [],
+        failure: _isTestKey && kReleaseMode
+            ? OfferingsFailure.notReady
+            : OfferingsFailure.notReady,
+      );
+    }
+
     try {
       final offerings = await Purchases.getOfferings();
-      final current = offerings.current;
-      if (current == null) return [];
-      return current.availablePackages;
+      var packages = _packagesFrom(offerings);
+      if (packages.isEmpty) {
+        packages = await _packagesFromProductIds();
+      }
+      if (packages.isEmpty) {
+        return OfferingsLoadResult(
+          packages: const [],
+          failure: _isTestKey
+              ? OfferingsFailure.testStoreEmpty
+              : OfferingsFailure.empty,
+        );
+      }
+      return OfferingsLoadResult(packages: packages);
     } catch (e) {
       debugPrint('getOfferings error: $e');
-      return [];
+      return OfferingsLoadResult(
+        packages: const [],
+        failure: _classifyOfferingsError(e),
+        debugMessage: e.toString(),
+      );
     }
+  }
+
+  List<Package> _packagesFrom(Offerings offerings) {
+    final seen = <String>{};
+    final out = <Package>[];
+
+    void addAll(Iterable<Package> packages) {
+      for (final package in packages) {
+        final id = package.storeProduct.identifier;
+        if (seen.add(id)) out.add(package);
+      }
+    }
+
+    final current = offerings.current;
+    if (current != null) addAll(current.availablePackages);
+    for (final offering in offerings.all.values) {
+      addAll(offering.availablePackages);
+    }
+    return out;
+  }
+
+  /// When the "current" offering is empty but products exist in the store
+  /// (StoreKit config / Play), still surface them for purchase.
+  Future<List<Package>> _packagesFromProductIds() async {
+    try {
+      final products = await Purchases.getProducts(
+        AppConstants.subscriptionProductIds,
+        productCategory: ProductCategory.subscription,
+      );
+      return [
+        for (final product in products)
+          Package(
+            product.identifier,
+            _packageTypeFor(product.identifier),
+            product,
+            const PresentedOfferingContext('fallback', null, null),
+          ),
+      ];
+    } catch (e) {
+      debugPrint('getProducts fallback error: $e');
+      return const [];
+    }
+  }
+
+  PackageType _packageTypeFor(String productId) {
+    if (productId.contains('weekly')) return PackageType.weekly;
+    if (productId.contains('yearly') || productId.contains('annual')) {
+      return PackageType.annual;
+    }
+    if (productId.contains('monthly')) return PackageType.monthly;
+    return PackageType.custom;
+  }
+
+  OfferingsFailure _classifyOfferingsError(Object error) {
+    final text = error.toString().toLowerCase();
+    if (error is PlatformException) {
+      if (error.code == '23' ||
+          text.contains('test store') ||
+          text.contains('configuration')) {
+        return _isTestKey
+            ? OfferingsFailure.testStoreEmpty
+            : OfferingsFailure.empty;
+      }
+    }
+    if (text.contains('billing') ||
+        text.contains('storekit') ||
+        text.contains('purchasenotallowed') ||
+        text.contains('not allowed to make the purchase')) {
+      return OfferingsFailure.storeUnavailable;
+    }
+    if (text.contains('network') ||
+        text.contains('offline') ||
+        text.contains('internet')) {
+      return OfferingsFailure.unknown;
+    }
+    return _isTestKey
+        ? OfferingsFailure.testStoreEmpty
+        : OfferingsFailure.unknown;
   }
 
   Future<SubscriptionStatus> purchase(Package package) async {
     if (!_initialized) return SubscriptionStatus.free();
     try {
-      // ignore: deprecated_member_use
-      final result = await Purchases.purchasePackage(package);
+      final PurchaseResult result =
+          package.presentedOfferingContext.offeringIdentifier == 'fallback'
+              ? await Purchases.purchaseStoreProduct(package.storeProduct)
+              : await Purchases.purchasePackage(package);
       return _mapToStatus(result.customerInfo);
     } catch (e) {
       debugPrint('purchase error: $e');

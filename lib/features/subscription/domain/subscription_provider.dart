@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import '../data/subscription_service.dart';
+import 'offerings_load.dart';
 import 'subscription_status.dart';
 
 final subscriptionServiceProvider = Provider<SubscriptionService>((ref) {
@@ -43,7 +44,7 @@ class SubscriptionStatusNotifier extends AsyncNotifier<SubscriptionStatus> {
   }
 }
 
-final offeringsProvider = FutureProvider<List<Package>>((ref) async {
+final offeringsProvider = FutureProvider<OfferingsLoadResult>((ref) async {
   return ref.read(subscriptionServiceProvider).getOfferings();
 });
 

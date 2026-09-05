@@ -17,10 +17,13 @@ final healthScoreProvider = Provider<HealthScore>((ref) {
         data: (storage) => storage.usedPercent,
       );
 
+      if (!battery.hasLevelData) return HealthScore.unavailable();
+
       return HealthScore.calculate(
         batteryLevel: battery.level,
         temperature: battery.temperature,
         storageUsedPercent: storageUsedPercent,
+        hasTemperature: battery.hasTemperatureData,
       );
     },
   );

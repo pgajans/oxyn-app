@@ -9,6 +9,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/oxyn_card.dart';
 import '../../domain/dashboard_provider.dart';
+import '../../domain/health_score.dart';
 import '../../../battery/domain/battery_provider.dart';
 import '../../../cleaner/domain/storage_provider.dart';
 
@@ -56,12 +57,51 @@ Color _scoreColor(int score) {
 }
 
 class _ScoreSection extends StatelessWidget {
-  final dynamic score;
+  final HealthScore score;
 
   const _ScoreSection({required this.score});
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context)!;
+    if (!score.hasScore) {
+      return OxynCard(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              t.dailyScore,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            const Text(
+              '—',
+              style: TextStyle(
+                fontSize: 48,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textTertiary,
+                height: 1,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              t.dailyScoreUnavailableExplain,
+              style: const TextStyle(
+                fontSize: 13,
+                color: AppColors.textSecondary,
+                height: 1.35,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     final int total = score.total;
     final color = _scoreColor(total);
 
@@ -73,7 +113,7 @@ class _ScoreSection extends StatelessWidget {
           Row(
             children: [
               Text(
-                AppLocalizations.of(context)!.dailyScore,
+                t.dailyScore,
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
@@ -88,7 +128,7 @@ class _ScoreSection extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  _healthStatusText(AppLocalizations.of(context)!, score.statusLevel),
+                  _healthStatusText(t, score.statusLevel),
                   style: TextStyle(
                     color: color,
                     fontSize: 12,
@@ -112,8 +152,8 @@ class _ScoreSection extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 6),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 6),
+              const Padding(
+                padding: EdgeInsets.only(bottom: 6),
                 child: Text(
                   '/ 100',
                   style: TextStyle(
@@ -172,7 +212,7 @@ class _ModuleGrid extends StatelessWidget {
     final batteryText = batteryAsync.when(
       loading: () => '...',
       error: (e, s) => '—',
-      data: (info) => '%${info.level}',
+      data: (info) => info.hasLevelData ? '%${info.level}' : '—',
     );
 
     final storageAsync = ref.watch(storageInfoProvider);
@@ -1121,6 +1161,8 @@ class _OptResult {
 
 String _healthStatusText(AppLocalizations t, int level) {
   switch (level) {
+    case -1:
+      return t.dailyScoreUnavailable;
     case 0:
       return t.healthStatusHealthy;
     case 1:

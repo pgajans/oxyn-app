@@ -50,6 +50,8 @@ lib/core/localization/generated/
 # Environment / secrets
 .env
 *.env
+.env.ios
+.env.android
 
 # Android signing
 android/key.properties

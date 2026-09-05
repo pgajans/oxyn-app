@@ -33,7 +33,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
           ),
           SizedBox(height: 8),
           Text(
-            'Son güncelleme: 1 Nisan 2026',
+            'Son güncelleme: 5 Eylül 2026',
             style: TextStyle(color: AppColors.textTertiary, fontSize: 13),
           ),
           SizedBox(height: AppSpacing.lg),
@@ -50,8 +50,9 @@ class PrivacyPolicyScreen extends StatelessWidget {
                 'Oxyn, cihazınızda yerel olarak çalışan bir optimizasyon uygulamasıdır. '
                 'Topladığımız bilgiler:\n\n'
                 '• Cihaz bilgileri: Cihaz modeli, işletim sistemi sürümü, batarya durumu, '
-                'depolama kullanımı gibi teknik bilgiler. Bu veriler yalnızca cihazınızda '
-                'işlenir ve sunucularımıza gönderilmez.\n\n'
+                'depolama kullanımı gibi teknik bilgiler. Fotoğraflar cihazınızda kalır. '
+                'AI Cihaz Doktoru açıksa yalnızca sayısal performans verileri (şarj, sıcaklık, '
+                'depolama yüzdesi) analiz için Google Gemini API\'sine gönderilebilir.\n\n'
                 '• Kullanım analitikleri: Uygulama içi etkileşimleriniz hakkında anonim '
                 've toplu istatistikler (Firebase Analytics aracılığıyla). Bunlar kişisel '
                 'bilgilerinizi içermez.\n\n'
@@ -78,17 +79,15 @@ class PrivacyPolicyScreen extends StatelessWidget {
                 'Aşağıdaki hizmet sağlayıcılarla sınırlı veri paylaşımı yapılabilir:\n\n'
                 '• Firebase (Google): Anonim kullanım analitikleri ve bildirimler\n'
                 '• RevenueCat: Abonelik yönetimi\n'
-                '• AppLovin: Reklam gösterimi (ücretsiz kullanıcılar için)\n\n'
+                '• Google Gemini API: AI Cihaz Doktoru ve haber çevirisi (yapılandırıldığında)\n\n'
                 'Bu hizmet sağlayıcıların kendi gizlilik politikaları geçerlidir.',
           ),
           _Section(
-            title: '5. Reklam ve İzleme',
+            title: '5. Reklam',
             body:
-                'Ücretsiz kullanıcılara reklam göstermek için AppLovin MAX kullanılmaktadır. '
-                'Reklam ağları, size daha uygun reklamlar göstermek amacıyla cihaz tanımlayıcısı '
-                '(IDFA/GAID) kullanabilir. iOS cihazlarda App Tracking Transparency izni '
-                'istenir; izin vermezseniz kişiselleştirilmemiş reklamlar gösterilir.\n\n'
-                'Premium aboneler reklam görmez.',
+                'Şu anda uygulamada üçüncü taraf reklam ağı (AppLovin vb.) aktif değildir '
+                've iOS App Tracking Transparency izni istenmez. Reklam eklendiğinde bu '
+                'politika güncellenecektir.',
           ),
           _Section(
             title: '6. Veri Güvenliği',
@@ -110,9 +109,8 @@ class PrivacyPolicyScreen extends StatelessWidget {
             body: 'Aşağıdaki haklara sahipsiniz:\n\n'
                 '• Verilerinize erişim talep etme\n'
                 '• Verilerinizin silinmesini isteme\n'
-                '• Reklam izlemeyi reddetme (iOS ATT / Android Ad Settings)\n'
                 '• Bildirimleri kapatma\n\n'
-                'Bu haklarınızı kullanmak için bize pgajans@gmail.com adresinden ulaşabilirsiniz.',
+                'Bu haklarınızı kullanmak için bize support@oxynapp.net adresinden ulaşabilirsiniz.',
           ),
           _Section(
             title: '9. Politika Değişiklikleri',
@@ -125,7 +123,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
             title: '10. İletişim',
             body:
                 'Gizlilik politikamız hakkında sorularınız için:\n\n'
-                'E-posta: pgajans@gmail.com',
+                'E-posta: support@oxynapp.net',
           ),
           SizedBox(height: 40),
         ],

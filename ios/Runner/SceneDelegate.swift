@@ -28,7 +28,7 @@ class SceneDelegate: FlutterSceneDelegate {
         result(self.getBatteryDetails())
       case "getCpuTemperature":
         result(0.0)
-      case "openBatterySettings":
+      case "openBatterySettings", "openNotificationSettings", "openAppSettings":
         if let url = URL(string: UIApplication.openSettingsURLString) {
           UIApplication.shared.open(url)
         }

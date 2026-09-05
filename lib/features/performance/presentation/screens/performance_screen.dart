@@ -40,19 +40,35 @@ class PerformanceScreen extends ConsumerWidget {
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   const SizedBox(height: AppSpacing.md),
-                  ScoreRing(score: score.total),
+                  score.hasScore
+                      ? ScoreRing(score: score.total)
+                      : const Text(
+                          '—',
+                          style: TextStyle(
+                            fontSize: 48,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textTertiary,
+                          ),
+                        ),
                   const SizedBox(height: AppSpacing.md),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
-                      color: (score.isGood ? AppColors.success : AppColors.secondary)
+                      color: (score.hasScore
+                              ? (score.isGood ? AppColors.success : AppColors.secondary)
+                              : AppColors.textTertiary)
                           .withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      _healthStatusText(t, score.statusLevel),
+                      score.hasScore
+                          ? _healthStatusText(t, score.statusLevel)
+                          : t.dailyScoreUnavailableExplain,
+                      textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: score.isGood ? AppColors.success : AppColors.secondary,
+                        color: score.hasScore
+                            ? (score.isGood ? AppColors.success : AppColors.secondary)
+                            : AppColors.textSecondary,
                         fontWeight: FontWeight.w500,
                       ),
                     ),

@@ -64,20 +64,11 @@ dependencies {
 }
 
 // Some transitive Android dependencies recently started shipping alpha versions
-// that require Android Gradle Plugin 9.1.0+ (newer than our AGP 8.11.1). Our
-// previously shipped, working build used stable versions, so we pin/exclude
-// these to keep building on the current AGP toolchain:
-//   - androidx.compose.remote: pulled in by the AdMob adapter (via applovin_max);
-//     the app does not use this Compose-based remote rendering path -> exclude.
-//   - androidx.glance: pulled in by home_widget; pin to the latest stable (1.1.1)
-//     instead of the 1.3.0-alpha that demands AGP 9.1.0+.
+// that require Android Gradle Plugin 9.1.0+ (newer than our AGP 8.11.1).
+// androidx.compose.remote is pulled in by the AdMob adapter (via applovin_max);
+// the app does not use this Compose-based remote rendering path.
 configurations.all {
     exclude(group = "androidx.compose.remote")
-    resolutionStrategy.eachDependency {
-        if (requested.group == "androidx.glance") {
-            useVersion("1.1.1")
-        }
-    }
 }
 
 flutter {

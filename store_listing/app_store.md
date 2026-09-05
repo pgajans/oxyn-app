@@ -7,15 +7,15 @@ Oxyn - Telefon Bakımı
 Batarya, Depolama ve Temizlik
 
 ## Tanıtım Metni / Promotional Text (170 karakter max)
-Cihazının durumunu takip et! Batarya analizi, akıllı temizlik, şarj animasyonları ve daha fazlası. Ücretsiz dene!
+Cihazının durumunu takip et! Batarya analizi, akıllı temizlik ve cihaz sağlık özeti. Ücretsiz dene!
 
 ## Açıklama / Description (4000 karakter max)
 Oxyn ile cihazının durumunu takip et! Batarya sağlığından depolama temizliğine, cihaz sağlık analizinden kişiselleştirmeye kadar her şey tek uygulamada.
 
 BATARYA ANALİZİ
-• Gerçek zamanlı batarya durumu ve sıcaklık takibi
-• Şarj döngüsü ve batarya sağlığı bilgileri
-• Akıllı şarj önerileri ile batarya ömrünü uzat
+• Gerçek zamanlı şarj seviyesi ve (cihaz destekliyorsa) sıcaklık
+• Cihazın bildirdiği kadarıyla batarya bilgisi — uydurma sağlık skoru yok
+• Şarj önerileri (ör. %80 hatırlatıcı)
 
 AKILLI TEMİZLİK
 • Benzer fotoğrafları bul ve gereksiz kopyaları sil
@@ -28,43 +28,38 @@ CİHAZ DURUMU
 • Depolama ve batarya durumu analizi
 • Kişiselleştirilmiş öneriler
 
-ŞARJ ANİMASYONLARI
-• 6 farklı premium şarj animasyonu
-• Telefonunu şarj ederken görsel şölen
-
 KİŞİSELLEŞTİRME
-• Farklı widget temaları
-• Karanlık mod uyumlu modern tasarım
+• Uygulama içi şarj görselleri (sistem şarj ekranı değil)
+• Karanlık / aydınlık / sistem teması
 
 OXYN PLUS
 • Sınırsız fotoğraf ve dosya temizliği
-• Tüm şarj animasyonları ve widget stilleri
-• Reklamsız deneyim
-• Detaylı batarya raporu
+• Tüm uygulama içi kişiselleştirme stilleri
+• Detaylı batarya raporu (cihazın verdiği verilerle)
 
 Oxyn, gizliliğine saygı duyar. Verilerini cihazında işler, sunuculara yüklemez.
 
 ## Anahtar Kelimeler / Keywords (100 karakter max, virgülle ayrılmış)
-temizleyici,batarya,depolama,temizlik,şarj,cihaz sağlığı,widget,bakım,analiz
+temizleyici,batarya,depolama,temizlik,şarj,cihaz sağlığı,bakım,analiz
 
 ## Kategori
 Primary: Utilities (Yardımcı Programlar)
 Secondary: Productivity (Verimlilik)
 
 ## Yaş Derecelendirmesi
-4+ (reklam içerir notu ile)
+4+
 
 ## İletişim
-pgajans@gmail.com
+support@oxynapp.net
 
 ## Gizlilik Politikası URL
-https://pgajans.github.io/oxyn-pages/privacy.html
+https://oxynapp.net/privacy-policy.html
 
 ## Destek URL
-https://pgajans.github.io/oxyn-pages/
+https://oxynapp.net/support.html
 
 ## Pazarlama URL (opsiyonel)
-https://pgajans.github.io/oxyn-pages/
+https://oxynapp.net/
 
 ## Telif Hakkı
 © 2026 Oxyn

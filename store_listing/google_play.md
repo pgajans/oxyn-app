@@ -4,16 +4,16 @@
 Oxyn - Telefon Optimizasyonu
 
 ## Kısa Açıklama (80 karakter max)
-Batarya analizi, akıllı temizlik, şarj animasyonları. Telefonuna nefes aldır!
+Batarya analizi ve akıllı temizlik. Telefonuna nefes aldır!
 
 ## Uzun Açıklama (4000 karakter max)
 Oxyn ile telefonunu en iyi performansta tut! Batarya sağlığından depolama temizliğine, cihaz performans analizinden kişiselleştirmeye kadar her şey tek uygulamada.
 
-🔋 BATARYA ANALİZİ
-• Gerçek zamanlı batarya durumu ve sıcaklık takibi
-• Şarj döngüsü ve batarya sağlığı bilgileri
-• Akıllı şarj önerileri ile batarya ömrünü uzat
-• Batarya tüketen uygulamaları tespit et
+BATARYA ANALİZİ
+• Gerçek zamanlı şarj seviyesi ve (cihaz destekliyorsa) sıcaklık
+• Cihazın bildirdiği kadarıyla batarya bilgisi
+• Şarj önerileri (ör. %80 hatırlatıcı)
+• Sistem pil ayarlarına kısayol
 
 🧹 AKILLI TEMİZLİK
 • Benzer fotoğrafları bul ve gereksiz kopyaları sil
@@ -26,25 +26,17 @@ Oxyn ile telefonunu en iyi performansta tut! Batarya sağlığından depolama te
 • Depolama ve batarya durumu analizi
 • Kişiselleştirilmiş öneriler
 
-⚡ ŞARJ ANİMASYONLARI
-• 6 farklı premium şarj animasyonu
-• Telefonunu şarj ederken görsel şölen
-• Kişiselleştirilebilir widget stilleri
-
-🎨 KİŞİSELLEŞTİRME
-• Farklı widget temaları
-• Karanlık mod uyumlu tasarım
-• Modern ve minimalist arayüz
+KİŞİSELLEŞTİRME
+• Uygulama içi şarj görselleri (sistem şarj ekranı değil)
+• Karanlık / aydınlık / sistem teması
 
 🌍 ÇOK DİLLİ DESTEK
 • Türkçe, İngilizce, İspanyolca, Portekizce, Arapça
 
 OXYN PLUS İLE DAHA FAZLASI
 • Sınırsız fotoğraf ve dosya temizliği
-• Tüm şarj animasyonları
-• Tüm widget stilleri
-• Reklamsız deneyim
-• Detaylı batarya raporu
+• Tüm uygulama içi kişiselleştirme stilleri
+• Detaylı batarya raporu (cihazın verdiği verilerle)
 
 Oxyn, verilerini cihazında işler. Fotoğrafların ve dosyaların sunuculara yüklenmez.
 
@@ -57,10 +49,10 @@ Tools (Araçlar)
 Everyone / Herkes (PEGI 3)
 
 ## İletişim E-postası
-pgajans@gmail.com
+support@oxynapp.net
 
 ## Gizlilik Politikası URL
-https://pgajans.github.io/oxyn-pages/privacy.html
+https://oxynapp.net/privacy-policy.html
 
 ## Etiketler (Tags)
-telefon temizleyici, batarya, depolama, optimizasyon, temizlik, fotoğraf temizleme, şarj animasyonu, performans, cihaz bakımı, widget
+telefon temizleyici, batarya, depolama, temizlik, fotoğraf temizleme, performans, cihaz bakımı

@@ -98,7 +98,7 @@ class TermsScreen extends StatelessWidget {
             body: 'Uygulamanın düzgün çalışması için aşağıdaki izinler gerekebilir:\n\n'
                 '• Fotoğraf/medya erişimi: Temizleme özelliği için\n'
                 '• Bildirimler: Batarya uyarıları ve hatırlatmalar için\n'
-                '• İnternet erişimi: Abonelik doğrulama ve reklam gösterimi için\n\n'
+                '• İnternet erişimi: Abonelik doğrulama, haberler ve AI analiz için\n\n'
                 'Bu izinleri cihaz ayarlarından istediğiniz zaman geri alabilirsiniz.',
           ),
           _Section(
@@ -125,14 +125,15 @@ class TermsScreen extends StatelessWidget {
           _Section(
             title: '11. Uygulanacak Hukuk',
             body:
-                'Bu Kullanım Şartları Türkiye Cumhuriyeti yasalarına tabidir. '
-                'Uyuşmazlıklarda Türkiye mahkemeleri yetkilidir.',
+                'Bu Kullanım Şartları İngiltere ve Galler yasalarına tabidir. '
+                'Uyuşmazlıklarda İngiltere ve Galler mahkemeleri yetkilidir. '
+                'Yasal tüzel kişi: Growing Business Center Ltd.',
           ),
           _Section(
             title: '12. İletişim',
             body:
                 'Kullanım şartları hakkında sorularınız için:\n\n'
-                'E-posta: pgajans@gmail.com',
+                'E-posta: support@oxynapp.net',
           ),
           SizedBox(height: 40),
         ],

@@ -84,7 +84,9 @@ class _BatteryHealthBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
-    final healthColor = _healthColor(info.healthPercentage);
+    final hasHealth = info.hasHealthData;
+    final healthColor =
+        hasHealth ? _healthColor(info.healthPercentage) : AppColors.textTertiary;
     final isAndroid = Platform.isAndroid;
 
     return OxynCard(
@@ -97,7 +99,9 @@ class _BatteryHealthBar extends StatelessWidget {
               Icon(Icons.favorite, color: healthColor, size: 22),
               const SizedBox(width: 8),
               Text(
-                isAndroid ? t.estimatedBatteryHealth : t.batteryHealth,
+                hasHealth
+                    ? (isAndroid ? t.estimatedBatteryHealth : t.batteryHealth)
+                    : t.batteryHealthUnavailable,
                 style: const TextStyle(
                   fontWeight: FontWeight.w600,
                   fontSize: 16,
@@ -105,7 +109,7 @@ class _BatteryHealthBar extends StatelessWidget {
               ),
               const Spacer(),
               Text(
-                '%${info.healthPercentage}',
+                info.healthText,
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w800,
@@ -118,7 +122,7 @@ class _BatteryHealthBar extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(6),
             child: LinearProgressIndicator(
-              value: info.healthPercentage / 100,
+              value: hasHealth ? info.healthPercentage / 100 : 0,
               backgroundColor: AppColors.surfaceLight,
               valueColor: AlwaysStoppedAnimation<Color>(healthColor),
               minHeight: 10,
@@ -162,7 +166,9 @@ class _BatteryHealthBar extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    t.batteryHealthExplain,
+                    hasHealth
+                        ? t.batteryHealthExplain
+                        : t.batteryHealthUnavailableExplain,
                     style: const TextStyle(
                       fontSize: 11,
                       color: AppColors.textTertiary,
@@ -598,23 +604,29 @@ class _BatteryReportButtonState extends State<_BatteryReportButton>
   String _generateReport(AppLocalizations t) {
     final lines = <String>[];
 
-    if (widget.info.healthPercentage >= 80) {
-      lines.add(t.reportContentGood(widget.info.healthPercentage));
-    } else if (widget.info.healthPercentage >= 60) {
-      lines.add(t.reportContentMedium(widget.info.healthPercentage));
+    if (widget.info.hasHealthData) {
+      if (widget.info.healthPercentage >= 80) {
+        lines.add(t.reportContentGood(widget.info.healthPercentage));
+      } else if (widget.info.healthPercentage >= 60) {
+        lines.add(t.reportContentMedium(widget.info.healthPercentage));
+      } else {
+        lines.add(t.reportContentBad(widget.info.healthPercentage));
+      }
     } else {
-      lines.add(t.reportContentBad(widget.info.healthPercentage));
+      lines.add(t.batteryHealthUnavailableExplain);
     }
 
-    if (widget.info.temperature > 40) {
-      lines.add(t.reportTempHigh(widget.info.temperatureText));
-    } else if (widget.info.temperature > 35) {
-      lines.add(t.reportTempWarm(widget.info.temperatureText));
-    } else {
-      lines.add(t.reportTempNormal(widget.info.temperatureText));
+    if (widget.info.hasTemperatureData) {
+      if (widget.info.temperature > 40) {
+        lines.add(t.reportTempHigh(widget.info.temperatureText));
+      } else if (widget.info.temperature > 35) {
+        lines.add(t.reportTempWarm(widget.info.temperatureText));
+      } else {
+        lines.add(t.reportTempNormal(widget.info.temperatureText));
+      }
     }
 
-    if (widget.info.level < 20) {
+    if (widget.info.hasLevelData && widget.info.level < 20) {
       lines.add(t.reportLevelLow(widget.info.level));
     }
 

@@ -50,9 +50,9 @@ class AiDoctorService {
           'Bir kullanıcının telefonunu detaylı analiz ediyorsun. '
           'Aşağıdaki cihaz verilerini profesyonel bir şekilde değerlendir.\n\n'
           '📊 CİHAZ VERİLERİ:\n'
-          '• Batarya Seviyesi: %$batteryLevel\n'
-          '• Batarya Sıcaklığı: ${batteryTemperature.toStringAsFixed(1)}°C\n'
-          '• Tahmini Batarya Sağlığı: %$batteryHealth\n'
+          '• Batarya Seviyesi: ${batteryLevel >= 0 ? '%$batteryLevel' : 'cihaz raporlamıyor'}\n'
+          '• Batarya Sıcaklığı: ${batteryTemperature >= 0 ? '${batteryTemperature.toStringAsFixed(1)}°C' : 'cihaz raporlamıyor'}\n'
+          '• Tahmini Batarya Sağlığı: ${batteryHealth > 0 ? '%$batteryHealth' : 'cihaz raporlamıyor'}\n'
           '• Depolama Kullanımı: %${usedStoragePercent.toStringAsFixed(0)}\n'
           '• Kullanılabilir Boş Alan: $freeStorage\n\n'
           'RAPOR FORMATI (bu formatı kesinlikle takip et):\n\n'
@@ -149,8 +149,10 @@ class AiDoctorService {
     final buffer = StringBuffer();
 
     buffer.writeln('🔍 GENEL DEĞERLENDİRME');
-    if (batteryHealth >= 85 && usedStoragePercent < 80 && batteryTemperature < 38) {
+    if (batteryHealth > 0 && batteryHealth >= 85 && usedStoragePercent < 80 && batteryTemperature < 38) {
       buffer.writeln('Cihazınız genel olarak sağlıklı bir durumda. Batarya ve depolama değerleri kabul edilebilir seviyede. Düzenli bakım ile cihazınızın ömrünü uzatabilirsiniz.');
+    } else if (batteryHealth <= 0) {
+      buffer.writeln('Cihazınız batarya sağlık yüzdesini sistem API üzerinden paylaşmıyor. Aşağıdaki değerlendirme şarj seviyesi, sıcaklık ve depolama verilerine dayanır; tahmini pil yıpranması içermez.');
     } else if (batteryHealth >= 70) {
       buffer.writeln('Cihazınızda bazı iyileştirme gerektiren alanlar tespit edildi. Acil bir durum söz konusu olmasa da, aşağıdaki önerileri dikkate almanız cihaz performansını artıracaktır.');
     } else {
@@ -161,11 +163,11 @@ class AiDoctorService {
     buffer.writeln('⚠️ TESPİT EDİLEN SORUNLAR');
     bool hasIssue = false;
 
-    if (batteryHealth < 85) {
+    if (batteryHealth > 0 && batteryHealth < 85) {
       buffer.writeln('• Batarya sağlığı %$batteryHealth seviyesinde. ${batteryHealth < 70 ? "Pil değişimi düşünülmeli." : "Yıpranma başlamış, dikkatli kullanım önerilir."}');
       hasIssue = true;
     }
-    if (batteryTemperature > 35) {
+    if (batteryTemperature >= 0 && batteryTemperature > 35) {
       buffer.writeln('• Cihaz sıcaklığı ${batteryTemperature.toStringAsFixed(1)}°C ile normalin üzerinde. Aşırı ısınma batarya ömrünü kısaltır.');
       hasIssue = true;
     }
@@ -173,7 +175,7 @@ class AiDoctorService {
       buffer.writeln('• Depolama alanının %${usedStoragePercent.toStringAsFixed(0)}\'${usedStoragePercent >= 90 ? "ı" : "i"} dolu. ${usedStoragePercent >= 90 ? "Kritik seviyede alan azlığı var." : "Temizlik yapılması önerilir."}');
       hasIssue = true;
     }
-    if (batteryLevel < 20) {
+    if (batteryLevel >= 0 && batteryLevel < 20) {
       buffer.writeln('• Batarya seviyesi %$batteryLevel ile düşük. Cihazı en kısa sürede şarj edin.');
       hasIssue = true;
     }
@@ -189,7 +191,9 @@ class AiDoctorService {
 
     buffer.writeln();
     buffer.writeln('📈 RİSK SEVİYESİ');
-    if (batteryHealth >= 85 && usedStoragePercent < 80 && batteryTemperature < 38) {
+    if (batteryHealth <= 0) {
+      buffer.write('BİLİNMİYOR - Pil sağlık yüzdesi bu cihazda okunamadı. Risk yalnızca sıcaklık ve depolamaya göre değerlendirildi.');
+    } else if (batteryHealth >= 85 && usedStoragePercent < 80 && batteryTemperature < 38) {
       buffer.write('DÜŞÜK - Cihazınız sağlıklı durumda, düzenli bakımla uzun süre sorunsuz kullanabilirsiniz.');
     } else if (batteryHealth >= 70 && usedStoragePercent < 90) {
       buffer.write('ORTA - Bazı iyileştirmeler yapılması önerilir, ancak acil bir durum yok.');

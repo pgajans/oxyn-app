@@ -11,10 +11,20 @@ class HealthScore {
     required this.temperatureScore,
   });
 
+  bool get hasScore => total >= 0;
+
+  factory HealthScore.unavailable() => const HealthScore(
+        total: -1,
+        batteryScore: 0,
+        storageScore: 0,
+        temperatureScore: 0,
+      );
+
   factory HealthScore.calculate({
     required int batteryLevel,
     required double temperature,
     required double storageUsedPercent,
+    bool hasTemperature = true,
   }) {
     // Battery: 0-35 points (more granular)
     int bScore;
@@ -63,26 +73,24 @@ class HealthScore {
       tScore = 0;
     }
 
-    final total = (bScore + sScore + tScore).clamp(0, 100);
+    final raw = bScore + sScore + (hasTemperature ? tScore : 0);
+    final maxPoints = 35 + 40 + (hasTemperature ? 25 : 0);
+    final total = ((raw / maxPoints) * 100).round().clamp(0, 100);
 
     return HealthScore(
       total: total,
       batteryScore: bScore,
       storageScore: sScore,
-      temperatureScore: tScore,
+      temperatureScore: hasTemperature ? tScore : 0,
     );
   }
 
-  factory HealthScore.empty() => const HealthScore(
-        total: 0,
-        batteryScore: 0,
-        storageScore: 0,
-        temperatureScore: 0,
-      );
+  factory HealthScore.empty() => HealthScore.unavailable();
 
   /// 0 = healthy, 1 = good, 2 = improvement, 3 = maintenance, 4 = urgent.
-  /// Used by the UI to pick a localized status message.
+  /// -1 = not enough data to score.
   int get statusLevel {
+    if (!hasScore) return -1;
     if (total >= 85) return 0;
     if (total >= 70) return 1;
     if (total >= 55) return 2;
@@ -90,7 +98,7 @@ class HealthScore {
     return 4;
   }
 
-  bool get isGood => total >= 70;
-  bool get isMedium => total >= 40 && total < 70;
-  bool get isBad => total < 40;
+  bool get isGood => hasScore && total >= 70;
+  bool get isMedium => hasScore && total >= 40 && total < 70;
+  bool get isBad => hasScore && total < 40;
 }

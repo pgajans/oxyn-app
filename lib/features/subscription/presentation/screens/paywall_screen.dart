@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
+import '../../../../core/localization/generated/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../domain/offerings_load.dart';
 import '../../domain/subscription_provider.dart';
 
 class PaywallScreen extends ConsumerWidget {
@@ -75,10 +77,21 @@ class PaywallScreen extends ConsumerWidget {
                         padding: EdgeInsets.all(24),
                         child: CircularProgressIndicator(color: AppColors.primary),
                       ),
-                      error: (e, s) => _FallbackPricing(ref: ref),
-                      data: (packages) {
-                        if (packages.isEmpty) return _FallbackPricing(ref: ref);
-                        return _PackageList(packages: packages, ref: ref);
+                      error: (e, s) => _FallbackPricing(
+                        ref: ref,
+                        failure: OfferingsFailure.unknown,
+                      ),
+                      data: (result) {
+                        if (result.hasPackages) {
+                          return _PackageList(
+                            packages: result.packages,
+                            ref: ref,
+                          );
+                        }
+                        return _FallbackPricing(
+                          ref: ref,
+                          failure: result.failure,
+                        );
                       },
                     ),
                     const SizedBox(height: 12),
@@ -147,6 +160,7 @@ class _CompactFeatures extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -156,12 +170,11 @@ class _CompactFeatures extends StatelessWidget {
       ),
       child: Column(
         children: [
-          _FeatureRow(Icons.all_inclusive, 'Sınırsız temizlik ve analiz'),
-          _FeatureRow(Icons.health_and_safety, 'AI Cihaz Doktoru'),
-          _FeatureRow(Icons.block, 'Reklamsız deneyim'),
-          _FeatureRow(Icons.battery_full, 'Detaylı pil sağlığı raporu'),
-          _FeatureRow(Icons.folder_open, 'Büyük dosya bulucu tam erişim'),
-          _FeatureRow(Icons.bolt, 'Öncelikli destek ve güncellemeler'),
+          _FeatureRow(Icons.all_inclusive, t.plusFeatureClean),
+          _FeatureRow(Icons.health_and_safety, t.plusFeatureDoctor),
+          _FeatureRow(Icons.battery_full, t.plusFeatureBatteryReport),
+          _FeatureRow(Icons.folder_open, t.plusFeatureLargeFiles),
+          _FeatureRow(Icons.palette, t.plusFeatureStyles),
         ],
       ),
     );
@@ -345,18 +358,23 @@ class _PricingCard extends StatelessWidget {
   }
 }
 
-/// Shown only when RevenueCat offerings could not be loaded (e.g. no network
-/// or store not yet ready). We intentionally DO NOT show any hardcoded prices
-/// here: displaying a fixed currency (e.g. "$2.99") while the store would
-/// charge in the user's local currency violates Google Play's Subscriptions
-/// policy ("currency differences with prominent display price"). Instead we
-/// offer a retry so real, localized store prices can load.
+/// Shown only when store packages could not be loaded. No hardcoded prices.
 class _FallbackPricing extends StatelessWidget {
   final WidgetRef ref;
-  const _FallbackPricing({required this.ref});
+  final OfferingsFailure failure;
+  const _FallbackPricing({required this.ref, required this.failure});
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context)!;
+    final detail = switch (failure) {
+      OfferingsFailure.testStoreEmpty => t.offeringsTestStore,
+      OfferingsFailure.storeUnavailable => t.offeringsStoreUnavailable,
+      OfferingsFailure.empty => t.offeringsEmpty,
+      OfferingsFailure.notReady => t.offeringsNotReady,
+      OfferingsFailure.unknown || OfferingsFailure.none => t.offeringsUnknown,
+    };
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -368,20 +386,20 @@ class _FallbackPricing extends StatelessWidget {
         children: [
           const Icon(Icons.cloud_off, color: AppColors.textSecondary, size: 32),
           const SizedBox(height: 12),
-          const Text(
-            'Abonelik seçenekleri şu anda yüklenemedi',
+          Text(
+            t.offeringsLoadFailed,
             textAlign: TextAlign.center,
-            style: TextStyle(
+            style: const TextStyle(
               color: AppColors.textPrimary,
               fontSize: 14,
               fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 6),
-          const Text(
-            'İnternet bağlantını kontrol edip tekrar dene.',
+          Text(
+            detail,
             textAlign: TextAlign.center,
-            style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+            style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
           ),
           const SizedBox(height: 16),
           SizedBox(
@@ -396,9 +414,9 @@ class _FallbackPricing extends StatelessWidget {
                 ),
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
-              child: const Text(
-                'Tekrar Dene',
-                style: TextStyle(fontWeight: FontWeight.w700),
+              child: Text(
+                t.tryAgain,
+                style: const TextStyle(fontWeight: FontWeight.w700),
               ),
             ),
           ),

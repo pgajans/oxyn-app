@@ -27,4 +27,11 @@ class AppConstants {
   static const String monthlyPlusProductId = 'oxyn_plus_monthly';
   static const String monthlyProProductId = 'oxyn_pro_monthly';
   static const String yearlyProProductId = 'oxyn_pro_yearly';
+
+  static const List<String> subscriptionProductIds = [
+    weeklyProductId,
+    monthlyPlusProductId,
+    monthlyProProductId,
+    yearlyProProductId,
+  ];
 }

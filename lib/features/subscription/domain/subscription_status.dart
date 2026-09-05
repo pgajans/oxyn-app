@@ -28,7 +28,7 @@ class SubscriptionStatus {
   // Feature access checks
   bool get hasUnlimitedCleaning => isPremium;
   bool get hasAllAnimations => isPremium;
-  bool get hasAllWidgets => isPro;
+  bool get hasAllWidgets => isPremium;
   bool get isAdFree => isPremium;
   bool get hasDetailedBatteryReport => isPremium;
   bool get hasLargeFileFullAccess => isPremium;

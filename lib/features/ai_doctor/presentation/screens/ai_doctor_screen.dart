@@ -127,7 +127,7 @@ class _AiDoctorScreenState extends ConsumerState<AiDoctorScreen> {
             Text(
               isPremium
                   ? 'Yapay zeka ile cihazınızı analiz edin'
-                  : 'Reklam izleyerek günde 1 kez kullanın',
+                  : t.aiDoctorFreeHint,
               style: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
             ),
             const SizedBox(height: 20),
@@ -144,19 +144,17 @@ class _AiDoctorScreenState extends ConsumerState<AiDoctorScreen> {
                         child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.background),
                       )
                     : Icon(
-                        isPremium ? Icons.search : Icons.play_circle_outline,
+                        Icons.search,
                         color: AppColors.background,
                       ),
                 label: Text(
                   _analyzing
                       ? 'Analiz ediliyor...'
-                      : isPremium
-                          ? 'Cihazımı Analiz Et'
-                          : 'Reklam İzle ve Analiz Et',
+                      : t.aiDoctorAnalyzeCta,
                   style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.background),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: isPremium ? AppColors.primary : AppColors.secondary,
+                  backgroundColor: AppColors.primary,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 ),
               ),
@@ -303,7 +301,7 @@ class _HowItWorksSection extends StatelessWidget {
                 SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Verileriniz üçüncü taraflarla paylaşılmaz. Analiz sonuçları yalnızca cihazınızda saklanır.',
+                    'Fotoğraf ve dosyalarınız cihazda kalır. Analiz için yalnızca sayısal cihaz verileri (şarj, sıcaklık, depolama) Google Gemini’ye gönderilebilir.',
                     style: TextStyle(color: AppColors.primary, fontSize: 11, height: 1.4),
                   ),
                 ),
@@ -452,11 +450,23 @@ class _DoctorAnalysisScreenState extends State<_DoctorAnalysisScreen>
       _addLog('[BAT] Batarya verileri okunuyor...');
       await Future.delayed(const Duration(milliseconds: 400));
       batteryInfo = await widget.ref.read(batteryInfoProvider.future);
-      _addLog('[BAT] Seviye: %${batteryInfo.level}');
+      _addLog(
+        batteryInfo.hasLevelData
+            ? '[BAT] Seviye: %${batteryInfo.level}'
+            : '[BAT] Seviye: cihaz raporlamıyor',
+      );
       await Future.delayed(const Duration(milliseconds: 300));
-      _addLog('[BAT] Sıcaklık: ${batteryInfo.temperature.toStringAsFixed(1)}°C');
+      _addLog(
+        batteryInfo.hasTemperatureData
+            ? '[BAT] Sıcaklık: ${batteryInfo.temperature.toStringAsFixed(1)}°C'
+            : '[BAT] Sıcaklık: cihaz raporlamıyor',
+      );
       await Future.delayed(const Duration(milliseconds: 300));
-      _addLog('[BAT] Sağlık: %${batteryInfo.healthPercentage}');
+      _addLog(
+        batteryInfo.hasHealthData
+            ? '[BAT] Sağlık: %${batteryInfo.healthPercentage}'
+            : '[BAT] Sağlık: cihaz raporlamıyor',
+      );
       await Future.delayed(const Duration(milliseconds: 300));
       _addLog('[BAT] Durum: ${batteryInfo.isCharging ? "Şarj oluyor" : "Pilde çalışıyor"}');
       await Future.delayed(const Duration(milliseconds: 500));
@@ -501,9 +511,15 @@ class _DoctorAnalysisScreenState extends State<_DoctorAnalysisScreen>
     _addLog('[AI] Analiz ediliyor... Lütfen bekleyin.');
     await Future.delayed(const Duration(milliseconds: 500));
 
-    final int bLevel = batteryInfo?.level ?? 50;
-    final double bTemp = (batteryInfo?.temperature ?? 25.0).toDouble();
-    final int bHealth = batteryInfo?.healthPercentage ?? 80;
+    final int bLevel = (batteryInfo != null && batteryInfo.hasLevelData)
+        ? batteryInfo.level as int
+        : -1;
+    final double bTemp = (batteryInfo != null && batteryInfo.hasTemperatureData)
+        ? (batteryInfo.temperature as num).toDouble()
+        : -1;
+    final int bHealth = (batteryInfo != null && batteryInfo.hasHealthData)
+        ? batteryInfo.healthPercentage
+        : -1;
     final double sUsedPct = (storageInfo?.usedPercent ?? 50.0).toDouble();
     final String sFree = storageInfo?.freeFormatted ?? 'Bilinmiyor';
 
