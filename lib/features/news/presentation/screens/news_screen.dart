@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/localization/generated/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/widgets/oxyn_banner_ad.dart';
 import '../../domain/news_model.dart';
 import '../../domain/news_provider.dart';
 
@@ -25,31 +26,40 @@ class NewsScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: newsAsync.when(
-        loading: () => const _ShimmerList(),
-        error: (e, _) => _ErrorView(
-          message: t.error('').replaceAll(': ', ''),
-          onRetry: () => ref.read(newsProvider.notifier).refresh(),
-        ),
-        data: (articles) {
-          if (articles.isEmpty) {
-            return _ErrorView(
-              message: t.error('').replaceAll(': ', ''),
-              onRetry: () => ref.read(newsProvider.notifier).refresh(),
-            );
-          }
-          return RefreshIndicator(
-            color: AppColors.primary,
-            backgroundColor: AppColors.surface,
-            onRefresh: () => ref.read(newsProvider.notifier).refresh(),
-            child: ListView.separated(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              itemCount: articles.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 12),
-              itemBuilder: (context, index) => _NewsCard(article: articles[index]),
+      body: Column(
+        children: [
+          Expanded(
+            child: newsAsync.when(
+              loading: () => const _ShimmerList(),
+              error: (e, _) => _ErrorView(
+                message: t.error('').replaceAll(': ', ''),
+                onRetry: () => ref.read(newsProvider.notifier).refresh(),
+              ),
+              data: (articles) {
+                if (articles.isEmpty) {
+                  return _ErrorView(
+                    message: t.error('').replaceAll(': ', ''),
+                    onRetry: () => ref.read(newsProvider.notifier).refresh(),
+                  );
+                }
+                return RefreshIndicator(
+                  color: AppColors.primary,
+                  backgroundColor: AppColors.surface,
+                  onRefresh: () => ref.read(newsProvider.notifier).refresh(),
+                  child: ListView.separated(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
+                    itemCount: articles.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 12),
+                    itemBuilder: (context, index) =>
+                        _NewsCard(article: articles[index]),
+                  ),
+                );
+              },
             ),
-          );
-        },
+          ),
+          const OxynBannerAd(),
+        ],
       ),
     );
   }

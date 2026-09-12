@@ -9,6 +9,20 @@ class AdService {
   bool _initialized = false;
   VoidCallback? _pendingRewardCallback;
 
+  // --- Interstitial frequency capping (Play "Disruptive Ads" safety) ---
+  final DateTime _sessionStart = DateTime.now();
+  DateTime? _lastInterstitialShown;
+  int _interstitialsThisSession = 0;
+
+  /// Minimum time between two interstitials.
+  static const Duration _minInterstitialGap = Duration(seconds: 90);
+
+  /// No interstitials during the first moments of a session.
+  static const Duration _sessionInitialGrace = Duration(seconds: 60);
+
+  /// Hard cap on interstitials per app session.
+  static const int _maxInterstitialsPerSession = 5;
+
   static const _sdkKey = String.fromEnvironment(
     'APPLOVIN_SDK_KEY',
     defaultValue: '',
@@ -99,6 +113,29 @@ class AdService {
 
     debugPrint('Interstitial ad not ready');
     return false;
+  }
+
+  /// Premium-aware, frequency-capped interstitial. Use this from screens
+  /// instead of [showInterstitial] so we never spam ads or show them to
+  /// premium (ad-free) users.
+  Future<bool> maybeShowInterstitial({required bool isPremium}) async {
+    if (isPremium) return false;
+    if (!_initialized || _isPlaceholderKey) return false;
+
+    final now = DateTime.now();
+    if (now.difference(_sessionStart) < _sessionInitialGrace) return false;
+    if (_interstitialsThisSession >= _maxInterstitialsPerSession) return false;
+    if (_lastInterstitialShown != null &&
+        now.difference(_lastInterstitialShown!) < _minInterstitialGap) {
+      return false;
+    }
+
+    final shown = await showInterstitial();
+    if (shown) {
+      _lastInterstitialShown = now;
+      _interstitialsThisSession++;
+    }
+    return shown;
   }
 
   // --- Rewarded ---

@@ -1,21 +1,25 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:share_plus/share_plus.dart';
+import '../../../../core/services/ad_service.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/oxyn_banner_ad.dart';
+import '../../../subscription/domain/subscription_provider.dart';
 import '../../data/trivia_questions.dart';
 
-class TriviaScreen extends StatefulWidget {
+class TriviaScreen extends ConsumerStatefulWidget {
   const TriviaScreen({super.key});
 
   @override
-  State<TriviaScreen> createState() => _TriviaScreenState();
+  ConsumerState<TriviaScreen> createState() => _TriviaScreenState();
 }
 
 enum _GamePhase { start, playing, gameOver }
 
-class _TriviaScreenState extends State<TriviaScreen>
+class _TriviaScreenState extends ConsumerState<TriviaScreen>
     with TickerProviderStateMixin {
   final _random = Random();
 
@@ -187,6 +191,11 @@ class _TriviaScreenState extends State<TriviaScreen>
     setState(() {
       _phase = _GamePhase.gameOver;
     });
+    // Show an interstitial at this natural break point (frequency-capped,
+    // skipped for premium users and when ads are not configured).
+    AdService().maybeShowInterstitial(
+      isPremium: ref.read(isPremiumProvider),
+    );
   }
 
   Color _getOptionColor(String option) {
@@ -254,6 +263,7 @@ class _TriviaScreenState extends State<TriviaScreen>
   Widget _buildStartScreen() {
     return Scaffold(
       backgroundColor: AppColors.background,
+      bottomNavigationBar: const OxynBannerAd(),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
@@ -661,6 +671,7 @@ class _TriviaScreenState extends State<TriviaScreen>
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      bottomNavigationBar: const OxynBannerAd(),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 32),
