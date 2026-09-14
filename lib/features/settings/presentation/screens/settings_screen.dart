@@ -9,6 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/localization/generated/app_localizations.dart';
 import '../../../../core/localization/locale_provider.dart';
+import '../../../../core/services/feedback_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/theme_provider.dart';
@@ -110,6 +111,22 @@ class SettingsScreen extends ConsumerWidget {
                 title: t.rateApp,
                 subtitle: t.rateAppSubtitle,
                 onTap: () => _requestReview(context, t),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          _SettingsSection(
+            title: t.feedbackAndSound,
+            children: const [
+              _FeedbackSwitchTile(
+                icon: Icons.volume_up_outlined,
+                iconColor: AppColors.primary,
+                kind: _FbKind.sound,
+              ),
+              _FeedbackSwitchTile(
+                icon: Icons.vibration,
+                iconColor: AppColors.secondary,
+                kind: _FbKind.haptic,
               ),
             ],
           ),
@@ -601,6 +618,61 @@ class _PremiumBanner extends StatelessWidget {
             const Icon(Icons.chevron_right, color: AppColors.primary),
           ],
         ),
+      ),
+    );
+  }
+}
+
+enum _FbKind { sound, haptic }
+
+class _FeedbackSwitchTile extends StatefulWidget {
+  final IconData icon;
+  final Color iconColor;
+  final _FbKind kind;
+
+  const _FeedbackSwitchTile({
+    required this.icon,
+    required this.iconColor,
+    required this.kind,
+  });
+
+  @override
+  State<_FeedbackSwitchTile> createState() => _FeedbackSwitchTileState();
+}
+
+class _FeedbackSwitchTileState extends State<_FeedbackSwitchTile> {
+  late bool _value = widget.kind == _FbKind.sound
+      ? feedback.soundEnabled
+      : feedback.hapticEnabled;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context)!;
+    final title =
+        widget.kind == _FbKind.sound ? t.soundEffects : t.hapticFeedback;
+    return ListTile(
+      leading: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: widget.iconColor.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(widget.icon, color: widget.iconColor, size: 20),
+      ),
+      title: Text(title, style: const TextStyle(fontSize: 15)),
+      trailing: Switch(
+        value: _value,
+        activeTrackColor: AppColors.primary,
+        onChanged: (v) async {
+          setState(() => _value = v);
+          if (widget.kind == _FbKind.sound) {
+            await feedback.setSoundEnabled(v);
+          } else {
+            await feedback.setHapticEnabled(v);
+          }
+          // Let the user immediately feel/hear the change when enabling.
+          if (v) feedback.select();
+        },
       ),
     );
   }

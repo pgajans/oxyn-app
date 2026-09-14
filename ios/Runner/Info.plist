@@ -61,8 +61,6 @@
 		<string>Oxyn, oluşturulan görselleri fotoğraf kitaplığınıza kaydetmek için izin ister.</string>
 		<key>NSCameraUsageDescription</key>
 		<string>Oxyn, profil resmi seçmek için kamerayı kullanmak ister.</string>
-		<key>NSUserTrackingUsageDescription</key>
-		<string>Bu tanımlayıcı, sana daha alakalı reklamlar göstermek için kullanılır. Reddetsen de uygulama sorunsuz çalışır.</string>
 		<key>ITSAppUsesNonExemptEncryption</key>
 		<false/>
 		<key>SKAdNetworkItems</key>

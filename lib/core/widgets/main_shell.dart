@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../localization/generated/app_localizations.dart';
+import '../services/feedback_service.dart';
 import '../theme/app_colors.dart';
 
 class MainShell extends StatelessWidget {
@@ -38,6 +39,7 @@ class MainShell extends StatelessWidget {
           selectedIndex: index,
           labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
           onDestinationSelected: (i) {
+            feedback.select();
             switch (i) {
               case 0:
                 context.go('/dashboard');

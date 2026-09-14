@@ -1,8 +1,12 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/localization/generated/app_localizations.dart';
+import '../../../../core/services/feedback_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../domain/offerings_load.dart';
 import '../../domain/subscription_provider.dart';
@@ -12,7 +16,13 @@ class PaywallScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // If the user is already premium, never show an upsell — celebrate instead.
+    if (ref.watch(isPremiumProvider)) {
+      return const _AlreadyPremiumView();
+    }
+
     final offeringsAsync = ref.watch(offeringsProvider);
+    final t = AppLocalizations.of(context)!;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -65,12 +75,15 @@ class PaywallScreen extends ConsumerWidget {
                       ],
                     ),
                     const SizedBox(height: 6),
-                    const Text(
-                      'Tüm özelliklerin kilidini aç',
-                      style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+                    Text(
+                      t.unlockAllFeatures,
+                      style: const TextStyle(
+                          fontSize: 14, color: AppColors.textSecondary),
                     ),
                     const SizedBox(height: 20),
-                    const _CompactFeatures(),
+                    const _EmotionHero(),
+                    const SizedBox(height: 16),
+                    const _EmotionBenefits(),
                     const SizedBox(height: 20),
                     offeringsAsync.when(
                       loading: () => const Padding(
@@ -95,8 +108,29 @@ class PaywallScreen extends ConsumerWidget {
                       },
                     ),
                     const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.auto_awesome,
+                            color: AppColors.tertiary, size: 14),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            AppLocalizations.of(context)!.paywallFreeTasteNote,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: AppColors.tertiary,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
                     TextButton(
                       onPressed: () {
+                        feedback.tap();
                         ref.read(subscriptionStatusProvider.notifier).restore();
                         if (context.canPop()) {
                           context.pop();
@@ -104,9 +138,10 @@ class PaywallScreen extends ConsumerWidget {
                           context.go('/dashboard');
                         }
                       },
-                      child: const Text(
-                        'Satın Alımları Geri Yükle',
-                        style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                      child: Text(
+                        t.restorePurchases,
+                        style: const TextStyle(
+                            color: AppColors.textSecondary, fontSize: 12),
                       ),
                     ),
                     Row(
@@ -114,9 +149,9 @@ class PaywallScreen extends ConsumerWidget {
                       children: [
                         GestureDetector(
                           onTap: () => context.push('/privacy'),
-                          child: const Text(
-                            'Gizlilik Politikası',
-                            style: TextStyle(
+                          child: Text(
+                            t.privacyPolicy,
+                            style: const TextStyle(
                               color: AppColors.textTertiary,
                               fontSize: 10,
                               decoration: TextDecoration.underline,
@@ -126,9 +161,9 @@ class PaywallScreen extends ConsumerWidget {
                         const SizedBox(width: 16),
                         GestureDetector(
                           onTap: () => context.push('/terms'),
-                          child: const Text(
-                            'Kullanım Şartları',
-                            style: TextStyle(
+                          child: Text(
+                            t.termsOfUse,
+                            style: const TextStyle(
                               color: AppColors.textTertiary,
                               fontSize: 10,
                               decoration: TextDecoration.underline,
@@ -138,10 +173,13 @@ class PaywallScreen extends ConsumerWidget {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    const Text(
-                      'Abonelik otomatik yenilenir. İstediğiniz zaman mağaza ayarlarından iptal edebilirsiniz.',
+                    Text(
+                      t.subscriptionAutoRenewNote,
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: AppColors.textTertiary, fontSize: 10, height: 1.3),
+                      style: const TextStyle(
+                          color: AppColors.textTertiary,
+                          fontSize: 10,
+                          height: 1.3),
                     ),
                     const SizedBox(height: 16),
                   ],
@@ -155,14 +193,283 @@ class PaywallScreen extends ConsumerWidget {
   }
 }
 
-class _CompactFeatures extends StatelessWidget {
-  const _CompactFeatures();
+/// Shown instead of the paywall when the user is already an Oxyn Plus member.
+class _AlreadyPremiumView extends StatefulWidget {
+  const _AlreadyPremiumView();
+
+  @override
+  State<_AlreadyPremiumView> createState() => _AlreadyPremiumViewState();
+}
+
+class _AlreadyPremiumViewState extends State<_AlreadyPremiumView>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    )..forward();
+    // celebratory feedback
+    WidgetsBinding.instance.addPostFrameCallback((_) => feedback.success());
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _manage() async {
+    feedback.tap();
+    final uri = Platform.isAndroid
+        ? Uri.parse('https://play.google.com/store/account/subscriptions')
+        : Uri.parse('https://apps.apple.com/account/subscriptions');
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {}
+  }
 
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Align(
+              alignment: Alignment.centerRight,
+              child: IconButton(
+                icon: const Icon(Icons.close, color: AppColors.textSecondary),
+                onPressed: () {
+                  feedback.tap();
+                  if (context.canPop()) {
+                    context.pop();
+                  } else {
+                    context.go('/dashboard');
+                  }
+                },
+              ),
+            ),
+            Expanded(
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ScaleTransition(
+                        scale: CurvedAnimation(
+                          parent: _ctrl,
+                          curve: Curves.elasticOut,
+                        ),
+                        child: Container(
+                          width: 96,
+                          height: 96,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [
+                                AppColors.primary,
+                                AppColors.tertiary,
+                              ],
+                            ),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.tertiary
+                                    .withValues(alpha: 0.4),
+                                blurRadius: 30,
+                                spreadRadius: 4,
+                              ),
+                            ],
+                          ),
+                          child: const Icon(Icons.workspace_premium,
+                              color: Colors.white, size: 52),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      Text(
+                        t.alreadyPremiumTitle,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        t.alreadyPremiumDesc,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: AppColors.textSecondary,
+                          height: 1.4,
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 52,
+                        child: OutlinedButton.icon(
+                          onPressed: _manage,
+                          icon: const Icon(Icons.settings, size: 18),
+                          label: Text(t.manageYourSubscription),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.primary,
+                            side: const BorderSide(color: AppColors.primary),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Emotional hero banner: sells the *feeling*, not a dry feature list.
+class _EmotionHero extends StatefulWidget {
+  const _EmotionHero();
+
+  @override
+  State<_EmotionHero> createState() => _EmotionHeroState();
+}
+
+class _EmotionHeroState extends State<_EmotionHero>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _pulse;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulse = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2200),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _pulse.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context)!;
+    return AnimatedBuilder(
+      animation: _pulse,
+      builder: (context, child) {
+        final glow = 0.15 + _pulse.value * 0.25;
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [AppColors.tertiaryDark, AppColors.primaryDark],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.tertiary.withValues(alpha: glow),
+                blurRadius: 24,
+                spreadRadius: 1,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: child,
+        );
+      },
+      child: Column(
+        children: [
+          const Icon(Icons.spa_rounded, color: Colors.white, size: 34),
+          const SizedBox(height: 10),
+          Text(
+            t.paywallHeroTitle,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              height: 1.2,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            t.paywallHeroSubtitle,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.85),
+              fontSize: 13,
+              height: 1.35,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Benefit list phrased as feelings/outcomes, with a staggered entrance.
+class _EmotionBenefits extends StatefulWidget {
+  const _EmotionBenefits();
+
+  @override
+  State<_EmotionBenefits> createState() => _EmotionBenefitsState();
+}
+
+class _EmotionBenefitsState extends State<_EmotionBenefits>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..forward();
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context)!;
+    final items = <_Benefit>[
+      _Benefit(Icons.block, AppColors.danger, t.paywallBenefitAdFreeTitle,
+          t.paywallBenefitAdFreeDesc),
+      _Benefit(Icons.all_inclusive, AppColors.secondary,
+          t.paywallBenefitCleanTitle, t.paywallBenefitCleanDesc),
+      _Benefit(Icons.battery_charging_full, AppColors.success,
+          t.paywallBenefitBatteryTitle, t.paywallBenefitBatteryDesc),
+      _Benefit(Icons.palette, AppColors.tertiary,
+          t.paywallBenefitStyleTitle, t.paywallBenefitStyleDesc),
+      _Benefit(Icons.health_and_safety, AppColors.primary,
+          t.paywallBenefitDoctorTitle, t.paywallBenefitDoctorDesc),
+    ];
+
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
@@ -170,34 +477,81 @@ class _CompactFeatures extends StatelessWidget {
       ),
       child: Column(
         children: [
-          _FeatureRow(Icons.all_inclusive, t.plusFeatureClean),
-          _FeatureRow(Icons.health_and_safety, t.plusFeatureDoctor),
-          _FeatureRow(Icons.battery_full, t.plusFeatureBatteryReport),
-          _FeatureRow(Icons.folder_open, t.plusFeatureLargeFiles),
-          _FeatureRow(Icons.palette, t.plusFeatureStyles),
+          for (int i = 0; i < items.length; i++)
+            AnimatedBuilder(
+              animation: _ctrl,
+              builder: (context, child) {
+                final start = i / items.length * 0.6;
+                final v = Curves.easeOutBack.transform(
+                  ((_ctrl.value - start) / (1 - start)).clamp(0.0, 1.0),
+                );
+                return Opacity(
+                  opacity: v.clamp(0.0, 1.0),
+                  child: Transform.translate(
+                    offset: Offset(0, 16 * (1 - v)),
+                    child: child,
+                  ),
+                );
+              },
+              child: _BenefitRow(items[i]),
+            ),
         ],
       ),
     );
   }
 }
 
-class _FeatureRow extends StatelessWidget {
+class _Benefit {
   final IconData icon;
-  final String text;
-  const _FeatureRow(this.icon, this.text);
+  final Color color;
+  final String title;
+  final String desc;
+  const _Benefit(this.icon, this.color, this.title, this.desc);
+}
+
+class _BenefitRow extends StatelessWidget {
+  final _Benefit benefit;
+  const _BenefitRow(this.benefit);
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: [
-          Icon(icon, color: AppColors.primary, size: 18),
+          Container(
+            padding: const EdgeInsets.all(9),
+            decoration: BoxDecoration(
+              color: benefit.color.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(benefit.icon, color: benefit.color, size: 20),
+          ),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(text, style: const TextStyle(color: AppColors.textPrimary, fontSize: 13)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  benefit.title,
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  benefit.desc,
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
+                    height: 1.3,
+                  ),
+                ),
+              ],
+            ),
           ),
-          const Icon(Icons.check_circle, color: AppColors.success, size: 16),
         ],
       ),
     );
@@ -227,23 +581,36 @@ class _PricingCard extends StatelessWidget {
   final WidgetRef ref;
   const _PricingCard({required this.package, required this.ref});
 
-  String _unitLabel(PeriodUnit unit) {
+  String _unitLabel(AppLocalizations t, PeriodUnit unit) {
     switch (unit) {
       case PeriodUnit.day:
-        return 'gün';
+        return t.unitDay;
       case PeriodUnit.week:
-        return 'hafta';
+        return t.unitWeek;
       case PeriodUnit.month:
-        return 'ay';
+        return t.unitMonth;
       case PeriodUnit.year:
-        return 'yıl';
+        return t.unitYear;
       case PeriodUnit.unknown:
         return '';
     }
   }
 
+  /// Clean plan label. Google Play automatically appends the app name in
+  /// parentheses to the subscription title returned by the Billing API, e.g.
+  /// "Oxyn Plus Yearly (Oxyn: Battery & Storage Care)". This overflows and
+  /// collides with the price, and it cannot be removed from the store side.
+  /// We strip the trailing parenthetical so only the plan name remains
+  /// (e.g. "Oxyn Plus Yearly"). Works the same on iOS.
+  String _planLabel() {
+    final raw = package.storeProduct.title;
+    final stripped = raw.replaceFirst(RegExp(r'\s*\(.*\)\s*$'), '').trim();
+    return stripped.isEmpty ? raw : stripped;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context)!;
     final product = package.storeProduct;
     final isWeekly = package.packageType == PackageType.weekly;
     final isAnnual = package.packageType == PackageType.annual;
@@ -255,13 +622,16 @@ class _PricingCard extends StatelessWidget {
     final intro = product.introductoryPrice;
     final hasFreeTrial = intro != null && intro.price == 0;
     final String? subtitleText = hasFreeTrial
-        ? '${intro.periodNumberOfUnits} ${_unitLabel(intro.periodUnit)} ücretsiz deneme'
-        : (isAnnual ? 'Yıllık fatura' : null);
+        ? t.freeTrialLabel(
+            intro.periodNumberOfUnits, _unitLabel(t, intro.periodUnit))
+        : (isAnnual ? t.annualBilling : null);
 
     return GestureDetector(
       onTap: () async {
+        feedback.tap();
         try {
           await ref.read(subscriptionStatusProvider.notifier).purchase(package);
+          feedback.success();
           if (context.mounted) {
             if (context.canPop()) {
               context.pop();
@@ -272,7 +642,7 @@ class _PricingCard extends StatelessWidget {
         } catch (e) {
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Satın alma iptal edildi')),
+              SnackBar(content: Text(t.purchaseCancelled)),
             );
           }
         }
@@ -295,12 +665,16 @@ class _PricingCard extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      Text(
-                        product.title,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
-                          fontSize: 14,
+                      Flexible(
+                        child: Text(
+                          _planLabel(),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
+                            fontSize: 14,
+                          ),
                         ),
                       ),
                       if (isWeekly) ...[
@@ -343,6 +717,7 @@ class _PricingCard extends StatelessWidget {
                 ],
               ),
             ),
+            const SizedBox(width: 10),
             Text(
               product.priceString,
               style: TextStyle(

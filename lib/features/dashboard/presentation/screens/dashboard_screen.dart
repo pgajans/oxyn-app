@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/localization/generated/app_localizations.dart';
+import '../../../../core/services/feedback_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/oxyn_card.dart';
@@ -12,6 +13,7 @@ import '../../domain/dashboard_provider.dart';
 import '../../domain/health_score.dart';
 import '../../../battery/domain/battery_provider.dart';
 import '../../../cleaner/domain/storage_provider.dart';
+import '../../../subscription/domain/subscription_provider.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -223,6 +225,7 @@ class _ModuleGrid extends StatelessWidget {
     );
 
     final t = AppLocalizations.of(context)!;
+    final isPremium = ref.watch(isPremiumProvider);
     return GridView.count(
       crossAxisCount: 2,
       mainAxisSpacing: 12,
@@ -232,22 +235,31 @@ class _ModuleGrid extends StatelessWidget {
       children: [
         _CleanerCard(
           storageText: storageText,
-          onTap: () => context.go('/cleaner'),
+          onTap: () {
+            feedback.tap();
+            context.go('/cleaner');
+          },
         ),
         _ModuleCard(
           icon: Icons.speed,
           label: t.performance,
           value: batteryText,
           color: AppColors.success,
-          onTap: () => context.go('/battery'),
+          onTap: () {
+            feedback.tap();
+            context.go('/battery');
+          },
         ),
         const _DashboardNewsCard(),
         _ModuleCard(
-          icon: Icons.star_rounded,
+          icon: isPremium ? Icons.workspace_premium : Icons.star_rounded,
           label: t.premium,
-          value: 'Oxyn Plus',
+          value: isPremium ? t.premiumActive : 'Oxyn Plus',
           color: AppColors.tertiary,
-          onTap: () => context.push('/paywall'),
+          onTap: () {
+            feedback.tap();
+            context.push('/paywall');
+          },
         ),
       ],
     );
@@ -618,6 +630,7 @@ class _OptimizeButtonState extends State<_OptimizeButton>
 
   Future<void> _runOptimization() async {
     if (_isOptimizing || _isCoolingDown) return;
+    feedback.strike();
     setState(() => _isOptimizing = true);
 
     final result = await Navigator.of(context, rootNavigator: true).push<int>(
@@ -758,7 +771,10 @@ class _HackerOptimizationScreenState extends State<_HackerOptimizationScreen>
     super.initState();
     _progressCtrl = AnimationController(vsync: this, duration: _totalDuration);
     _progressCtrl.forward();
-    _runOptimization();
+    // Defer so Localizations are ready before we start emitting log lines.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _runOptimization();
+    });
   }
 
   @override
@@ -783,49 +799,53 @@ class _HackerOptimizationScreenState extends State<_HackerOptimizationScreen>
   }
 
   Future<void> _runOptimization() async {
-    _addLog('[SYS] Oxyn cihaz analizi başlatılıyor...');
+    if (!mounted) return;
+    final t = AppLocalizations.of(context)!;
+    _addLog(t.optLogStart);
     await Future.delayed(const Duration(milliseconds: 600));
-    _addLog('[SYS] Cihaz bilgileri okunuyor...');
+    _addLog(t.optLogReadingInfo);
     await Future.delayed(const Duration(milliseconds: 400));
 
     try {
       final batteryInfo = await widget.ref.read(batteryInfoProvider.future);
-      _addLog('[BAT] Batarya seviyesi: %${batteryInfo.level}');
+      _addLog(t.optLogBatLevel(batteryInfo.level));
       await Future.delayed(const Duration(milliseconds: 300));
-      _addLog('[BAT] Batarya sıcaklığı: ${batteryInfo.temperature.toStringAsFixed(1)}°C');
+      _addLog(t.optLogBatTemp(batteryInfo.temperature.toStringAsFixed(1)));
       await Future.delayed(const Duration(milliseconds: 300));
-      _addLog('[BAT] Şarj durumu: ${batteryInfo.isCharging ? "Şarj oluyor" : "Şarjda değil"}');
+      _addLog(batteryInfo.isCharging
+          ? t.optLogChargeCharging
+          : t.optLogChargeNot);
       await Future.delayed(const Duration(milliseconds: 500));
     } catch (_) {
-      _addLog('[BAT] Batarya bilgisi alınamadı, devam ediliyor...');
+      _addLog(t.optLogBatError);
     }
 
     try {
       final repo = widget.ref.read(storageRepositoryProvider);
       final storageInfo = await widget.ref.read(storageInfoProvider.future);
-      _addLog('[DISK] Depolama durumu okunuyor...');
+      _addLog(t.optLogDiskReading);
       await Future.delayed(const Duration(milliseconds: 500));
-      _addLog('[DISK] Kullanılan alan: ${storageInfo.usedFormatted}');
+      _addLog(t.optLogDiskUsed(storageInfo.usedFormatted));
       await Future.delayed(const Duration(milliseconds: 300));
-      _addLog('[DISK] Boş alan: ${storageInfo.freeFormatted}');
+      _addLog(t.optLogDiskFree(storageInfo.freeFormatted));
       await Future.delayed(const Duration(milliseconds: 500));
 
-      _addLog('[CACHE] Uygulama önbelleği temizleniyor...');
+      _addLog(t.optLogCacheClearing);
       await Future.delayed(const Duration(milliseconds: 800));
       _cacheCleared = await repo.clearAppCache();
       final mb = (_cacheCleared / (1024 * 1024)).toStringAsFixed(1);
-      _addLog('[CACHE] $mb MB uygulama önbelleği temizlendi');
+      _addLog(t.optLogCacheCleared(mb));
       await Future.delayed(const Duration(milliseconds: 600));
     } catch (_) {
-      _addLog('[CACHE] Önbellek temizleme hatası, devam ediliyor...');
+      _addLog(t.optLogCacheError);
     }
 
     widget.ref.invalidate(batteryInfoProvider);
     widget.ref.invalidate(storageInfoProvider);
 
     _addLog('');
-    _addLog('[✓] Analiz tamamlandı');
-    _addLog('[✓] Cihaz durumu güncellendi');
+    _addLog(t.optLogDone);
+    _addLog(t.optLogUpdated);
 
     // Wait for progress bar to reach 100%
     if (!_progressCtrl.isCompleted) {
@@ -833,10 +853,14 @@ class _HackerOptimizationScreenState extends State<_HackerOptimizationScreen>
     }
     await Future.delayed(const Duration(milliseconds: 500));
 
-    if (mounted) setState(() => _completed = true);
+    if (mounted) {
+      setState(() => _completed = true);
+      feedback.success();
+    }
   }
 
   void _showCompletionPopup() {
+    feedback.success();
     final cacheMB = (_cacheCleared / (1024 * 1024)).toStringAsFixed(1);
     
     showGeneralDialog(
@@ -1005,14 +1029,21 @@ class _OptimizationResultPopupState extends State<_OptimizationResultPopup> {
   @override
   void initState() {
     super.initState();
-    _animateResults();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _animateResults();
+    });
   }
 
   Future<void> _animateResults() async {
+    if (!mounted) return;
+    final t = AppLocalizations.of(context)!;
     final items = [
-      _OptResult(Icons.cached, 'Önbellek Temizlendi', '${widget.cacheMB} MB uygulama önbelleği temizlendi', AppColors.secondary),
-      _OptResult(Icons.battery_charging_full, 'Batarya Kontrol Edildi', 'Güncel seviye ve sıcaklık görüntülendi', AppColors.primary),
-      _OptResult(Icons.storage, 'Depolama Analiz Edildi', 'Kullanılan ve boş alan güncellendi', const Color(0xFFD7BA7D)),
+      _OptResult(Icons.cached, t.optResultCacheTitle,
+          t.optResultCacheDesc(widget.cacheMB), AppColors.secondary),
+      _OptResult(Icons.battery_charging_full, t.optResultBatteryTitle,
+          t.optResultBatteryDesc, AppColors.primary),
+      _OptResult(Icons.storage, t.optResultStorageTitle,
+          t.optResultStorageDesc, const Color(0xFFD7BA7D)),
     ];
 
     for (final item in items) {

@@ -6,6 +6,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/oxyn_card.dart';
 import '../../../../core/widgets/score_ring.dart';
+import '../../../battery/presentation/widgets/battery_check_button.dart';
 import '../../../dashboard/domain/dashboard_provider.dart';
 import '../../domain/performance_provider.dart';
 
@@ -76,6 +77,9 @@ class PerformanceScreen extends ConsumerWidget {
                 ],
               ),
             ),
+            const SizedBox(height: AppSpacing.md),
+            // Hold-to-charge battery check
+            const BatteryCheckButton(),
             const SizedBox(height: AppSpacing.md),
             // Score breakdown
             Row(

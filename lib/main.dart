@@ -7,6 +7,7 @@ import 'app.dart';
 import 'core/services/router.dart';
 import 'core/services/notification_service.dart';
 import 'core/services/ad_service.dart';
+import 'core/services/feedback_service.dart';
 import 'features/subscription/data/subscription_service.dart';
 
 void main() async {
@@ -60,5 +61,10 @@ Future<void> _initializeServices() async {
     await AdService().initialize();
   } catch (e) {
     debugPrint('Ad init error: $e');
+  }
+  try {
+    await FeedbackService.instance.init();
+  } catch (e) {
+    debugPrint('Feedback init error: $e');
   }
 }

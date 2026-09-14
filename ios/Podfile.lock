@@ -3,6 +3,9 @@ PODS:
     - AppLovinSDK (= 13.6.1)
     - Flutter
   - AppLovinSDK (13.6.1)
+  - audioplayers_darwin (0.0.1):
+    - Flutter
+    - FlutterMacOS
   - battery_plus (1.0.0):
     - Flutter
   - connectivity_plus (0.0.1):
@@ -160,6 +163,7 @@ PODS:
 
 DEPENDENCIES:
   - applovin_max (from `.symlinks/plugins/applovin_max/ios`)
+  - audioplayers_darwin (from `.symlinks/plugins/audioplayers_darwin/darwin`)
   - battery_plus (from `.symlinks/plugins/battery_plus/ios`)
   - connectivity_plus (from `.symlinks/plugins/connectivity_plus/ios`)
   - device_info_plus (from `.symlinks/plugins/device_info_plus/ios`)
@@ -201,6 +205,8 @@ SPEC REPOS:
 EXTERNAL SOURCES:
   applovin_max:
     :path: ".symlinks/plugins/applovin_max/ios"
+  audioplayers_darwin:
+    :path: ".symlinks/plugins/audioplayers_darwin/darwin"
   battery_plus:
     :path: ".symlinks/plugins/battery_plus/ios"
   connectivity_plus:
@@ -243,6 +249,7 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   applovin_max: adb92e5255e3168893978a634d6b52a7c7bb79ed
   AppLovinSDK: fb0795377cc861aa8813019ddc5d05fbd998c527
+  audioplayers_darwin: f15e209a3e856d1a7edcf98dc029f484fead2242
   battery_plus: 34f72fa2afeeea83bbae306c72a25828d3ec727a
   connectivity_plus: 2a701ffec2c0ae28a48cf7540e279787e77c447d
   device_info_plus: bf2e3232933866d73fe290f2942f2156cdd10342

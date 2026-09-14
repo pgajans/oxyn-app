@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:photo_manager/photo_manager.dart';
 import '../../../../core/localization/generated/app_localizations.dart';
+import '../../../../core/services/feedback_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/oxyn_card.dart';
@@ -360,6 +361,25 @@ class CleanerScreen extends ConsumerWidget {
   }
 }
 
+/// Maps a scan step *key* (set in the provider, which has no BuildContext)
+/// to localized display text. Falls back to the raw value if not a known key.
+String _scanStepText(AppLocalizations t, String key) {
+  switch (key) {
+    case 'preparing':
+      return t.scanStepPreparing;
+    case 'cache':
+      return t.scanStepCache;
+    case 'screenshots':
+      return t.scanStepScreenshots;
+    case 'largeFiles':
+      return t.scanStepLargeFiles;
+    case 'comparingPhotos':
+      return t.scanStepComparingPhotos;
+    default:
+      return key;
+  }
+}
+
 class _ScanProgressCard extends StatelessWidget {
   final ScanProgress progress;
   const _ScanProgressCard({required this.progress});
@@ -403,7 +423,7 @@ class _ScanProgressCard extends StatelessWidget {
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 300),
               child: Text(
-                progress.currentStep,
+                _scanStepText(t, progress.currentStep),
                 key: ValueKey(progress.currentStep),
                 style: const TextStyle(
                   fontSize: 15,
@@ -511,7 +531,10 @@ class _ScanResultCardState extends State<_ScanResultCard>
       if (mounted) setState(() => _visibleStats.add(stat));
     }
     await Future.delayed(const Duration(milliseconds: 400));
-    if (mounted) setState(() => _statsRevealed = true);
+    if (mounted) {
+      setState(() => _statsRevealed = true);
+      feedback.success();
+    }
   }
 
   @override
@@ -872,6 +895,7 @@ class _SimilarPhotosPageState extends State<_SimilarPhotosPage> {
 
     if (!mounted) return;
     if (success) {
+      feedback.success();
       await markFreeCleanUsed();
       widget.ref.invalidate(freeCleanAvailableProvider);
       if (!mounted) return;
@@ -1079,6 +1103,7 @@ class _FileListPageState extends State<_FileListPage> {
 
     if (!mounted) return;
     if (success) {
+      feedback.success();
       await markFreeCleanUsed();
       widget.ref.invalidate(freeCleanAvailableProvider);
       if (!mounted) return;
@@ -1331,6 +1356,7 @@ class _CacheCategory extends StatelessWidget {
           final repo = ref.read(storageRepositoryProvider);
           final cleaned = await repo.clearAppCache();
           ref.invalidate(storageInfoProvider);
+          feedback.success();
 
           if (context.mounted) {
             final mb = (cleaned / (1024 * 1024)).toStringAsFixed(1);

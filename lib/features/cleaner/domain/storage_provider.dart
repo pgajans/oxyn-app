@@ -92,8 +92,10 @@ class ScanProgressNotifier extends Notifier<ScanProgress> {
   @override
   ScanProgress build() => const ScanProgress();
 
+  // NOTE: [currentStep] holds a step *key* (not display text) so the UI can
+  // localize it. See ScanStepText in the cleaner screen.
   void start() =>
-      state = const ScanProgress(isScanning: true, currentStep: 'Hazırlanıyor...');
+      state = const ScanProgress(isScanning: true, currentStep: 'preparing');
 
   void update(String step, int index) =>
       state = ScanProgress(
@@ -160,19 +162,19 @@ class ScanResultNotifier extends AsyncNotifier<ScanResult> {
     StorageRepository repo,
     ScanProgressNotifier progress,
   ) async {
-    progress.update('Cache kontrol ediliyor...', 1);
+    progress.update('cache', 1);
     final cacheSize = await repo.getCacheSize()
         .timeout(const Duration(seconds: 10), onTimeout: () => 0);
 
-    progress.update('Ekran görüntüleri taranıyor...', 2);
+    progress.update('screenshots', 2);
     final screenshots = await repo.findScreenshots()
         .timeout(const Duration(seconds: 15), onTimeout: () => <CleanableItem>[]);
 
-    progress.update('Büyük dosyalar aranıyor...', 3);
+    progress.update('largeFiles', 3);
     final largeFiles = await repo.findLargeFiles()
         .timeout(const Duration(seconds: 15), onTimeout: () => <CleanableItem>[]);
 
-    progress.update('Fotoğraflar karşılaştırılıyor...', 4);
+    progress.update('comparingPhotos', 4);
     final similarGroups = await repo.findSimilarPhotos()
         .timeout(const Duration(seconds: 20), onTimeout: () => <List<CleanableItem>>[]);
 
