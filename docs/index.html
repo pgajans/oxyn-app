@@ -882,6 +882,55 @@
             color: var(--muted-soft);
         }
 
+        /* ------- Our apps ------- */
+        .apps-section { padding: 80px 0; }
+        .apps-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            max-width: 820px;
+            margin: 0 auto;
+        }
+        @media (min-width: 720px) {
+            .apps-grid { grid-template-columns: 1fr 1fr; }
+        }
+        .app-card {
+            display: block;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 28px;
+            color: inherit;
+            transition: border-color .25s, transform .25s, background .25s;
+        }
+        .app-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-4px);
+            background: var(--card-soft);
+        }
+        .app-card-mark {
+            width: 46px;
+            height: 46px;
+            border-radius: 12px;
+            background: var(--accent-soft);
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            font-weight: 800;
+            margin-bottom: 16px;
+        }
+        .app-card h3 {
+            color: #fff;
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: -0.3px;
+        }
+        .app-card p { color: var(--muted); font-size: 14px; margin-bottom: 16px; }
+        .app-card .app-link { font-size: 14px; font-weight: 600; }
+
         /* ------- Footer ------- */
         footer {
             border-top: 1px solid var(--border);
@@ -986,6 +1035,7 @@
                 <a href="#screenshots">Screenshots</a>
                 <a href="#pricing">Pricing</a>
                 <a href="#faq">FAQ</a>
+                <a href="#apps">Apps</a>
             </nav>
             <nav class="lang-switch" aria-label="Language">
                 <a href="index.html" class="active" aria-current="page">EN</a>
@@ -1423,6 +1473,28 @@
         </div>
     </section>
 
+    <section class="apps-section" id="apps">
+        <div class="container">
+            <div class="section-eyebrow">Our apps</div>
+            <h2>Uygulamalarımız</h2>
+            <p class="section-sub">Two apps from Growing Business Center Ltd — device care and a one-tap game.</p>
+            <div class="apps-grid">
+                <a class="app-card" href="index.html">
+                    <div class="app-card-mark" aria-hidden="true">O</div>
+                    <h3>Oxyn</h3>
+                    <p>Battery, storage, and smart device care. Privacy-first, on your phone.</p>
+                    <span class="app-link">Open Oxyn →</span>
+                </a>
+                <a class="app-card" href="naztap/">
+                    <div class="app-card-mark" aria-hidden="true">N</div>
+                    <h3>Naztap: Tap &amp; Turn</h3>
+                    <p>Steer a living glass nazar bead. Tap, turn, jump — hundreds of one-touch levels.</p>
+                    <span class="app-link">Open Naztap →</span>
+                </a>
+            </div>
+        </div>
+    </section>
+
     <section class="cta-wrap">
         <div class="container">
             <h2>Ready to give your phone the care it deserves?</h2>
@@ -1468,7 +1540,9 @@
                 <ul>
                     <li><a href="support.html">Support</a></li>
                     <li><a href="privacy-policy.html">Privacy Policy</a></li>
+                    <li><a href="naztap/privacy.html">Naztap Gizlilik Politikası</a></li>
                     <li><a href="terms.html">Terms of Use</a></li>
+                    <li><a href="naztap/">Naztap</a></li>
                     <li><a href="mailto:support@oxynapp.net">support@oxynapp.net</a></li>
                     <li><a href="tr.html">Türkçe</a></li>
                 </ul>
