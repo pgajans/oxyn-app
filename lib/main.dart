@@ -6,16 +6,21 @@ import 'package:firebase_core/firebase_core.dart';
 import 'app.dart';
 import 'core/services/router.dart';
 import 'core/services/notification_service.dart';
-import 'core/services/ad_service.dart';
 import 'core/services/feedback_service.dart';
 import 'features/subscription/data/subscription_service.dart';
+import 'features/subscription/domain/access_gate.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Android 15+ draws the app edge-to-edge. Do not set status/navigation
+  // bar colors here — those APIs are deprecated and trip Play pre-launch.
+  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
+      systemNavigationBarIconBrightness: Brightness.light,
+      systemNavigationBarContrastEnforced: false,
     ),
   );
 
@@ -35,35 +40,48 @@ void main() async {
   );
 }
 
+// Every step runs before the first frame, so none of them may hang the
+// launch on a slow network or a device without Play services.
+const _initTimeout = Duration(seconds: 6);
+
 Future<void> _initializeServices() async {
   try {
     if (!kIsWeb) {
-      await Firebase.initializeApp();
+      await Firebase.initializeApp().timeout(_initTimeout);
     }
   } catch (e) {
     debugPrint('Firebase init error: $e');
   }
 
   try {
-    await SubscriptionService().initialize();
+    await accessGate.loadAccessCode();
+  } catch (e) {
+    debugPrint('Access code load error: $e');
+  }
+
+  try {
+    final service = SubscriptionService();
+    await service.initialize().timeout(_initTimeout);
+    final status =
+        await service.getSubscriptionStatus().timeout(_initTimeout);
+    accessGate.update(status.isPremium);
   } catch (e) {
     debugPrint('RevenueCat init error: $e');
   }
   try {
     final notifService = NotificationService();
-    await notifService.initialize();
-    await notifService.scheduleOptimizationReminder();
-    await notifService.scheduleFreeUserReminder();
+    await notifService.initialize().timeout(_initTimeout);
+    await notifService.cancelFreeUserReminder().timeout(_initTimeout);
+    if (accessGate.hasEntitlement || accessGate.hasAccessCode) {
+      await notifService.scheduleOptimizationReminder().timeout(_initTimeout);
+    } else {
+      await notifService.cancelUsageReminders().timeout(_initTimeout);
+    }
   } catch (e) {
     debugPrint('Notification init error: $e');
   }
   try {
-    await AdService().initialize();
-  } catch (e) {
-    debugPrint('Ad init error: $e');
-  }
-  try {
-    await FeedbackService.instance.init();
+    await FeedbackService.instance.init().timeout(_initTimeout);
   } catch (e) {
     debugPrint('Feedback init error: $e');
   }

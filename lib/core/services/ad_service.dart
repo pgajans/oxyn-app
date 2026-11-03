@@ -1,5 +1,9 @@
-import 'package:applovin_max/applovin_max.dart';
+import 'dart:io' show Platform;
+
 import 'package:flutter/foundation.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+
+import '../constants/app_constants.dart';
 
 class AdService {
   static final AdService _instance = AdService._();
@@ -7,120 +11,116 @@ class AdService {
   AdService._();
 
   bool _initialized = false;
-  VoidCallback? _pendingRewardCallback;
+  InterstitialAd? _interstitial;
+  RewardedAd? _rewarded;
 
-  // --- Interstitial frequency capping (Play "Disruptive Ads" safety) ---
   final DateTime _sessionStart = DateTime.now();
   DateTime? _lastInterstitialShown;
   int _interstitialsThisSession = 0;
 
-  /// Minimum time between two interstitials.
   static const Duration _minInterstitialGap = Duration(seconds: 90);
-
-  /// No interstitials during the first moments of a session.
   static const Duration _sessionInitialGrace = Duration(seconds: 60);
-
-  /// Hard cap on interstitials per app session.
   static const int _maxInterstitialsPerSession = 5;
 
-  static const _sdkKey = String.fromEnvironment(
-    'APPLOVIN_SDK_KEY',
-    defaultValue: '',
-  );
+  static const _testBanner = 'ca-app-pub-3940256099942544/6300978111';
+  static const _testInterstitial = 'ca-app-pub-3940256099942544/1033173712';
+  static const _testRewarded = 'ca-app-pub-3940256099942544/5224354917';
 
-  static const _interstitialAdUnitId = String.fromEnvironment(
-    'APPLOVIN_INTERSTITIAL_ID',
-    defaultValue: '',
-  );
-  static const _rewardedAdUnitId = String.fromEnvironment(
-    'APPLOVIN_REWARDED_ID',
-    defaultValue: '',
-  );
-  static const _bannerAdUnitId = String.fromEnvironment(
-    'APPLOVIN_BANNER_ID',
-    defaultValue: '',
-  );
+  static bool get _isAndroid => !kIsWeb && Platform.isAndroid;
+  static bool get _isIos => !kIsWeb && Platform.isIOS;
 
-  static bool get isAdsAvailable => !_isPlaceholderKey;
+  static bool get isAdsAvailable {
+    if (_isAndroid) return true;
+    if (_isIos) return AppConstants.admobIosAppId.isNotEmpty;
+    return false;
+  }
 
-  static bool get _isPlaceholderKey =>
-      _sdkKey.isEmpty || _sdkKey.startsWith('YOUR_');
+  String get bannerAdUnitId {
+    if (kDebugMode) return _testBanner;
+    return _isIos
+        ? AppConstants.admobIosBannerId
+        : AppConstants.admobAndroidBannerId;
+  }
+
+  String get _interstitialId {
+    if (kDebugMode) return _testInterstitial;
+    return _isIos
+        ? AppConstants.admobIosInterstitialId
+        : AppConstants.admobAndroidInterstitialId;
+  }
+
+  String get _rewardedId {
+    if (kDebugMode) return _testRewarded;
+    return _isIos
+        ? AppConstants.admobIosRewardedId
+        : AppConstants.admobAndroidRewardedId;
+  }
 
   Future<void> initialize() async {
     if (_initialized) return;
-
-    if (_isPlaceholderKey) {
-      debugPrint('AppLovin skipped: placeholder SDK key');
+    if (!isAdsAvailable) {
       _initialized = true;
+      debugPrint('AdMob skipped: Android only for now');
       return;
     }
 
     try {
-      final config = await AppLovinMAX.initialize(_sdkKey);
-      if (config == null) {
-        debugPrint('AppLovin MAX init returned null');
-        _initialized = true;
-        return;
-      }
-
-      _setupInterstitialListeners();
-      _setupRewardedListeners();
-
+      await MobileAds.instance.initialize();
       _initialized = true;
-      debugPrint('AdService initialized');
-
+      debugPrint('AdMob initialized');
       _loadInterstitial();
       _loadRewarded();
     } catch (e) {
-      debugPrint('AdService init error: $e');
+      debugPrint('AdMob init error: $e');
       _initialized = true;
     }
   }
 
-  // --- Interstitial ---
-
-  void _setupInterstitialListeners() {
-    AppLovinMAX.setInterstitialListener(InterstitialListener(
-      onAdLoadedCallback: (_) {
-        debugPrint('Interstitial ad loaded');
-      },
-      onAdLoadFailedCallback: (adUnitId, error) {
-        Future.delayed(const Duration(seconds: 30), _loadInterstitial);
-      },
-      onAdDisplayedCallback: (_) {},
-      onAdDisplayFailedCallback: (adUnitId, error) {
-        _loadInterstitial();
-      },
-      onAdClickedCallback: (_) {},
-      onAdHiddenCallback: (_) {
-        _loadInterstitial();
-      },
-    ));
-  }
-
   void _loadInterstitial() {
-    AppLovinMAX.loadInterstitial(_interstitialAdUnitId);
+    if (!_initialized || !isAdsAvailable) return;
+    InterstitialAd.load(
+      adUnitId: _interstitialId,
+      request: const AdRequest(),
+      adLoadCallback: InterstitialAdLoadCallback(
+        onAdLoaded: (ad) {
+          _interstitial = ad;
+          ad.fullScreenContentCallback = FullScreenContentCallback(
+            onAdDismissedFullScreenContent: (ad) {
+              ad.dispose();
+              _interstitial = null;
+              _loadInterstitial();
+            },
+            onAdFailedToShowFullScreenContent: (ad, error) {
+              ad.dispose();
+              _interstitial = null;
+              _loadInterstitial();
+            },
+          );
+        },
+        onAdFailedToLoad: (error) {
+          _interstitial = null;
+          debugPrint('Interstitial failed to load: $error');
+          Future.delayed(const Duration(seconds: 30), _loadInterstitial);
+        },
+      ),
+    );
   }
 
   Future<bool> showInterstitial() async {
-    if (!_initialized || _isPlaceholderKey) return false;
-
-    final ready = await AppLovinMAX.isInterstitialReady(_interstitialAdUnitId);
-    if (ready ?? false) {
-      AppLovinMAX.showInterstitial(_interstitialAdUnitId);
-      return true;
+    if (!_initialized || !isAdsAvailable) return false;
+    final ad = _interstitial;
+    if (ad == null) {
+      _loadInterstitial();
+      return false;
     }
-
-    debugPrint('Interstitial ad not ready');
-    return false;
+    _interstitial = null;
+    await ad.show();
+    return true;
   }
 
-  /// Premium-aware, frequency-capped interstitial. Use this from screens
-  /// instead of [showInterstitial] so we never spam ads or show them to
-  /// premium (ad-free) users.
   Future<bool> maybeShowInterstitial({required bool isPremium}) async {
     if (isPremium) return false;
-    if (!_initialized || _isPlaceholderKey) return false;
+    if (!_initialized || !isAdsAvailable) return false;
 
     final now = DateTime.now();
     if (now.difference(_sessionStart) < _sessionInitialGrace) return false;
@@ -138,56 +138,54 @@ class AdService {
     return shown;
   }
 
-  // --- Rewarded ---
-
-  void _setupRewardedListeners() {
-    AppLovinMAX.setRewardedAdListener(RewardedAdListener(
-      onAdLoadedCallback: (_) {
-        debugPrint('Rewarded ad loaded');
-      },
-      onAdLoadFailedCallback: (adUnitId, error) {
-        Future.delayed(const Duration(seconds: 30), _loadRewarded);
-      },
-      onAdDisplayedCallback: (_) {},
-      onAdDisplayFailedCallback: (adUnitId, error) {
-        _loadRewarded();
-      },
-      onAdClickedCallback: (_) {},
-      onAdHiddenCallback: (_) {
-        _loadRewarded();
-      },
-      onAdReceivedRewardCallback: (adUnitId, reward) {
-        _pendingRewardCallback?.call();
-        _pendingRewardCallback = null;
-      },
-    ));
-  }
-
   void _loadRewarded() {
-    AppLovinMAX.loadRewardedAd(_rewardedAdUnitId);
+    if (!_initialized || !isAdsAvailable) return;
+    RewardedAd.load(
+      adUnitId: _rewardedId,
+      request: const AdRequest(),
+      rewardedAdLoadCallback: RewardedAdLoadCallback(
+        onAdLoaded: (ad) {
+          _rewarded = ad;
+          ad.fullScreenContentCallback = FullScreenContentCallback(
+            onAdDismissedFullScreenContent: (ad) {
+              ad.dispose();
+              _rewarded = null;
+              _loadRewarded();
+            },
+            onAdFailedToShowFullScreenContent: (ad, error) {
+              ad.dispose();
+              _rewarded = null;
+              _loadRewarded();
+            },
+          );
+        },
+        onAdFailedToLoad: (error) {
+          _rewarded = null;
+          debugPrint('Rewarded failed to load: $error');
+          Future.delayed(const Duration(seconds: 30), _loadRewarded);
+        },
+      ),
+    );
   }
 
   Future<bool> showRewarded({required VoidCallback onRewarded}) async {
-    if (!_initialized || _isPlaceholderKey) return false;
-
-    final ready = await AppLovinMAX.isRewardedAdReady(_rewardedAdUnitId);
-    if (ready ?? false) {
-      _pendingRewardCallback = onRewarded;
-      AppLovinMAX.showRewardedAd(_rewardedAdUnitId);
-      return true;
+    if (!_initialized || !isAdsAvailable) return false;
+    final ad = _rewarded;
+    if (ad == null) {
+      _loadRewarded();
+      return false;
     }
-
-    debugPrint('Rewarded ad not ready');
-    return false;
+    _rewarded = null;
+    await ad.show(onUserEarnedReward: (_, __) => onRewarded());
+    return true;
   }
 
-  // --- Banner ---
-
-  String get bannerAdUnitId => _bannerAdUnitId;
-
   void dispose() {
+    _interstitial?.dispose();
+    _rewarded?.dispose();
+    _interstitial = null;
+    _rewarded = null;
     _initialized = false;
-    _pendingRewardCallback = null;
   }
 }
 

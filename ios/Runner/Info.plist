@@ -63,6 +63,10 @@
 		<string>Oxyn, profil resmi seçmek için kamerayı kullanmak ister.</string>
 		<key>ITSAppUsesNonExemptEncryption</key>
 		<false/>
+		<key>GADApplicationIdentifier</key>
+		<string>ca-app-pub-5166393645234481~2702726473</string>
+		<key>GADDelayAppMeasurementInit</key>
+		<true/>
 		<key>SKAdNetworkItems</key>
 		<array>
 			<dict>

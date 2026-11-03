@@ -62,14 +62,17 @@ class TermsScreen extends StatelessWidget {
           _Section(
             title: '4. Abonelikler ve Ödemeler',
             body:
-                'Oxyn, ücretsiz ve premium (Oxyn Plus) olmak üzere iki kullanım modeli sunar.\n\n'
-                'Premium Abonelik:\n'
+                'Oxyn\'in özelliklerini kullanmak için aktif bir Oxyn Plus aboneliği '
+                'gerekir. Uygulamanın ücretsiz bir sürümü yoktur.\n\n'
+                'Oxyn Plus Aboneliği:\n'
                 '• Abonelikler Apple App Store veya Google Play Store üzerinden işlenir\n'
-                '• Abonelik süresi dolmadan en az 24 saat önce iptal edilmezse otomatik '
-                'olarak yenilenir\n'
-                '• İptal işlemi cihazınızın mağaza ayarlarından yapılmalıdır\n'
-                '• Ücretsiz deneme süresi varsa, kullanılmayan kısım abonelik satın '
-                'alındığında geçersiz olur\n\n'
+                '• Ödeme, satın alma onaylandığında mağaza hesabınızdan alınır\n'
+                '• Abonelik süresi dolmadan en az 24 saat önce iptal edilmezse aynı '
+                'fiyat ve süreyle otomatik olarak yenilenir\n'
+                '• İptal işlemi cihazınızın mağaza ayarlarından yapılmalıdır; iptal '
+                'edilen abonelik dönem sonuna kadar geçerli kalır\n'
+                '• Aboneliğiniz sona erdiğinde uygulamaya erişim yeniden abonelik '
+                'gerektirir\n\n'
                 'İade Politikası:\n'
                 '• İade talepleri Apple/Google iade politikalarına tabidir\n'
                 '• Doğrudan uygulama üzerinden iade işlemi yapılamaz',

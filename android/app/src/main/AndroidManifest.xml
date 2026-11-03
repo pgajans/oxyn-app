@@ -1,4 +1,5 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
@@ -8,7 +9,7 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32"/>
     <uses-permission android:name="android.permission.VIBRATE"/>
-    <!-- Advertising ID for AppLovin MAX ads (Android 13+ requires explicit declaration) -->
+    <!-- Advertising ID for AdMob (Android 13+ requires explicit declaration) -->
     <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>
 
     <application
@@ -38,11 +39,20 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <!-- AppLovin ships screenOrientation=behind, which Play flags for
+             large-screen Android 16. Let the system pick orientation. -->
+        <activity
+            android:name="com.applovin.adview.AppLovinFullscreenActivity"
+            android:screenOrientation="fullUser"
+            tools:replace="android:screenOrientation" />
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-5166393645234481~7250319452"/>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

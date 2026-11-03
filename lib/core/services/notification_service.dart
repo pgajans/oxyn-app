@@ -102,6 +102,23 @@ class NotificationService {
     debugPrint('Charge alarm cancelled');
   }
 
+  /// Users without a subscription cannot open the app past the paywall, so
+  /// usage reminders would only nudge them toward a purchase screen.
+  Future<void> cancelUsageReminders() async {
+    for (final key in const [
+      'optimize_reminder',
+      'free_user_reminder',
+      'weekly_maintenance',
+      'daily_score',
+    ]) {
+      await _local.cancel(id: key.hashCode);
+    }
+  }
+
+  Future<void> cancelFreeUserReminder() async {
+    await _local.cancel(id: 'free_user_reminder'.hashCode);
+  }
+
   Future<void> scheduleWeeklyMaintenance() async {
     final now = tz.TZDateTime.now(tz.local);
     var scheduled = tz.TZDateTime(tz.local, now.year, now.month, now.day, 10);

@@ -10,14 +10,19 @@ class SubscriptionService {
   factory SubscriptionService() => _instance;
   SubscriptionService._();
 
+  // A release build without RevenueCat would lock every user out of the hard
+  // paywall, so the default is the production public SDK key.
   static const _apiKeyiOS = String.fromEnvironment(
     'REVENUECAT_IOS_KEY',
-    defaultValue: 'test_TzkrDTMSSUVFIReOIcxWQsVUWkr',
+    defaultValue: 'appl_hzomWtRyQIDKivXfZVmSaiiaLod',
   );
   static const _apiKeyAndroid = String.fromEnvironment(
     'REVENUECAT_ANDROID_KEY',
     defaultValue: 'goog_FcjENVZJSseGJJQvdBjuFvhEZkp',
   );
+
+  /// Keeps the paywall from spinning forever when Play Billing never answers.
+  static const _storeTimeout = Duration(seconds: 8);
 
   bool _initialized = false;
   bool get isInitialized => _initialized;
@@ -64,30 +69,42 @@ class SubscriptionService {
     }
   }
 
+  SubscriptionStatus? _lastFetched;
+
+  /// On errors this returns the last successfully fetched status, so a
+  /// temporary failure does not downgrade an active subscriber.
   Future<SubscriptionStatus> getSubscriptionStatus() async {
-    if (!_initialized) return SubscriptionStatus.free();
+    if (!_initialized) return _lastFetched ?? SubscriptionStatus.free();
     try {
       final customerInfo = await Purchases.getCustomerInfo();
-      return _mapToStatus(customerInfo);
+      return _lastFetched = _mapToStatus(customerInfo);
     } catch (e) {
       debugPrint('getSubscriptionStatus error: $e');
-      return SubscriptionStatus.free();
+      return _lastFetched ?? SubscriptionStatus.free();
     }
   }
 
   Future<OfferingsLoadResult> getOfferings() async {
+    final first = await _loadOfferingsOnce();
+    if (first.hasPackages || first.failure == OfferingsFailure.notReady) {
+      return first;
+    }
+    await Future<void>.delayed(const Duration(seconds: 2));
+    return _loadOfferingsOnce();
+  }
+
+  Future<OfferingsLoadResult> _loadOfferingsOnce() async {
     await initialize();
     if (!_initialized) {
-      return OfferingsLoadResult(
-        packages: const [],
-        failure: _isTestKey && kReleaseMode
-            ? OfferingsFailure.notReady
-            : OfferingsFailure.notReady,
+      return const OfferingsLoadResult(
+        packages: [],
+        failure: OfferingsFailure.notReady,
       );
     }
 
     try {
-      final offerings = await Purchases.getOfferings();
+      final offerings =
+          await Purchases.getOfferings().timeout(_storeTimeout);
       var packages = _packagesFrom(offerings);
       if (packages.isEmpty) {
         packages = await _packagesFromProductIds();
@@ -103,6 +120,11 @@ class SubscriptionService {
       return OfferingsLoadResult(packages: packages);
     } catch (e) {
       debugPrint('getOfferings error: $e');
+      // RevenueCat throws a configuration error when none of the offering's
+      // products come back from the store; the raw product query can still
+      // succeed in that case.
+      final packages = await _packagesFromProductIds();
+      if (packages.isNotEmpty) return OfferingsLoadResult(packages: packages);
       return OfferingsLoadResult(
         packages: const [],
         failure: _classifyOfferingsError(e),
@@ -137,7 +159,7 @@ class SubscriptionService {
       final products = await Purchases.getProducts(
         AppConstants.subscriptionProductIds,
         productCategory: ProductCategory.subscription,
-      );
+      ).timeout(_storeTimeout);
       return [
         for (final product in products)
           Package(
@@ -182,7 +204,7 @@ class SubscriptionService {
     if (text.contains('network') ||
         text.contains('offline') ||
         text.contains('internet')) {
-      return OfferingsFailure.unknown;
+      return OfferingsFailure.network;
     }
     return _isTestKey
         ? OfferingsFailure.testStoreEmpty
@@ -190,7 +212,10 @@ class SubscriptionService {
   }
 
   Future<SubscriptionStatus> purchase(Package package) async {
-    if (!_initialized) return SubscriptionStatus.free();
+    await initialize();
+    if (!_initialized) {
+      throw StateError('RevenueCat is not initialized');
+    }
     try {
       final PurchaseResult result =
           package.presentedOfferingContext.offeringIdentifier == 'fallback'
@@ -203,15 +228,22 @@ class SubscriptionService {
     }
   }
 
+  /// Throws on store/network errors so callers keep the last known status
+  /// instead of downgrading a paying user to free.
   Future<SubscriptionStatus> restorePurchases() async {
-    if (!_initialized) return SubscriptionStatus.free();
-    try {
-      final customerInfo = await Purchases.restorePurchases();
-      return _mapToStatus(customerInfo);
-    } catch (e) {
-      debugPrint('restorePurchases error: $e');
-      return SubscriptionStatus.free();
+    await initialize();
+    if (!_initialized) {
+      throw StateError('RevenueCat is not initialized');
     }
+    final customerInfo = await Purchases.restorePurchases();
+    return _mapToStatus(customerInfo);
+  }
+
+  void addStatusListener(void Function(SubscriptionStatus status) onChange) {
+    if (!_initialized) return;
+    Purchases.addCustomerInfoUpdateListener(
+      (info) => onChange(_mapToStatus(info)),
+    );
   }
 
   SubscriptionStatus _mapToStatus(CustomerInfo info) {

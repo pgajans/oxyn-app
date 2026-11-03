@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
@@ -8,11 +9,43 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/localization/generated/app_localizations.dart';
 import '../../../../core/services/feedback_service.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../domain/access_gate.dart';
 import '../../domain/offerings_load.dart';
 import '../../domain/subscription_provider.dart';
 
+void _showMessage(BuildContext context, String message) {
+  ScaffoldMessenger.of(context)
+    ..hideCurrentSnackBar()
+    ..showSnackBar(SnackBar(content: Text(message)));
+}
+
 class PaywallScreen extends ConsumerWidget {
-  const PaywallScreen({super.key});
+  /// When true the app is locked behind this screen: there is no way to close
+  /// it, and the router opens the app once an entitlement becomes active.
+  final bool hardGate;
+
+  const PaywallScreen({super.key, this.hardGate = false});
+
+  Future<void> _restore(BuildContext context, WidgetRef ref) async {
+    feedback.tap();
+    final t = AppLocalizations.of(context)!;
+    try {
+      final status =
+          await ref.read(subscriptionStatusProvider.notifier).restore();
+      if (!context.mounted) return;
+      if (!status.isPremium) {
+        _showMessage(context, t.restoreNoSubscription);
+        return;
+      }
+      feedback.success();
+      _showMessage(context, t.restoreSuccess);
+      if (!hardGate) {
+        context.canPop() ? context.pop() : context.go('/dashboard');
+      }
+    } catch (_) {
+      if (context.mounted) _showMessage(context, t.restoreFailed);
+    }
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -29,21 +62,25 @@ class PaywallScreen extends ConsumerWidget {
       body: SafeArea(
         child: Column(
           children: [
-            Align(
-              alignment: Alignment.centerRight,
-              child: IconButton(
-                icon: const Icon(Icons.close, color: AppColors.textSecondary),
-                onPressed: () {
-                  if (Navigator.of(context).canPop()) {
-                    Navigator.of(context).pop();
-                  } else if (context.canPop()) {
-                    context.pop();
-                  } else {
-                    context.go('/dashboard');
-                  }
-                },
+            if (hardGate)
+              const SizedBox(height: 16)
+            else
+              Align(
+                alignment: Alignment.centerRight,
+                child: IconButton(
+                  icon:
+                      const Icon(Icons.close, color: AppColors.textSecondary),
+                  onPressed: () {
+                    if (Navigator.of(context).canPop()) {
+                      Navigator.of(context).pop();
+                    } else if (context.canPop()) {
+                      context.pop();
+                    } else {
+                      context.go('/dashboard');
+                    }
+                  },
+                ),
               ),
-            ),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -76,7 +113,10 @@ class PaywallScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      t.unlockAllFeatures,
+                      hardGate
+                          ? t.paywallRequiredSubtitle
+                          : t.unlockAllFeatures,
+                      textAlign: TextAlign.center,
                       style: const TextStyle(
                           fontSize: 14, color: AppColors.textSecondary),
                     ),
@@ -93,57 +133,58 @@ class PaywallScreen extends ConsumerWidget {
                       error: (e, s) => _FallbackPricing(
                         ref: ref,
                         failure: OfferingsFailure.unknown,
+                        canContinue: hardGate,
                       ),
                       data: (result) {
                         if (result.hasPackages) {
                           return _PackageList(
                             packages: result.packages,
                             ref: ref,
+                            hardGate: hardGate,
                           );
                         }
                         return _FallbackPricing(
                           ref: ref,
                           failure: result.failure,
+                          canContinue: hardGate && result.storeCannotSell,
                         );
                       },
                     ),
-                    const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.auto_awesome,
-                            color: AppColors.tertiary, size: 14),
-                        const SizedBox(width: 6),
-                        Flexible(
-                          child: Text(
-                            AppLocalizations.of(context)!.paywallFreeTasteNote,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: AppColors.tertiary,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                    if (hardGate) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        t.paywallRequiredNote,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: AppColors.tertiary,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          height: 1.35,
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                     const SizedBox(height: 4),
                     TextButton(
-                      onPressed: () {
-                        feedback.tap();
-                        ref.read(subscriptionStatusProvider.notifier).restore();
-                        if (context.canPop()) {
-                          context.pop();
-                        } else {
-                          context.go('/dashboard');
-                        }
-                      },
+                      onPressed: () => _restore(context, ref),
                       child: Text(
                         t.restorePurchases,
                         style: const TextStyle(
-                            color: AppColors.textSecondary, fontSize: 12),
+                            color: AppColors.textSecondary,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600),
                       ),
                     ),
+                    if (hardGate)
+                      TextButton(
+                        onPressed: () => _showAccessCodeDialog(context),
+                        child: Text(
+                          t.accessCodeLink,
+                          style: const TextStyle(
+                              color: AppColors.textTertiary,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600),
+                        ),
+                      ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -174,7 +215,7 @@ class PaywallScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      t.subscriptionAutoRenewNote,
+                      t.subscriptionTermsNote,
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                           color: AppColors.textTertiary,
@@ -191,6 +232,64 @@ class PaywallScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+Future<void> _showAccessCodeDialog(BuildContext context) async {
+  final t = AppLocalizations.of(context)!;
+  final controller = TextEditingController();
+  String? error;
+  var busy = false;
+
+  await showDialog<void>(
+    context: context,
+    builder: (dialogContext) => StatefulBuilder(
+      builder: (dialogContext, setState) {
+        Future<void> submit() async {
+          if (busy) return;
+          setState(() => busy = true);
+          final ok = await accessGate.redeemAccessCode(controller.text);
+          if (!dialogContext.mounted) return;
+          if (ok) {
+            Navigator.of(dialogContext).pop();
+          } else {
+            setState(() {
+              busy = false;
+              error = t.accessCodeInvalid;
+            });
+          }
+        }
+
+        return AlertDialog(
+          backgroundColor: AppColors.surface,
+          title: Text(t.accessCodeTitle,
+              style: const TextStyle(color: AppColors.textPrimary)),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            textCapitalization: TextCapitalization.characters,
+            autocorrect: false,
+            style: const TextStyle(color: AppColors.textPrimary),
+            decoration: InputDecoration(
+              hintText: t.accessCodeHint,
+              errorText: error,
+            ),
+            onSubmitted: (_) => submit(),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(t.cancel),
+            ),
+            TextButton(
+              onPressed: busy ? null : submit,
+              child: Text(t.accessCodeSubmit),
+            ),
+          ],
+        );
+      },
+    ),
+  );
+  controller.dispose();
 }
 
 /// Shown instead of the paywall when the user is already an Oxyn Plus member.
@@ -456,8 +555,6 @@ class _EmotionBenefitsState extends State<_EmotionBenefits>
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
     final items = <_Benefit>[
-      _Benefit(Icons.block, AppColors.danger, t.paywallBenefitAdFreeTitle,
-          t.paywallBenefitAdFreeDesc),
       _Benefit(Icons.all_inclusive, AppColors.secondary,
           t.paywallBenefitCleanTitle, t.paywallBenefitCleanDesc),
       _Benefit(Icons.battery_charging_full, AppColors.success,
@@ -561,14 +658,19 @@ class _BenefitRow extends StatelessWidget {
 class _PackageList extends StatelessWidget {
   final List<Package> packages;
   final WidgetRef ref;
-  const _PackageList({required this.packages, required this.ref});
+  final bool hardGate;
+  const _PackageList({
+    required this.packages,
+    required this.ref,
+    required this.hardGate,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
         for (final pkg in packages) ...[
-          _PricingCard(package: pkg, ref: ref),
+          _PricingCard(package: pkg, ref: ref, hardGate: hardGate),
           const SizedBox(height: 10),
         ],
       ],
@@ -579,7 +681,12 @@ class _PackageList extends StatelessWidget {
 class _PricingCard extends StatelessWidget {
   final Package package;
   final WidgetRef ref;
-  const _PricingCard({required this.package, required this.ref});
+  final bool hardGate;
+  const _PricingCard({
+    required this.package,
+    required this.ref,
+    required this.hardGate,
+  });
 
   String _unitLabel(AppLocalizations t, PeriodUnit unit) {
     switch (unit) {
@@ -625,26 +732,48 @@ class _PricingCard extends StatelessWidget {
         ? t.freeTrialLabel(
             intro.periodNumberOfUnits, _unitLabel(t, intro.periodUnit))
         : (isAnnual ? t.annualBilling : null);
+    final String? periodUnit = switch (package.packageType) {
+      PackageType.weekly => t.unitWeek,
+      PackageType.monthly => t.unitMonth,
+      PackageType.annual => t.unitYear,
+      _ => switch (product.subscriptionPeriod) {
+          'P1W' || 'P7D' => t.unitWeek,
+          'P1M' => t.unitMonth,
+          'P1Y' || 'P12M' => t.unitYear,
+          _ => null,
+        },
+    };
 
     return GestureDetector(
       onTap: () async {
         feedback.tap();
         try {
-          await ref.read(subscriptionStatusProvider.notifier).purchase(package);
+          final status = await ref
+              .read(subscriptionStatusProvider.notifier)
+              .purchase(package);
+          if (!context.mounted) return;
+          if (!status.isPremium) {
+            _showMessage(context, t.purchasePending);
+            return;
+          }
           feedback.success();
-          if (context.mounted) {
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              context.go('/dashboard');
-            }
+          // In the hard gate the router leaves /subscribe by itself.
+          if (!hardGate) {
+            context.canPop() ? context.pop() : context.go('/dashboard');
           }
-        } catch (e) {
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(t.purchaseCancelled)),
-            );
-          }
+        } on PlatformException catch (e) {
+          if (!context.mounted) return;
+          final code = PurchasesErrorHelper.getErrorCode(e);
+          _showMessage(
+            context,
+            switch (code) {
+              PurchasesErrorCode.purchaseCancelledError => t.purchaseCancelled,
+              PurchasesErrorCode.paymentPendingError => t.purchasePending,
+              _ => t.purchaseFailed,
+            },
+          );
+        } catch (_) {
+          if (context.mounted) _showMessage(context, t.purchaseFailed);
         }
       },
       child: Container(
@@ -685,9 +814,9 @@ class _PricingCard extends StatelessWidget {
                             color: AppColors.primary,
                             borderRadius: BorderRadius.circular(4),
                           ),
-                          child: const Text(
-                            'Popüler',
-                            style: TextStyle(color: AppColors.background, fontSize: 9, fontWeight: FontWeight.w600),
+                          child: Text(
+                            t.badgePopular,
+                            style: const TextStyle(color: AppColors.background, fontSize: 9, fontWeight: FontWeight.w600),
                           ),
                         ),
                       ],
@@ -699,9 +828,9 @@ class _PricingCard extends StatelessWidget {
                             color: AppColors.success,
                             borderRadius: BorderRadius.circular(4),
                           ),
-                          child: const Text(
-                            'Tasarruf',
-                            style: TextStyle(color: AppColors.background, fontSize: 9, fontWeight: FontWeight.w600),
+                          child: Text(
+                            t.badgeBestValue,
+                            style: const TextStyle(color: AppColors.background, fontSize: 9, fontWeight: FontWeight.w600),
                           ),
                         ),
                       ],
@@ -719,7 +848,9 @@ class _PricingCard extends StatelessWidget {
             ),
             const SizedBox(width: 10),
             Text(
-              product.priceString,
+              periodUnit == null
+                  ? product.priceString
+                  : t.perPeriod(product.priceString, periodUnit),
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
@@ -737,7 +868,15 @@ class _PricingCard extends StatelessWidget {
 class _FallbackPricing extends StatelessWidget {
   final WidgetRef ref;
   final OfferingsFailure failure;
-  const _FallbackPricing({required this.ref, required this.failure});
+
+  /// Lets the user into the hard-gated app when the store has nothing to
+  /// sell, so the app never dead-ends on this screen.
+  final bool canContinue;
+  const _FallbackPricing({
+    required this.ref,
+    required this.failure,
+    this.canContinue = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -747,7 +886,10 @@ class _FallbackPricing extends StatelessWidget {
       OfferingsFailure.storeUnavailable => t.offeringsStoreUnavailable,
       OfferingsFailure.empty => t.offeringsEmpty,
       OfferingsFailure.notReady => t.offeringsNotReady,
-      OfferingsFailure.unknown || OfferingsFailure.none => t.offeringsUnknown,
+      OfferingsFailure.network ||
+      OfferingsFailure.unknown ||
+      OfferingsFailure.none =>
+        t.offeringsUnknown,
     };
 
     return Container(
@@ -795,6 +937,37 @@ class _FallbackPricing extends StatelessWidget {
               ),
             ),
           ),
+          if (canContinue) ...[
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: () {
+                  feedback.tap();
+                  accessGate.grantStoreUnavailablePass();
+                },
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.textPrimary,
+                  side: const BorderSide(color: AppColors.surfaceLight),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+                child: Text(
+                  t.continueToApp,
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              t.storeUnavailableContinueNote,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                  color: AppColors.textSecondary, fontSize: 11, height: 1.35),
+            ),
+          ],
         ],
       ),
     );

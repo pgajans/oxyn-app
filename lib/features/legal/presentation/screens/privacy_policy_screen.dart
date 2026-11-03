@@ -85,9 +85,10 @@ class PrivacyPolicyScreen extends StatelessWidget {
           _Section(
             title: '5. Reklam',
             body:
-                'Şu anda uygulamada üçüncü taraf reklam ağı (AppLovin vb.) aktif değildir '
-                've iOS App Tracking Transparency izni istenmez. Reklam eklendiğinde bu '
-                'politika güncellenecektir.',
+                'Ücretsiz kullanıcılar Google AdMob reklamı görebilir '
+                '(banner, geçiş, ödüllü; Android ve iOS). Oxyn Plus üyelerine '
+                'reklam gösterilmez. Reklamlar reklam kimliği kullanabilir. '
+                'Ayrıntı: https://policies.google.com/privacy',
           ),
           _Section(
             title: '6. Veri Güvenliği',

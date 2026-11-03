@@ -9,7 +9,7 @@ Başlık/açıklama ve görseller gerçek işlevi anlatmalı. RAM/hız/optimizas
 Oxyn: Battery & Storage Care
 
 ### Kısa açıklama (80)
-Battery info, storage cleanup you control, device status, and phone news.
+Battery info, storage cleanup, device status. Oxyn Plus subscription required.
 
 ### Uzun açıklama
 Oxyn helps you understand battery and storage, free up space safely, and stay current with phone news — without fake speed boosts or invented hardware scores.
@@ -35,10 +35,11 @@ PHONE NEWS & TRIVIA
 • Smartphone headlines from public sources
 • Short trivia to learn about phones
 
-OXYN PLUS (OPTIONAL)
-• More AI analyses and fewer cleanup limits
-• Extra in-app customization
-• Subscription terms are shown at purchase
+OXYN PLUS SUBSCRIPTION (REQUIRED)
+Oxyn requires an active Oxyn Plus subscription; there is no free version. Every feature is included and there are no ads.
+• Weekly, monthly and yearly plans; prices are shown in the app before purchase
+• The subscription renews automatically until you cancel it in Google Play > Payments & subscriptions
+• Terms: https://oxynapp.net/terms.html
 
 IMPORTANT
 Oxyn is not antivirus software and does not claim to remove malware.
@@ -53,7 +54,7 @@ Privacy: photos and files stay on your device. See https://oxynapp.net/privacy-p
 Oxyn: Pil ve Depolama
 
 ### Kısa açıklama (80)
-Pil bilgisi, senin kontrolünde temizlik, cihaz durumu ve telefon haberleri.
+Pil bilgisi, depolama temizliği ve cihaz durumu. Oxyn Plus aboneliği gerekir.
 
 ### Uzun açıklama
 Oxyn; pil ve depolama durumunu anlamanıza, güvenli şekilde yer açmanıza ve telefon haberlerini takip etmenize yardımcı olur. Sahte hız artışı veya uydurma donanım skoru vaat etmez.
@@ -79,10 +80,11 @@ HABER VE BİLGİ YARIŞMASI
 • Kamuya açık kaynaklardan akıllı telefon başlıkları
 • Kısa telefon bilgi yarışması
 
-OXYN PLUS (İSTEĞE BAĞLI)
-• Daha fazla AI analiz ve daha az temizlik limiti
-• Ek uygulama içi kişiselleştirme
-• Abonelik koşulları satın alma sırasında gösterilir
+OXYN PLUS ABONELİĞİ (GEREKLİ)
+Oxyn'i kullanmak için aktif bir Oxyn Plus aboneliği gerekir; ücretsiz sürüm yoktur. Tüm özellikler dahildir ve reklam yoktur.
+• Haftalık, aylık ve yıllık planlar; fiyatlar satın almadan önce uygulamada gösterilir
+• Abonelik, Google Play > Ödemeler ve abonelikler bölümünden iptal edilene kadar otomatik yenilenir
+• Koşullar: https://oxynapp.net/terms.html
 
 ÖNEMLİ
 Oxyn antivirüs değildir ve kötü amaçlı yazılım temizlediğini iddia etmez.
@@ -96,3 +98,19 @@ Tools (Araçlar)
 
 ## Gizlilik
 https://oxynapp.net/privacy-policy.html
+
+## Sürüm notları (1.6.0)
+<en-US>
+Oxyn now works with a single subscription: every feature is included in Oxyn Plus, with no ads. The subscription screen shows restore, clear prices and renewal terms.
+</en-US>
+<tr-TR>
+Oxyn artık tek bir abonelikle çalışıyor: tüm özellikler Oxyn Plus'a dahil ve reklam yok. Abonelik ekranında geri yükleme, net fiyatlar ve yenileme bilgileri yer alıyor.
+</tr-TR>
+
+## Uygulama erişimi (Play Console > Uygulama içeriği > Uygulama erişimi)
+Seçim: "Uygulamamdaki işlevlerin tamamı veya bir kısmı kısıtlanmış"
+Talimat adı: Oxyn Plus subscription
+Talimat:
+Oxyn is subscription-only. After onboarding, a subscription screen appears and all features require an active Oxyn Plus subscription. No login or account is needed.
+To review the app, redeem this Google Play promo code in the Play Store app (Profile > Payments & subscriptions > Redeem code), then open Oxyn: <PROMO_CODE>
+Alternatively, purchase any plan on the subscription screen. "Restore Purchases" is on the same screen.

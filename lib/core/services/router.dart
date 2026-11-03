@@ -7,6 +7,7 @@ import '../../features/cleaner/presentation/screens/cleaner_screen.dart';
 import '../../features/performance/presentation/screens/performance_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
 import '../../features/onboarding/presentation/screens/onboarding_screen.dart';
+import '../../features/subscription/domain/access_gate.dart';
 import '../../features/subscription/presentation/screens/paywall_screen.dart';
 import '../../features/legal/presentation/screens/privacy_policy_screen.dart';
 import '../../features/legal/presentation/screens/terms_screen.dart';
@@ -30,14 +31,40 @@ Future<void> markOnboardingSeen() async {
   await prefs.setBool(_onboardingSeenKey, true);
 }
 
+/// Routes a user without an active subscription may still open. Privacy and
+/// terms must stay reachable from the paywall (App Store 3.1.2).
+const _routesWithoutSubscription = {
+  '/onboarding',
+  '/subscribe',
+  '/privacy',
+  '/terms',
+};
+
 GoRouter buildRouter({required bool showOnboarding}) {
   return GoRouter(
     navigatorKey: rootNavigatorKey,
-    initialLocation: showOnboarding ? '/onboarding' : '/dashboard',
+    initialLocation: showOnboarding
+        ? '/onboarding'
+        : (accessGate.hasAccess ? '/dashboard' : '/subscribe'),
+    refreshListenable: accessGate,
+    redirect: (context, state) {
+      final location = state.matchedLocation;
+      if (!accessGate.hasAccess) {
+        return _routesWithoutSubscription.contains(location)
+            ? null
+            : '/subscribe';
+      }
+      if (location == '/subscribe') return '/dashboard';
+      return null;
+    },
     routes: [
       GoRoute(
         path: '/onboarding',
         builder: (context, state) => const OnboardingScreen(),
+      ),
+      GoRoute(
+        path: '/subscribe',
+        builder: (context, state) => const PaywallScreen(hardGate: true),
       ),
       ShellRoute(
         navigatorKey: shellNavigatorKey,

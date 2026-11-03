@@ -6,6 +6,7 @@ enum OfferingsFailure {
   testStoreEmpty,
   storeUnavailable,
   empty,
+  network,
   unknown,
 }
 
@@ -21,4 +22,10 @@ class OfferingsLoadResult {
   });
 
   bool get hasPackages => packages.isNotEmpty;
+
+  /// The device is online but the store offers nothing to buy (unsupported
+  /// region, no billing account, store misconfiguration). Locking the user
+  /// out in that case would leave the app unusable.
+  bool get storeCannotSell =>
+      !hasPackages && failure != OfferingsFailure.network;
 }

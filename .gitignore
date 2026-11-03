@@ -65,3 +65,6 @@ android/app/*.jks
 OXYN-CREDENTIALS.md
 *-CREDENTIALS.md
 *.credentials.md
+
+# Local store binaries (AAB / IPA copies)
+store_listing/builds/

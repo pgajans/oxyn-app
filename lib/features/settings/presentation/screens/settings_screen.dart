@@ -70,7 +70,17 @@ class SettingsScreen extends ConsumerWidget {
                 iconColor: AppColors.primary,
                 title: t.restorePurchases,
                 onTap: () {
-                  ref.read(subscriptionStatusProvider.notifier).restore();
+                  ref
+                      .read(subscriptionStatusProvider.notifier)
+                      .restore()
+                      .catchError((Object _) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(t.restoreFailed)),
+                      );
+                    }
+                    return ref.read(subscriptionStatusProvider).requireValue;
+                  });
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(t.checkingPurchases),

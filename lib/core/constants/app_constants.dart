@@ -34,4 +34,23 @@ class AppConstants {
     monthlyProProductId,
     yearlyProProductId,
   ];
+
+  // AdMob (public client IDs). Debug builds use Google test units.
+  static const String admobAndroidAppId =
+      'ca-app-pub-5166393645234481~7250319452';
+  static const String admobAndroidBannerId =
+      'ca-app-pub-5166393645234481/9736881997';
+  static const String admobAndroidInterstitialId =
+      'ca-app-pub-5166393645234481/7603699363';
+  static const String admobAndroidRewardedId =
+      'ca-app-pub-5166393645234481/1716947869';
+
+  static const String admobIosAppId =
+      'ca-app-pub-5166393645234481~2702726473';
+  static const String admobIosBannerId =
+      'ca-app-pub-5166393645234481/6836965492';
+  static const String admobIosInterstitialId =
+      'ca-app-pub-5166393645234481/9894820788';
+  static const String admobIosRewardedId =
+      'ca-app-pub-5166393645234481/7268657440';
 }
